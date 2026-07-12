@@ -1,0 +1,13 @@
+{
+  "name": "ship",
+  "version": "1.0.0",
+  "description": "AI orchestrator pipeline: spec -> plan -> implement -> review -> QA, with human approval gates.",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Ship",
+    "shortDescription": "Ticket-to-PR pipeline orchestrator",
+    "developerName": "Eugene Godun",
+    "category": "productivity"
+  },
+  "keywords": ["orchestrator", "pipeline", "jira", "code-review", "qa", "agents"]
+}
