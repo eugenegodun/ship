@@ -1,0 +1,22 @@
+{
+  "name": "ship",
+  "interface": {
+    "displayName": "Ship"
+  },
+  "metadata": {
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ship",
+      "source": {
+        "source": "local",
+        "path": "./plugins/ship"
+      },
+      "policy": {
+        "installation": "AVAILABLE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
