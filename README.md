@@ -5,10 +5,55 @@ reviewed, QA'd pull request.
 
 ```
 /ship <TICKET> [stage] [model] [--spec]
-  (Spec ──🛑GATE1──)? Plan ──🛑GATE2── Implement ──┬── Review⇄Fix loop ── Commit/Push/draft-PR ──┐
-                                                   │                                              ├── QA-plan ──🛑GATE3── QA-run ── Results
-                                                   └── QA-plan authoring (qa-agent Phase A, bg) ──┘
 ```
+
+## How it works
+
+```mermaid
+flowchart TD
+    Start(["/ship TICKET --spec"]) --> Stage0["Stage 0 — choose models\nplanner + reviewer"]
+
+    Stage0 --> SpecCheck{"--spec flag?"}
+
+    SpecCheck -- yes --> S1["Stage 1 — spec-agent\nWHAT/WHY · EARS acceptance criteria\nor invariants-to-preserve"]
+    S1 --> G1{{"🛑 GATE 1\nspec approved?"}}
+    G1 -- "changes requested" --> S1
+    G1 -- approved --> S2
+
+    SpecCheck -- no --> S2["Stage 2 — task-planner-agent\nreads ticket + code, writes plan"]
+    S2 --> G2{{"🛑 GATE 2\nplan approved?"}}
+    G2 -- "changes requested" --> S2
+    G2 -- approved --> S3
+
+    S3["Stage 3 — implementator-agent\nTDD in isolated git worktree"] --> Fork((" "))
+    Fork --> S4["Stage 4 — reviewer-agent\nCritical / Important / Minor findings"]
+    Fork -.background.-> QA_A["qa-agent Phase A\nauthors test plan"]
+
+    S4 --> ReadyCheck{"ready to commit?"}
+    ReadyCheck -- "fix round (max 3×)" --> S3
+    ReadyCheck -- yes --> S5["Stage 5 — commit · push · draft PR"]
+
+    S5 --> Join((" "))
+    QA_A -.queued.-> Join
+    Join --> G3{{"🛑 GATE 3\nQA plan approved?"}}
+    G3 -- "changes requested" --> QA_A
+    G3 -- approved --> S6["Stage 6 — qa-agent Phase B\nstage account · Playwright · PR results"]
+    S6 --> S7(["Stage 7 — final report"])
+
+    classDef gate fill:#f97316,stroke:#c2410c,color:#fff,font-weight:bold
+    classDef stage fill:#2563eb,stroke:#1e3a8a,color:#fff
+    classDef bg fill:#059669,stroke:#065f46,color:#fff,stroke-dasharray: 4 3
+    classDef endpoint fill:#111827,stroke:#111827,color:#fff
+
+    class G1,G2,G3 gate
+    class S1,S2,S3,S4,S5,S6,S7 stage
+    class QA_A bg
+    class Start,Fork,Join endpoint
+```
+
+Only three stops need a human: the spec (when `--spec` is used), the plan, and the QA
+plan. Everything else — the review⇄fix loop, the parallel QA-plan authoring, the
+commit/push/PR — runs on its own.
 
 Five agents, three human gates:
 
@@ -24,6 +69,11 @@ Five agents, three human gates:
   autonomously up to 3 rounds.
 - **qa-agent** — plans and executes an end-to-end browser QA pass, then posts the plan
   and results to the PR.
+
+Plus **`workflow-retro`** (`/workflow-retro`, manual-only) — a read-only observer that
+reviews a completed `/ship` run afterward: real per-agent token spend, what went well
+or poorly, and improvement suggestions. Not a pipeline stage, no handoff contract with
+`ship`.
 
 ## Install
 
