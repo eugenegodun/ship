@@ -1,5 +1,6 @@
 ---
 name: engineering-insights
+version: 1.0.0
 description: >-
   Use when a session involved a non-obvious problem, gotcha, decision, surprising
   behavior, or hard-won discovery worth remembering — and at the end of any such
