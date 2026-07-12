@@ -19,6 +19,24 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   suggestions as a terminal markdown report. Read-only observer — not a pipeline stage, no handoff
   contract with `ship`.
 
+## engineering-insights — 1.0.0 (2026-07-12)
+- Baseline. New bundled skill, invoked by `ship`'s Stage 8 with an explicit target `INSIGHTS.md` path
+  passed as `args` (no routing table of its own — unlike its dev-digest origin, the caller always
+  decides the target). Captures the same 7 fixed sections (What Works / What Doesn't Work / Codebase
+  Patterns / Tool & Library Notes / Recurring Errors & Fixes / Session Notes / Open Questions),
+  append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
+  Writes nothing when nothing substantial happened.
+
+## ship — 3.1.0 (2026-07-12)
+- **New Stage 8 — Insights retro** (automatic, no gate, best-effort). After every run, writes up to
+  two `INSIGHTS.md` targets via the new bundled `engineering-insights` skill: pipeline-level
+  orchestration friction to `$SHIP_REPO_PATH/INSIGHTS.md` (commit only, no push — permanent local
+  clone), and, only when the ticket touched `edu-frontend/`, project-level discoveries to
+  `<worktree>/edu-frontend/INSIGHTS.md` (commit **and** push, riding on the already-open PR — the
+  worktree is ephemeral, so pushing is the only way the note survives cleanup). Skips or failures in
+  Stage 8 never block, invalidate, or roll back the shipped PR. Now requires `engineering-insights`
+  ≥1.0.0.
+
 ## ship — 3.0.0 (2026-07-07)
 - **BREAKING (gate/handoff structure).** Adds an optional **`--spec`** flag: when set, a new **Stage 1
   — Spec** dispatches `spec-agent` before task-planner-agent, with its own human gate (GATE 1). All
