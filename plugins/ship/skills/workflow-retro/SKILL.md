@@ -84,7 +84,7 @@ invent a number yourself.
 
 SemVer (`version:` in frontmatter). Not a `/ship` pipeline stage — it's a read-only observer — but it
 reads the same four agents' reports and the ship contract, so bumps are recorded alongside them in
-`~/.claude/agents/CHANGELOG.md`.
+`plugins/ship/agents/CHANGELOG.md`.
 
 - **MAJOR** — the analyzer's output JSON shape changes in a way the workflow section depends on, or the
   report's required section list changes.

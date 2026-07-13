@@ -2,7 +2,7 @@
 
 SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and its subagents (four
 always, five when `spec-agent` runs via `--spec`). Bump rules live in
-`~/.claude/skills/ship/SKILL.md` § Versioning.
+`plugins/ship/skills/ship/SKILL.md` § Versioning.
 
 - **MAJOR** — breaking contract change (a stage's inputs/outputs, gate structure, or inter-stage
   handoff: approved-spec text, approved-plan text, worktree path + branch, PR URL, reviewer verdict
