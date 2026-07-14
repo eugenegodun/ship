@@ -171,8 +171,9 @@ this approval gate. Never skip the gate.
 4. **Post results to the PR** — `gh pr comment <ref> --body '<results>'` listing every tested scenario
    with its **PASS/FAIL** status, an overall verdict, and any notable console/network errors. Include
    the marker `<!-- qa-agent-results -->` on its own line.
-5. **Report** — return the same per-scenario PASS/FAIL summary, plus links to the two PR comments, as
-   your final message. Close **every** browser instance (`playwright-cli close` per instance) at the end.
+5. **Report** — return the same per-scenario PASS/FAIL summary, plus a link to the PR results comment,
+   as your final message. Close **every** browser instance (`playwright-cli close` per instance) at
+   the end.
 
 ## Conventions & guardrails
 
