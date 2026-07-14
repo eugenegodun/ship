@@ -27,6 +27,12 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
   Writes nothing when nothing substantial happened.
 
+## ship — 3.2.0 (2026-07-14)
+- Stage 3 wording updated to match `implementator-agent` 1.3.0's conditional persistence (below), and
+  the Compatibility floors bumped for `implementator-agent` ≥1.3.0, `reviewer-agent` ≥1.2.1, `qa-agent`
+  ≥2.4.0. Stage 6 wording also fixed to stop describing qa-agent as posting its plan to the PR. No
+  stage or gate structure change.
+
 ## ship — 3.1.0 (2026-07-12)
 - **New Stage 8 — Insights retro** (automatic, no gate, best-effort). After every run, writes up to
   two `INSIGHTS.md` targets via the new bundled `engineering-insights` skill: pipeline-level
@@ -140,6 +146,13 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - Baseline. Includes Crew-flag awareness in planning and `frontend-design:frontend-design` +
   `grill-me:grill-me` planning helpers.
 
+## implementator-agent — 1.3.0 (2026-07-14)
+- **Persistence into `specs/<TICKET>/*.md` is now entirely conditional on `--spec` mode** — previously
+  `plan.md` was always written regardless of `--spec`, cluttering every PR's diff with a
+  `specs/<TICKET>/` directory even on non-spec runs. Now both `plan.md` and `spec.md` are written
+  together only when the orchestrator passed an approved spec; skipped together otherwise. Backward
+  compatible: reviewer-agent/qa-agent already tolerate these files being absent.
+
 ## implementator-agent — 1.2.0 (2026-07-07)
 - The **Isolate** step now persists the planning text it received into the worktree before starting
   tasks: the approved plan to `specs/<TICKET>/plan.md`, and — when the orchestrator also passed an
@@ -155,6 +168,11 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 
 ## implementator-agent — 1.0.0 (2026-06-25)
 - Baseline. Includes `vercel:react-best-practices` for FE component/hook structure.
+
+## reviewer-agent — 1.2.1 (2026-07-14)
+- PATCH: Inputs wording corrected to reflect that `specs/<TICKET>/plan.md`/`spec.md` are only
+  persisted in `--spec` mode (previously implied `plan.md` was always present). No behavior change —
+  the fallback-to-relayed-text logic already handled the absent case correctly.
 
 ## reviewer-agent — 1.2.0 (2026-07-07)
 - Inputs now **prefer reading `specs/<TICKET>/plan.md` (and `spec.md`, if present) from the worktree**
@@ -174,6 +192,12 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 ## reviewer-agent — 1.0.0 (2026-06-25)
 - Baseline. Runs `code-review`, `security-review`, and (on story diffs)
   `frontend:storybook-review` read-only, folded into the manual review.
+
+## qa-agent — 2.4.0 (2026-07-14)
+- **No longer posts its test plan to the PR.** Phase B previously posted the plan as a PR comment
+  (marker `<!-- qa-agent-plan -->`) in addition to results — redundant, since the human already
+  reviews and approves the plan in-session at GATE 3 before Phase B runs. Now only posts results.
+  Phase B step numbering shifted down by one; the approval-gate mechanics themselves are unchanged.
 
 ## qa-agent — 2.3.0 (2026-07-07)
 - Feature-description input now **prefers reading `specs/<TICKET>/spec.md`/`plan.md` from the
