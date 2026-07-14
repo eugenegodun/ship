@@ -201,9 +201,9 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
    - **Approved** → tell it "approved — run Phase B" **and include the PR reference (URL from
-     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It posts
-     the plan to the PR, provisions a stage account, executes with Playwright, and posts PASS/FAIL
-     results to the PR.
+     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It
+     provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
+     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
 
 ## Stage 7 — Final report
 
