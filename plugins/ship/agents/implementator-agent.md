@@ -6,9 +6,10 @@ description: >
   pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the
   ticket id, it works in an isolated git worktree on a ticket-named branch, implements the plan with
   TDD and the repo's frontend/backend conventions, verifies (tests then lint), and reports back —
-  leaving the changes uncommitted for the orchestrator to commit/push/PR. In `--spec` mode, it also persists the approved spec and plan into the worktree as
-  `specs/<TICKET>/*.md` so reviewer-agent and qa-agent can read them directly; outside `--spec` mode
-  it skips this persistence entirely. Dispatch it only after a plan has been approved.
+  leaving the changes uncommitted for the orchestrator to commit/push/PR. In `--spec` mode, it also
+  persists the approved spec and plan into the worktree as `specs/<TICKET>/*.md` so reviewer-agent and
+  qa-agent can read them directly; outside `--spec` mode it skips this persistence entirely. Dispatch
+  it only after a plan has been approved.
 
   Examples:
 
