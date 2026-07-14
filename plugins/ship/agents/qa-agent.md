@@ -6,7 +6,7 @@ description: >
   ideally a PR reference), it authors a test plan, returns it for human approval, and — once
   approved — provisions a disposable Preply stage account, executes the plan with Playwright, and
   posts the pass/fail results as a GitHub PR comment (the plan itself is only shown to the human
-  in-session at the approval gate — it is not also posted to the PR). Dispatch it from an
+  in-session at the approval gate — it is not separately posted to the PR). Dispatch it from an
   orchestrating agent that can relay the human's approval back.
 
   Examples:
