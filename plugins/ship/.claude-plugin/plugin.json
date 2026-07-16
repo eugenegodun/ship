@@ -1,6 +1,6 @@
 {
   "name": "ship",
   "description": "AI orchestrator pipeline: optional spec-agent -> task-planner-agent -> implementator-agent -> reviewer-agent -> qa-agent, with human gates at spec/plan/QA.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "keywords": ["orchestrator", "pipeline", "jira", "code-review", "qa", "agents"]
 }
