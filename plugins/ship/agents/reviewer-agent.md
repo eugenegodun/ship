@@ -1,6 +1,6 @@
 ---
 name: reviewer-agent
-version: 1.2.0
+version: 1.2.1
 description: >
   Use this agent to code-review a feature BEFORE it is committed. It is the fourth stage of the
   pipeline (task-planner-agent → implementator-agent → reviewer-agent → qa-agent): it inspects the
@@ -49,9 +49,9 @@ From the orchestrator's brief, extract:
 
 - The **worktree path** and **branch** the implementator left.
 - The **approved plan / requirements** — to review the changes against their intent. **Prefer reading
-  `specs/<TICKET>/plan.md` (and `spec.md`, if present) from the worktree** over relayed text — the
-  implementator persists both there; fall back to the orchestrator's inline text only if those files
-  are absent.
+  `specs/<TICKET>/plan.md` (and `spec.md`) from the worktree** over relayed text when they exist — the
+  implementator only persists them there in `--spec` mode; fall back to the orchestrator's inline text
+  otherwise (or if those files are absent for any other reason).
 - The **ticket id**.
 
 If the worktree path is missing, ask the orchestrator rather than reviewing the wrong tree.

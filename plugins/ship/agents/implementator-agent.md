@@ -1,14 +1,15 @@
 ---
 name: implementator-agent
-version: 1.2.0
+version: 1.3.0
 description: >
   Use this agent to implement an already-approved implementation plan. It is the third stage of the
   pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the
   ticket id, it works in an isolated git worktree on a ticket-named branch, implements the plan with
   TDD and the repo's frontend/backend conventions, verifies (tests then lint), and reports back —
-  leaving the changes uncommitted for the orchestrator to commit/push/PR. It also persists the plan
-  (and the spec, when one was approved) into the worktree as `specs/<TICKET>/*.md` so reviewer-agent
-  and qa-agent can read them directly. Dispatch it only after a plan has been approved.
+  leaving the changes uncommitted for the orchestrator to commit/push/PR. In `--spec` mode, it also
+  persists the approved spec and plan into the worktree as `specs/<TICKET>/*.md` so reviewer-agent and
+  qa-agent can read them directly; outside `--spec` mode it skips this persistence entirely. Dispatch
+  it only after a plan has been approved.
 
   Examples:
 
@@ -61,11 +62,13 @@ Mirror the plan's tasks as a TodoWrite checklist, then work through them.
 
 1. **Isolate** — use `superpowers:using-git-worktrees` to create an isolated worktree on a branch
    named **exactly the ticket id** (per the repo's `AGENTS.md`). Run the project setup it prescribes
-   and verify a clean baseline before editing. **Persist the planning text you received** before
-   starting tasks: write the approved plan to `specs/<TICKET>/plan.md`, and — when the orchestrator
-   also passed an approved spec (spec-agent's output, `--spec` runs only) — write it to
-   `specs/<TICKET>/spec.md`. This gives reviewer-agent and qa-agent a file to read directly instead of
-   relayed prose.
+   and verify a clean baseline before editing. **Persist the planning text — only in `--spec` mode.**
+   When the orchestrator passed an approved spec (spec-agent's output), write it to
+   `specs/<TICKET>/spec.md` and write the approved plan alongside it to `specs/<TICKET>/plan.md`. This
+   gives reviewer-agent and qa-agent a file to read directly instead of relayed prose. **When no spec
+   was passed, skip this persistence step entirely** — don't create `specs/<TICKET>/` at all;
+   reviewer-agent and qa-agent already fall back to the orchestrator's relayed inline text in that
+   case.
 2. **Drive the plan** — use `superpowers:executing-plans` to execute the tasks sequentially with
    verification checkpoints. (Do not try to dispatch sub-agents per task — you cannot fan out.)
 3. **Before any front-end work** — load the `design-system` skill and read the target package's

@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.1.0
+version: 3.2.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -111,10 +111,11 @@ Do not proceed past this gate without explicit approval.
 
 Dispatch **`implementator-agent`** (`subagent_type: implementator-agent`) with: the **approved plan
 text** (inline), the **approved spec text** (inline, when Stage 1 ran), and the **ticket id**. It
-creates an isolated worktree on a branch named exactly the ticket id, persists the plan (and spec, if
-any) into the worktree as `specs/<TICKET>/*.md`, implements with TDD, verifies (tests then lint), and
-reports. **Keep this implementator instance's id** — fix rounds (Stage 4) resume it rather than
-spawning a new one.
+creates an isolated worktree on a branch named exactly the ticket id and, **only when Stage 1 ran**,
+persists the plan and spec into the worktree as `specs/<TICKET>/*.md` (skipped entirely otherwise —
+no `specs/<TICKET>/` directory on non-`--spec` runs). It implements with TDD, verifies (tests then
+lint), and reports. **Keep this implementator instance's id** — fix rounds (Stage 4) resume it rather
+than spawning a new one.
 
 From its report, **capture and retain**:
 
@@ -200,9 +201,9 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
    - **Approved** → tell it "approved — run Phase B" **and include the PR reference (URL from
-     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It posts
-     the plan to the PR, provisions a stage account, executes with Playwright, and posts PASS/FAIL
-     results to the PR.
+     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It
+     provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
+     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
 
 ## Stage 7 — Final report
 
@@ -314,12 +315,13 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.1.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
-≥1.2.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md`), `reviewer-agent` ≥1.2.0 and
-`qa-agent` ≥2.3.0 (both prefer reading `specs/<TICKET>/*.md` from the worktree over relayed text), and
-`engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
-routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
-consumes it before bumping this list. Record every bump in
+≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.4.0 (both prefer reading `specs/<TICKET>/*.md` from the
+worktree when it exists, falling back to relayed text otherwise; `qa-agent` no longer posts its plan
+to the PR, only results), and `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a
+target path via `args`, no routing of its own). If a subagent's MAJOR advances, re-check its handoff
+against the stage that consumes it before bumping this list. Record every bump in
 `plugins/ship/agents/CHANGELOG.md`.
