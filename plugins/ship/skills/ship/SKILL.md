@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.2.0
+version: 3.3.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -315,13 +315,14 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.3.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.4.0 (both prefer reading `specs/<TICKET>/*.md` from the
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.5.0 (both prefer reading `specs/<TICKET>/*.md` from the
 worktree when it exists, falling back to relayed text otherwise; `qa-agent` no longer posts its plan
-to the PR, only results), and `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a
-target path via `args`, no routing of its own). If a subagent's MAJOR advances, re-check its handoff
-against the stage that consumes it before bumping this list. Record every bump in
+to the PR, only results, formatted as a verdict line + Test Case/Description/Status/Notes table), and
+`engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
+routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
+consumes it before bumping this list. Record every bump in
 `plugins/ship/agents/CHANGELOG.md`.
