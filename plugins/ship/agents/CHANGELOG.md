@@ -27,6 +27,10 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
   Writes nothing when nothing substantial happened.
 
+## ship — 3.3.0 (2026-07-16)
+- Compatibility floor bumped for `qa-agent` ≥2.5.0 (results-table change, below). No stage or gate
+  structure change.
+
 ## ship — 3.2.0 (2026-07-14)
 - Stage 3 wording updated to match `implementator-agent` 1.3.0's conditional persistence (below), and
   the Compatibility floors bumped for `implementator-agent` ≥1.3.0, `reviewer-agent` ≥1.2.1, `qa-agent`
@@ -192,6 +196,13 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 ## reviewer-agent — 1.0.0 (2026-06-25)
 - Baseline. Runs `code-review`, `security-review`, and (on story diffs)
   `frontend:storybook-review` read-only, folded into the manual review.
+
+## qa-agent — 2.5.0 (2026-07-16)
+- **Results now reported as a verdict-line + table**, both in the PR comment and the final report:
+  `**Overall: X/Y passed** ✅|❌` followed by a `Test Case | Description | Status | Notes` table
+  (`✅`/`❌` per case, Notes blank when passing). Replaces the previous unstructured prose listing.
+  Backward compatible — no change to what data is collected or the handoff contract, only how the
+  already-collected pass/fail results are rendered.
 
 ## qa-agent — 2.4.0 (2026-07-14)
 - **No longer posts its test plan to the PR.** Phase B previously posted the plan as a PR comment

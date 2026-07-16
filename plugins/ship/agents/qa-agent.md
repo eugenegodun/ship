@@ -1,6 +1,6 @@
 ---
 name: qa-agent
-version: 2.4.0
+version: 2.5.0
 description: >
   Use this agent to QA a feature end-to-end in a real browser. Given a feature description (and
   ideally a PR reference), it authors a test plan, returns it for human approval, and — once
@@ -168,12 +168,24 @@ this approval gate. Never skip the gate.
    **`frontend:test-dwh-events`** skill (via the Skill tool). It runs on `playwright-cli` and provides
    the canonical workflow: a context-level `/dwh/log_events_batch` interceptor (`ctx._dwhEvents`),
    clear-the-buffer-before-each-case, capture, and validate-against-spec. Follow its steps directly.
-4. **Post results to the PR** — `gh pr comment <ref> --body '<results>'` listing every tested scenario
-   with its **PASS/FAIL** status, an overall verdict, and any notable console/network errors. Include
-   the marker `<!-- qa-agent-results -->` on its own line.
-5. **Report** — return the same per-scenario PASS/FAIL summary, plus a link to the PR results comment,
-   as your final message. Close **every** browser instance (`playwright-cli close` per instance) at
-   the end.
+4. **Post results to the PR** — `gh pr comment <ref> --body '<results>'`, where `<results>` is a
+   one-line verdict summary followed by a table, one row per test case:
+
+   ```
+   **Overall: <passed>/<total> passed** ✅|❌
+
+   | Test Case | Description | Status | Notes |
+   |---|---|---|---|
+   | <id/title from the plan> | <one line: what this case verifies> | ✅ or ❌ | <blank when passing;
+   failure detail and/or notable console/network errors when failing> |
+   ```
+
+   Use the case id/title exactly as it appeared in the approved Phase-A plan — don't rename or
+   renumber. The verdict emoji is ✅ only when every case passed, ❌ if any failed. Include the marker
+   `<!-- qa-agent-results -->` on its own line (outside the table, same as before).
+5. **Report** — return the **same verdict-line + table** as your final message (identical structure to
+   the PR comment — do not summarize it differently here), plus a link to the PR results comment.
+   Close **every** browser instance (`playwright-cli close` per instance) at the end.
 
 ## Conventions & guardrails
 
