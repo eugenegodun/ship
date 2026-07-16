@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.0.0
+version: 3.2.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -67,7 +67,8 @@ and reviewer — implementator, qa, and the git agent are unchanged.
 Track the stages below as a TodoWrite checklist so progress is visible. Include a dedicated
 **"QA-plan authoring (background)"** item so the parallel branch — launched after the implementator's
 first verified tree (end of Stage 3) — stays visible alongside the review→PR branch. When `--spec` is
-set, include a **"Spec (GATE 1)"** item ahead of the plan item.
+set, include a **"Spec (GATE 1)"** item ahead of the plan item. Include an **"Insights retro"** item
+for Stage 8.
 
 ## Stage 1 — Spec (conditional on `--spec`, 🛑 GATE 1)
 
@@ -110,10 +111,11 @@ Do not proceed past this gate without explicit approval.
 
 Dispatch **`implementator-agent`** (`subagent_type: implementator-agent`) with: the **approved plan
 text** (inline), the **approved spec text** (inline, when Stage 1 ran), and the **ticket id**. It
-creates an isolated worktree on a branch named exactly the ticket id, persists the plan (and spec, if
-any) into the worktree as `specs/<TICKET>/*.md`, implements with TDD, verifies (tests then lint), and
-reports. **Keep this implementator instance's id** — fix rounds (Stage 4) resume it rather than
-spawning a new one.
+creates an isolated worktree on a branch named exactly the ticket id and, **only when Stage 1 ran**,
+persists the plan and spec into the worktree as `specs/<TICKET>/*.md` (skipped entirely otherwise —
+no `specs/<TICKET>/` directory on non-`--spec` runs). It implements with TDD, verifies (tests then
+lint), and reports. **Keep this implementator instance's id** — fix rounds (Stage 4) resume it rather
+than spawning a new one.
 
 From its report, **capture and retain**:
 
@@ -199,9 +201,9 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
    - **Approved** → tell it "approved — run Phase B" **and include the PR reference (URL from
-     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It posts
-     the plan to the PR, provisions a stage account, executes with Playwright, and posts PASS/FAIL
-     results to the PR.
+     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It
+     provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
+     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
 
 ## Stage 7 — Final report
 
@@ -212,6 +214,41 @@ End the report with a **token-usage pointer** (see § Usage reporting): tell the
 for the whole-flow session total, and that per-agent counts are on each completed task's line in the
 Claude Code UI. **Do not state token numbers yourself** — you cannot read them; quoting any figure
 would be fabrication.
+
+## Stage 8 — Insights retro (automatic, no gate)
+
+Runs immediately after Stage 7, regardless of outcome, **best-effort** — a failure or skip here must
+never block, invalidate, or roll back an already-shipped PR.
+
+1. **Pipeline-insights call** — check whether `$SHIP_REPO_PATH` is set and the directory exists
+   (`[ -n "$SHIP_REPO_PATH" ] && [ -d "$SHIP_REPO_PATH" ]`). If not, skip this call and note the skip
+   in your final report (append a line — don't re-open or restructure the Stage 7 report). If it
+   exists:
+   - Dispatch the **`engineering-insights`** skill (Skill tool) with `args` set to
+     `$SHIP_REPO_PATH/INSIGHTS.md`. Ground it in **this run's own orchestration friction**: review
+     rounds taken, any `BLOCKED`/`NEEDS_CONTEXT` escalation from any subagent, gate change-requests,
+     model escalations (`fable`→`opus`), or anything else about *the pipeline itself* worth fixing in
+     a future `ship` version. Never invent friction that didn't happen — a clean run may write
+     nothing, which is correct.
+   - If the skill wrote anything, commit it locally: `cd $SHIP_REPO_PATH && git add INSIGHTS.md &&
+     git commit -m "<one-line summary of what was captured>"`. **Do not push.** This is the user's
+     permanent local clone — they review and push in their own batches. If the commit fails (not a
+     git repo, nothing staged, etc.), note the failure in the report; do not treat it as a pipeline
+     failure.
+2. **Project-insights call** — check whether Stage 3's changed-files list touched `edu-frontend/`. If
+   not, skip (no other project target exists yet — this is scoped narrowly on purpose). If it did:
+   - Dispatch the **`engineering-insights`** skill with `args` set to
+     `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 3). Ground it
+     in what implementator/reviewer/qa actually discovered while working the ticket — new patterns,
+     dead ends, gotchas, tool quirks. Same "write nothing if nothing substantial" rule applies.
+   - If the skill wrote anything, commit **and push** inside the worktree, onto the **same branch**
+     Stage 5 already pushed: `cd <worktree_path> && git add edu-frontend/INSIGHTS.md && git commit -m
+     "<one-line summary>" && git push`. This rides as one more commit on the already-open PR — never
+     open a new PR for it. Push (unlike the pipeline-insights call) because the worktree is
+     **ephemeral**: a local-only commit there can be lost once the worktree is cleaned up after merge.
+     If the push fails (branch already deleted, PR already merged, etc.), note it in the report and
+     move on — do not retry indefinitely and do not block on it.
+3. Append one line per call to the final report: written / skipped (with why) / failed (with why).
 
 ## Guardrails
 
@@ -247,6 +284,9 @@ would be fabrication.
 - Pass `stage` through to qa-agent unchanged; do not invent one.
 - **`--spec` changes only Stage 1's presence** — every other stage's mechanics (models, gates, loop
   cap, git ops, usage reporting) are unchanged whether or not it ran.
+- **Stage 8 never gates and never fails the run** — it always attempts to run after Stage 7, but any
+  skip (env var unset, ticket didn't touch edu-frontend) or failure (commit/push error) is noted in
+  the report and otherwise ignored. The shipped PR's success is independent of Stage 8's outcome.
 - **Never quote token numbers** — you have no tool to read them. Usage is surfaced per § Usage
   reporting, not by inventing figures.
 
@@ -275,10 +315,13 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.0.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
-≥1.2.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md`), `reviewer-agent` ≥1.2.0 and
-`qa-agent` ≥2.3.0 (both prefer reading `specs/<TICKET>/*.md` from the worktree over relayed text). If a
-subagent's MAJOR advances, re-check its handoff against the stage that consumes it before bumping this
-list. Record every bump in `~/.claude/agents/CHANGELOG.md`.
+≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.4.0 (both prefer reading `specs/<TICKET>/*.md` from the
+worktree when it exists, falling back to relayed text otherwise; `qa-agent` no longer posts its plan
+to the PR, only results), and `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a
+target path via `args`, no routing of its own). If a subagent's MAJOR advances, re-check its handoff
+against the stage that consumes it before bumping this list. Record every bump in
+`plugins/ship/agents/CHANGELOG.md`.
