@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.3.0
+version: 3.4.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -241,13 +241,12 @@ never block, invalidate, or roll back an already-shipped PR.
      `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 3). Ground it
      in what implementator/reviewer/qa actually discovered while working the ticket — new patterns,
      dead ends, gotchas, tool quirks. Same "write nothing if nothing substantial" rule applies.
-   - If the skill wrote anything, commit **and push** inside the worktree, onto the **same branch**
-     Stage 5 already pushed: `cd <worktree_path> && git add edu-frontend/INSIGHTS.md && git commit -m
-     "<one-line summary>" && git push`. This rides as one more commit on the already-open PR — never
-     open a new PR for it. Push (unlike the pipeline-insights call) because the worktree is
-     **ephemeral**: a local-only commit there can be lost once the worktree is cleaned up after merge.
-     If the push fails (branch already deleted, PR already merged, etc.), note it in the report and
-     move on — do not retry indefinitely and do not block on it.
+   - If the skill wrote anything, commit it locally: `cd <worktree_path> && git add
+     edu-frontend/INSIGHTS.md && git commit -m "<one-line summary>"`. **Do not push.** Same as the
+     pipeline-insights call — accepted tradeoff: this worktree is **ephemeral**, so a local-only
+     commit here can be lost once the worktree is cleaned up after merge; push was dropped anyway per
+     an explicit decision to keep both calls symmetric (commit-only, no push). If the commit fails,
+     note it in the report and move on — do not treat it as a pipeline failure.
 3. Append one line per call to the final report: written / skipped (with why) / failed (with why).
 
 ## Guardrails
