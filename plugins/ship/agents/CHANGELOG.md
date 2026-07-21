@@ -27,6 +27,13 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
   Writes nothing when nothing substantial happened.
 
+## ship — 3.4.0 (2026-07-21)
+- **Stage 8's project-insights call no longer pushes.** Previously it committed and pushed
+  `edu-frontend/INSIGHTS.md` onto the already-open PR (to survive worktree cleanup); now it
+  commits locally only, same as the pipeline-insights call — symmetric behavior, at the accepted
+  cost that a captured insight can be lost if the worktree is cleaned up before anyone pushes it.
+  No stage or gate structure change.
+
 ## ship — 3.3.0 (2026-07-16)
 - Compatibility floor bumped for `qa-agent` ≥2.5.0 (results-table change, below). No stage or gate
   structure change.
