@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.4.0
+version: 3.5.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -69,6 +69,32 @@ Track the stages below as a TodoWrite checklist so progress is visible. Include 
 first verified tree (end of Stage 3) — stays visible alongside the review→PR branch. When `--spec` is
 set, include a **"Spec (GATE 1)"** item ahead of the plan item. Include an **"Insights retro"** item
 for Stage 8.
+
+## Progress display — full stage table in every update
+
+The TodoWrite checklist is internal bookkeeping only — its widget collapses completed rows, so it is
+**not** the user-facing progress view. Every progress message you post to the user — each gate stop
+(GATE 1/2/3), each stage-completion note, each halt, and the Stage 7 final report — **ends with the
+full pipeline table**: one row per stage of this run, every row always present, none collapsed,
+elided, or summarized as "+N completed".
+
+| # | Stage                          | Status |
+|---|--------------------------------|--------|
+| 1 | Plan (GATE 2)                  | ✅ completed — approved plan from the fable planner |
+| 2 | Implement                      | ✅ completed — 7 files changed, 1,492 tests pass |
+| 3 | QA-plan authoring (background) | 🔄 in progress — qa-agent still writing its Phase-A plan |
+| 4 | Review ⇄ Fix loop              | ✅ completed — clean in 1 round (opus), verdict "Yes" |
+| 5 | Commit / Push / Draft PR       | ✅ completed — PR #137501 (<url>), commit <sha> |
+| 6 | QA (GATE 3)                    | ⏳ pending — waiting on the QA plan to surface for your approval |
+| 7 | Final report                   | ⏳ pending |
+| 8 | Insights retro                 | ⏳ pending |
+
+Each Status cell is `<state> — <one-line detail>`, where state is one of **✅ completed**,
+**🔄 in progress**, **⏳ pending**, **⏭️ skipped**, or **⛔ blocked**. Completed rows carry their
+concrete outcome (files changed + test evidence, PR number/URL, review rounds + verdict); a bare
+`⏳ pending` is fine when there is nothing to say yet. The row set mirrors the actual run: prepend a
+**Spec (GATE 1)** row when `--spec` is set (renumbering the rest), and keep the
+**QA-plan authoring (background)** row so the parallel branch stays visible.
 
 ## Stage 1 — Spec (conditional on `--spec`, 🛑 GATE 1)
 
@@ -314,7 +340,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.3.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.5.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),

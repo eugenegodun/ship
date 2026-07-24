@@ -27,6 +27,14 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
   Writes nothing when nothing substantial happened.
 
+## ship — 3.5.0 (2026-07-24)
+- **New "Progress display" rule: every user-facing progress message ends with the full pipeline
+  table.** One row per stage (`# | Stage | Status`), all rows always present — never the collapsed
+  TodoWrite widget ("+N completed"), which is now internal bookkeeping only. Status cells use
+  `✅/🔄/⏳/⏭️/⛔ — one-line detail`, completed rows carry concrete outcomes (files/tests, PR URL,
+  review verdict), and a **Spec (GATE 1)** row is prepended on `--spec` runs. No stage or gate
+  structure change.
+
 ## ship — 3.4.0 (2026-07-21)
 - **Stage 8's project-insights call no longer pushes.** Previously it committed and pushed
   `edu-frontend/INSIGHTS.md` onto the already-open PR (to survive worktree cleanup); now it
