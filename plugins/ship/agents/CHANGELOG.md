@@ -27,6 +27,27 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
   append-only, same quality bar ("if this were obvious to anyone reading the code, don't write it").
   Writes nothing when nothing substantial happened.
 
+## ship — 3.6.0 (2026-07-24)
+- **Authorization provenance in QA handoffs.** Subagent permission classifiers judge intent from the
+  subagent's own context and were (correctly) refusing stage mutations authorized only by an
+  orchestrator paraphrase. The qa-agent's initial brief now quotes the user's original `/ship`
+  invocation verbatim (stage provenance) and states the Phase-B authorization scope up front; the
+  GATE 3 Phase-B resume now relays the user's approval message verbatim (quoted) plus the invocation
+  and PR ref — never a bare "approved — run Phase B". New guardrail: authorization is quoted, never
+  paraphrased. Additive brief/resume fields, so MINOR. Compatibility floor bumped to `qa-agent`
+  ≥2.6.0.
+
+## qa-agent — 2.6.0 (2026-07-24)
+- **Relay-approval mechanics made explicit** (companion to ship 3.6.0). New "The approval channel"
+  section: the orchestrator's relay is the designed approval channel, and its strength is the user's
+  quoted words inside it — a resume asserting approval without them is weak evidence, and the agent
+  must ask the orchestrator for the verbatim approval before mutating a shared stage rather than
+  work around a denial. Inputs: a user-quoted stage in the brief *is* the resolved target
+  (overrides the localhost/stage40 default — the default is a fallback, not a boundary); a
+  non-default stage with no quoted provenance requires asking before Phase B mutates it. New
+  optional "authorization scope" input documenting what plan approval authorizes. Backward
+  compatible: briefs without provenance/scope still work, matching pre-3.6.0 orchestrators.
+
 ## ship — 3.5.0 (2026-07-24)
 - **New "Progress display" rule: every user-facing progress message ends with the full pipeline
   table.** One row per stage (`# | Stage | Status`), all rows always present — never the collapsed

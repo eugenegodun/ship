@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.5.0
+version: 3.6.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -162,7 +162,14 @@ authored while the review→PR branch proceeds. Brief it with:
 
 - a **feature description** drawn from the approved plan + ticket,
 - the **worktree path** (so it can ground the plan on the real implemented code / selectors),
-- **`stage`** if one was supplied,
+- **`stage`** if one was supplied, **with its provenance**: quote the user's original `/ship`
+  invocation **verbatim** (e.g. *"the user invoked `/ship LEX-1544 stage34`"*) so the target is
+  traceable to the user's own words, not to your paraphrase. A relayed "use stageN" with no quoted
+  invocation is exactly what the permission layer must refuse for stage mutations,
+- the **authorization scope**: state that upon the human's plan approval at GATE 3, Phase B is
+  authorized to provision disposable fixture data (client/tutor/tutoring/payments/lessons via
+  `@prep/fixtures`) and drive a browser against the resolved target host, and to post results to
+  the PR — and that approval will arrive as the user's own message quoted verbatim,
 - an explicit **deferred-PR** instruction: *"The PR does not exist yet — you were launched in parallel
   with the review/PR stage. Author the plan from the feature description / plan / ticket and the code
   in the worktree; do not run `gh pr view` or infer a branch. I'll hand you the PR ref when I resume
@@ -226,10 +233,15 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 3.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
-   - **Approved** → tell it "approved — run Phase B" **and include the PR reference (URL from
-     Stage 5)** in the same message, since it was launched in deferred-PR mode without one. It
-     provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
-     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
+   - **Approved** → the resume message carries the **user's approval quoted verbatim** (their exact
+     words, marked as a quote — e.g. *"the user replied: «approved, run it on stage34»"*), the
+     **user's original `/ship` invocation verbatim** (re-confirming the target stage's provenance),
+     and the **PR reference (URL from Stage 5)**, since it was launched in deferred-PR mode without
+     one. Never paraphrase the approval down to a bare "approved — run Phase B": qa-agent's Phase B
+     performs real stage mutations, and its permission layer weighs the user's own quoted words far
+     above an orchestrator's summary. It provisions a stage account, executes with Playwright, and
+     posts PASS/FAIL results to the PR (the plan itself was already shown to the human above at
+     GATE 3 — it is not separately posted).
 
 ## Stage 7 — Final report
 
@@ -288,6 +300,12 @@ never block, invalidate, or roll back an already-shipped PR.
 - **Deferred-PR handoff**: the parallel qa-agent has no PR at launch. Pass the PR URL (from Stage 5)
   in the **Phase-B resume** `SendMessage`, not at initial dispatch. The PR is the join point of the
   two branches.
+- **Authorization is quoted, never paraphrased.** Subagents' permission layers judge intent from
+  *their own* context — they cannot see this session. So every handoff that authorizes stage
+  mutations carries the user's words verbatim: the `/ship` invocation (stage provenance) in the
+  qa-agent's initial brief, and the user's GATE 3 approval message in the Phase-B resume. An
+  orchestrator paraphrase ("approved — run Phase B", "use stage34") is a relay a permission
+  classifier can and should refuse for irreversible actions on shared environments.
 - **Resume, don't re-spawn, across phases**: only **qa-agent** has an internal Phase A/B gate —
   relay its approval to the *same* instance via `SendMessage` so its context persists. The parallel
   qa-agent is launched once (after the first verified tree) and resumed for Phase B; never dispatch a
@@ -340,11 +358,11 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.5.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.6.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.5.0 (both prefer reading `specs/<TICKET>/*.md` from the
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.6.0 (both prefer reading `specs/<TICKET>/*.md` from the
 worktree when it exists, falling back to relayed text otherwise; `qa-agent` no longer posts its plan
 to the PR, only results, formatted as a verdict line + Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
