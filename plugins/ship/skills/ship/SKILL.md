@@ -53,7 +53,7 @@ Parse from the invocation:
 
 Before Stage 2 (Stage 1 when `--spec` is set), **ask the user which model to run the planner and
 reviewer on** using the `AskUserQuestion` tool — one call with **two questions**, each offering
-**`opus`** and **`fable`**:
+**`claude-opus-4-8[1m]`** and **`claude-fable-5`**:
 
 - **Planner model** (Stage 2). If the `model` param was already supplied on invocation, **skip this
   question** and use the param value.
@@ -187,10 +187,11 @@ Loop, counting rounds (cap = **3**):
    **branch**, the **approved plan**, and the **ticket id**. It diffs the uncommitted changes,
    re-runs the static checks, and returns findings (Critical / Important / Minor) plus a verdict line
    `Ready to commit? [Yes | No | With fixes]`.
-   - **Model:** run the reviewer on the **model chosen in Stage 0** (`opus` or `fable`), passed as the
-     Agent `model` override each round. **Escalation:** if the chosen base is **`fable`** and the
-     *previous* round surfaced a **Critical** finding, run that re-review round on **`opus`** for a
-     more rigorous re-check; if the base is already `opus`, stay on opus (no escalation needed).
+   - **Model:** run the reviewer on the **model chosen in Stage 0** (`claude-opus-4-8[1m]` or
+     `claude-fable-5`), passed as the Agent `model` override each round. **Escalation:** if the chosen
+     base is **`claude-fable-5`** and the *previous* round surfaced a **Critical** finding, run that
+     re-review round on **`claude-opus-4-8[1m]`** for a more rigorous re-check; if the base is already
+     `claude-opus-4-8[1m]`, stay on it (no escalation needed).
 2. Decide:
    - Verdict **`Yes`**, or only **Minor**/already-acknowledged findings remain → **exit the loop**.
    - Any **Critical** or **Important** finding → **fix round**: plan the fixes from the findings,
@@ -265,7 +266,8 @@ never block, invalidate, or roll back an already-shipped PR.
    - Dispatch the **`engineering-insights`** skill (Skill tool) with `args` set to
      `$SHIP_REPO_PATH/INSIGHTS.md`. Ground it in **this run's own orchestration friction**: review
      rounds taken, any `BLOCKED`/`NEEDS_CONTEXT` escalation from any subagent, gate change-requests,
-     model escalations (`fable`→`opus`), or anything else about *the pipeline itself* worth fixing in
+     model escalations (`claude-fable-5`→`claude-opus-4-8[1m]`), or anything else about *the pipeline
+     itself* worth fixing in
      a future `ship` version. Never invent friction that didn't happen — a clean run may write
      nothing, which is correct.
    - If the skill wrote anything, commit it locally: `cd $SHIP_REPO_PATH && git add INSIGHTS.md &&
@@ -314,10 +316,11 @@ never block, invalidate, or roll back an already-shipped PR.
   **implementator is resumed** (same instance from Stage 3) for every fix round — it applies fixes in
   place in its existing worktree, so never spawn a fresh implementator per round. Only the **reviewer**
   is dispatched fresh each round, always with the **worktree path + branch** (on the Stage-0 reviewer
-  model; `fable` base escalates to `opus` for a round after a Critical finding).
+  model; `claude-fable-5` base escalates to `claude-opus-4-8[1m]` for a round after a Critical finding).
 - **Model selection (Stage 0)**: ask the user — via `AskUserQuestion` — for the **planner** and
-  **reviewer** models (options `opus`/`fable`) before Stage 1/2. The `model` param pre-answers the
-  planner question. Spec-agent (when run) reuses the planner-model answer — no separate question.
+  **reviewer** models (options `claude-opus-4-8[1m]`/`claude-fable-5`) before Stage 1/2. The `model`
+  param pre-answers the planner question. Spec-agent (when run) reuses the planner-model answer — no
+  separate question.
   Applies to planner + spec-agent + reviewer only.
 - **On a halt** (review cap reached or implementation failed): keep the parallel qa-agent instance
   alive, do not run its Phase B, and report whether its plan is ready or still authoring.
