@@ -1,7 +1,7 @@
 {
   "name": "ship",
   "displayName": "Ship",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "AI orchestrator pipeline: spec -> plan -> implement -> review -> QA, with human approval gates.",
   "author": { "name": "Eugene Godun" },
   "keywords": ["orchestrator", "pipeline", "jira", "code-review", "qa", "agents"],
