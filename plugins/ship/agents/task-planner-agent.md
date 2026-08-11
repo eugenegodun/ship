@@ -45,7 +45,7 @@ description: >
   </commentary>
   </example>
 tools: Read, Grep, Glob, Bash, Skill, TodoWrite, mcp__claude_ai_Atlassian__getConfluencePage, mcp__claude_ai_Atlassian__searchConfluenceUsingCql, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources
-model: claude-opus-4-8[1m]
+model: claude-opus-5[1m]
 color: blue
 ---
 

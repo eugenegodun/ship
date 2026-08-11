@@ -10,6 +10,20 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship — 3.7.0 (2026-08-11)
+- **Third model option at Stage 0, plus a cross-model recommendation.** The planner/reviewer model
+  picker (`AskUserQuestion`) now offers `claude-fable-5`, `claude-opus-5[1m]`, and `claude-sonnet-5`
+  (previously just the first two) — the `/ship [model]` CLI shortcut already accepted `sonnet` but
+  Stage 0's own picker never offered it. The reviewer's Critical-finding escalation now targets
+  `claude-opus-5[1m]` from any non-Opus base (previously hardcoded to the fable→opus pair). Stage 0
+  also now recommends, without requiring, picking a *different* model for planner vs. reviewer, since
+  a same-model plan→review pass is more likely to share blind spots. Documented that the picker's
+  built-in "Other" choice covers users without access to any of the three listed models — whatever
+  they type is passed through verbatim as the `model` override, unvalidated. Additive/backward-compatible
+  (existing two-model choices and same-model picks still work), so MINOR. planner/spec-agent's default
+  `model:` frontmatter bumped from the stale `claude-opus-4-8[1m]` to `claude-opus-5[1m]` to match —
+  config-only, no version bump on those agents (same precedent as the prior canonical-ID pass).
+
 ## workflow-retro — 1.0.0 (2026-07-03)
 - New manual-only skill (`disable-model-invocation: true`, invoked via `/workflow-retro`). Reviews a
   completed `/ship` run: real per-agent token totals computed by a bundled analyzer script

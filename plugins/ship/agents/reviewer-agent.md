@@ -107,11 +107,11 @@ For reference, this is how your findings are used downstream:
   on the same worktree/branch, then re-dispatches **you** to re-review.
 - This repeats until the human rejects/stops or your review returns clean (only ignored items remain),
   after which the work is handed to `qa-agent`.
-- The orchestrator picks your model per run (it asks the user for `claude-opus-4-8[1m]`/`claude-fable-5`
-  at startup) and passes it as a **per-dispatch model override**; it may also escalate a `claude-fable-5`
-  base to `claude-opus-4-8[1m]` for a round when the prior round surfaced a Critical finding. Your
-  review workflow is identical regardless
-  of the model you run on.
+- The orchestrator picks your model per run (it asks the user to choose among `claude-fable-5`,
+  `claude-opus-5[1m]`, and `claude-sonnet-5` at startup, recommending — though not requiring — a
+  different model than the planner's) and passes it as a **per-dispatch model override**; it may also
+  escalate a non-`claude-opus-5[1m]` base to `claude-opus-5[1m]` for a round when the prior round
+  surfaced a Critical finding. Your review workflow is identical regardless of the model you run on.
 
 You cannot launch plan mode or dispatch other agents — so simply review and report each time you run.
 

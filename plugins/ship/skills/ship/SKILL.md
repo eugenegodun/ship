@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 3.6.0
+version: 3.7.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -53,11 +53,22 @@ Parse from the invocation:
 
 Before Stage 2 (Stage 1 when `--spec` is set), **ask the user which model to run the planner and
 reviewer on** using the `AskUserQuestion` tool — one call with **two questions**, each offering
-**`claude-opus-4-8[1m]`** and **`claude-fable-5`**:
+**`claude-fable-5`**, **`claude-opus-5[1m]`**, and **`claude-sonnet-5`**:
 
 - **Planner model** (Stage 2). If the `model` param was already supplied on invocation, **skip this
   question** and use the param value.
 - **Reviewer model** (Stage 4).
+
+**Recommend, but do not require, a different model for the reviewer than the planner** — surface this
+alongside the question (e.g. in the question text or a preceding line). A reviewer running on a
+different model than the one that produced the plan/implementation is more likely to catch blind spots
+a same-model pass would share; the user is free to pick the same model for both.
+
+**None of the three offered models has to fit** — `AskUserQuestion` always lets the user select
+"Other" and type a value, so if none of `claude-fable-5` / `claude-opus-5[1m]` / `claude-sonnet-5` is
+available to them (e.g. a different plan/access tier), they can paste whatever model name/ID they do
+have access to. Pass whatever they type through verbatim as the Agent `model` override — do not
+validate or second-guess it.
 
 Retain both answers. The planner answer is passed as the Agent `model` override in Stage 2; the
 reviewer answer is the reviewer's base model in Stage 4. When `--spec` is set, **spec-agent reuses the
@@ -187,11 +198,11 @@ Loop, counting rounds (cap = **3**):
    **branch**, the **approved plan**, and the **ticket id**. It diffs the uncommitted changes,
    re-runs the static checks, and returns findings (Critical / Important / Minor) plus a verdict line
    `Ready to commit? [Yes | No | With fixes]`.
-   - **Model:** run the reviewer on the **model chosen in Stage 0** (`claude-opus-4-8[1m]` or
-     `claude-fable-5`), passed as the Agent `model` override each round. **Escalation:** if the chosen
-     base is **`claude-fable-5`** and the *previous* round surfaced a **Critical** finding, run that
-     re-review round on **`claude-opus-4-8[1m]`** for a more rigorous re-check; if the base is already
-     `claude-opus-4-8[1m]`, stay on it (no escalation needed).
+   - **Model:** run the reviewer on the **model chosen in Stage 0** (`claude-fable-5`,
+     `claude-opus-5[1m]`, or `claude-sonnet-5`), passed as the Agent `model` override each round.
+     **Escalation:** if the chosen base is **not** `claude-opus-5[1m]` and the *previous* round
+     surfaced a **Critical** finding, run that re-review round on **`claude-opus-5[1m]`** for a more
+     rigorous re-check; if the base is already `claude-opus-5[1m]`, stay on it (no escalation needed).
 2. Decide:
    - Verdict **`Yes`**, or only **Minor**/already-acknowledged findings remain → **exit the loop**.
    - Any **Critical** or **Important** finding → **fix round**: plan the fixes from the findings,
@@ -266,8 +277,8 @@ never block, invalidate, or roll back an already-shipped PR.
    - Dispatch the **`engineering-insights`** skill (Skill tool) with `args` set to
      `$SHIP_REPO_PATH/INSIGHTS.md`. Ground it in **this run's own orchestration friction**: review
      rounds taken, any `BLOCKED`/`NEEDS_CONTEXT` escalation from any subagent, gate change-requests,
-     model escalations (`claude-fable-5`→`claude-opus-4-8[1m]`), or anything else about *the pipeline
-     itself* worth fixing in
+     model escalations (e.g. `claude-fable-5`→`claude-opus-5[1m]`), or anything else about *the
+     pipeline itself* worth fixing in
      a future `ship` version. Never invent friction that didn't happen — a clean run may write
      nothing, which is correct.
    - If the skill wrote anything, commit it locally: `cd $SHIP_REPO_PATH && git add INSIGHTS.md &&
@@ -316,11 +327,15 @@ never block, invalidate, or roll back an already-shipped PR.
   **implementator is resumed** (same instance from Stage 3) for every fix round — it applies fixes in
   place in its existing worktree, so never spawn a fresh implementator per round. Only the **reviewer**
   is dispatched fresh each round, always with the **worktree path + branch** (on the Stage-0 reviewer
-  model; `claude-fable-5` base escalates to `claude-opus-4-8[1m]` for a round after a Critical finding).
+  model; a non-`claude-opus-5[1m]` base escalates to `claude-opus-5[1m]` for a round after a Critical
+  finding).
 - **Model selection (Stage 0)**: ask the user — via `AskUserQuestion` — for the **planner** and
-  **reviewer** models (options `claude-opus-4-8[1m]`/`claude-fable-5`) before Stage 1/2. The `model`
-  param pre-answers the planner question. Spec-agent (when run) reuses the planner-model answer — no
-  separate question.
+  **reviewer** models (options `claude-fable-5`/`claude-opus-5[1m]`/`claude-sonnet-5`) before
+  Stage 1/2, recommending — but not requiring — different models for the two roles. If none of the
+  three fits (not available on the user's plan/access tier), they can pick "Other" and type any model
+  name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. The
+  `model` param pre-answers the planner question. Spec-agent (when run) reuses the planner-model
+  answer — no separate question.
   Applies to planner + spec-agent + reviewer only.
 - **On a halt** (review cap reached or implementation failed): keep the parallel qa-agent instance
   alive, do not run its Phase B, and report whether its plan is ready or still authoring.
@@ -361,7 +376,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.6.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 3.7.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
