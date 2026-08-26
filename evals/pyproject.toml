@@ -1,0 +1,25 @@
+[project]
+name = "ship-evals"
+version = "0.1.0"
+description = "deepeval suite for the /ship orchestrator"
+requires-python = ">=3.12"
+dependencies = [
+    "deepeval>=3.4",
+    "pytest>=8.0",
+    "anthropic>=0.60",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ship_evals"]
+
+[tool.pytest.ini_options]
+markers = [
+    "e2e: multi-turn pipeline scenarios (nightly job only)",
+    "llm: calls a live model (needs ANTHROPIC_API_KEY / OPENAI_API_KEY)",
+]
+addopts = "-m 'not e2e'"
+testpaths = ["tests", "agents", "orchestrator", "e2e"]
