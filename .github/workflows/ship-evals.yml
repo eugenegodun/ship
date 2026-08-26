@@ -1,0 +1,66 @@
+name: ship-evals
+
+on:
+  pull_request:
+    paths:
+      - "plugins/ship/**"
+      - "evals/**"
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ship-evals-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+jobs:
+  evals-pr:
+    # Blocking check: agent-level + orchestrator decision-point tiers.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: evals
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --frozen
+      - name: Unit tests (no model)
+        run: uv run pytest tests -v
+      - name: Agent + orchestrator evals (blocking)
+        run: uv run deepeval test run agents orchestrator -v
+
+  evals-e2e:
+    # Nightly / manual: multi-turn pipeline scenarios. Never a required check.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: evals
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv sync --frozen
+      - name: E2E pipeline scenarios
+        run: uv run pytest e2e -m "e2e" -v --junitxml=e2e-report.xml
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## ship E2E eval run" >> "$GITHUB_STEP_SUMMARY"
+          uv run python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          s = ET.parse("e2e-report.xml").getroot().find("testsuite") or ET.parse("e2e-report.xml").getroot()
+          print(f"- tests: {s.get('tests')}, failures: {s.get('failures')}, errors: {s.get('errors')}, time: {s.get('time')}s")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-report
+          path: evals/e2e-report.xml
