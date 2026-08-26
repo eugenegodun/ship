@@ -4,7 +4,7 @@ AI orchestrator to deliver product features end-to-end, from a Jira ticket to a
 reviewed, QA'd pull request.
 
 ```
-/ship <TICKET> [stage] [--spec]
+/ship <TICKET> [--spec]
 ```
 
 ## How it works

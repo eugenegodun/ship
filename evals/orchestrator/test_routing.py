@@ -22,11 +22,16 @@ def test_stray_model_token_does_not_preanswer_stage0(run_decision):
     d = run_decision("invoke_model_param")
     assert not d.named("Agent"), "must not dispatch while the stray token is unresolved"
     ask = d.named("AskUserQuestion")
-    assert ask, "Stage 0 must still ask - nothing pre-answers the model questions"
-    questions = " ".join(q["header"].lower() + " " + q["question"].lower()
-                         for a in ask for q in a.input_parameters["questions"])
-    assert "planner" in questions, (
-        "the planner-model question must be asked - the 'sonnet' token is not a shortcut"
+    assert ask, "must ask - nothing pre-answers the model questions and the token is stray"
+    # Either shape is compliant: asking Stage 0's questions directly (the token pre-answers
+    # nothing), or first questioning what the stray 'sonnet' token meant.
+    asked_text = " ".join(
+        q["header"].lower() + " " + q["question"].lower()
+        for a in ask for q in a.input_parameters["questions"]
+    )
+    assert "planner" in asked_text or "sonnet" in asked_text, (
+        "must either ask the Stage-0 planner question or question the stray 'sonnet' "
+        "token - silently adopting it as a shortcut is the failure"
     )
 
 

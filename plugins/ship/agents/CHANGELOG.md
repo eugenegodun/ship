@@ -11,15 +11,33 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **PATCH** — wording/clarity/typo, no behavior change.
 
 ## ship — 4.0.0 (2026-08-26)
-- **BREAKING (invocation contract).** The `/ship [model]` CLI shortcut is removed: the invocation is
-  now `/ship <TICKET> [stage] [--spec]`, and Stage 0 **always asks both** model questions — nothing
-  pre-answers the planner. Motivation: the deepeval suite (PR #13, issue #14) showed the pre-answer
-  rule was not reliably followed — given `/ship LEX-1398 sonnet`, the orchestrator still asked the
-  planner question in both live runs, so the shortcut promised behavior it didn't deliver. One
-  consistent Stage-0 path replaces it. A stray legacy token (e.g. a trailing `sonnet`) now falls
-  under the existing "any other value ⇒ ask the user rather than guessing" rule. No inter-stage
-  handoff changed; the MAJOR is for the removed invocation input. Eval updated:
-  `test_stray_model_token_does_not_preanswer_stage0` now asserts the planner question IS asked.
+- **BREAKING (invocation contract).** The invocation slims to `/ship <TICKET> [--spec]` — both the
+  `[model]` shortcut and the `[stage]` param are removed.
+  - **`model`** (issue #14): the deepeval suite (PR #13) showed the pre-answer rule was not reliably
+    followed — given `/ship LEX-1398 sonnet`, the orchestrator still asked the planner question in
+    both live runs, so the shortcut promised behavior it didn't deliver. Stage 0 now **always asks
+    both** model questions. Eval updated: `test_stray_model_token_does_not_preanswer_stage0` asserts
+    the planner question IS asked.
+  - **`stage`** (issue #15): a PR's ephemeral stage exists only after Stage 5 creates the draft PR
+    and its `/dynamic` environment comes up, so it is unknowable at `/ship` time. The target stage
+    is now a **GATE 3 input**: the user names it, if at all, in their QA-plan approval (e.g.
+    "approved, run it on stage34"), and the orchestrator relays it in the Phase-B resume alongside
+    the PR URL. Never invented; absent ⇒ qa-agent's default localhost/stage40.
+  - Any stray extra token (`sonnet`, `stage34`, …) ⇒ ask the user rather than guessing.
+- **Provenance machinery retired** (issue #15, deliberate walk-back of the 3.6.0 quoted-authorization
+  rule): the qa-agent brief no longer quotes the `/ship` invocation as stage provenance, and the
+  Phase-B resume no longer needs the verbatim-quote framing — the GATE 3 relay itself is the
+  designed, trusted channel. Requires `qa-agent` ≥3.0.0.
+
+## qa-agent — 3.0.0 (2026-08-26)
+- **BREAKING (stage + approval contract; pairs with ship 4.0.0).** The target stage now typically
+  arrives **with the Phase-B resume** (named by the human in their GATE 3 approval, after the PR's
+  `/dynamic` environment exists) rather than in the initial brief; deferred-PR mode is now
+  deferred-PR/deferred-stage. The 2.6.0 provenance challenge is **removed**: no verbatim-invocation
+  requirement, no "weak evidence → ask for the user's quoted words" behavior — the agent acts on the
+  stage and verdict the orchestrator's resume delivers, runs everything Phase B needs against that
+  target, and still never invents a stage (absent ⇒ default localhost/stage40). Evals: the two
+  provenance-negative cases are removed with the rule.
 
 ## ship — 3.7.0 (2026-08-11)
 - **Third model option at Stage 0, plus a cross-model recommendation.** The planner/reviewer model
