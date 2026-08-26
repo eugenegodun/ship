@@ -10,6 +10,17 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship — 4.0.0 (2026-08-26)
+- **BREAKING (invocation contract).** The `/ship [model]` CLI shortcut is removed: the invocation is
+  now `/ship <TICKET> [stage] [--spec]`, and Stage 0 **always asks both** model questions — nothing
+  pre-answers the planner. Motivation: the deepeval suite (PR #13, issue #14) showed the pre-answer
+  rule was not reliably followed — given `/ship LEX-1398 sonnet`, the orchestrator still asked the
+  planner question in both live runs, so the shortcut promised behavior it didn't deliver. One
+  consistent Stage-0 path replaces it. A stray legacy token (e.g. a trailing `sonnet`) now falls
+  under the existing "any other value ⇒ ask the user rather than guessing" rule. No inter-stage
+  handoff changed; the MAJOR is for the removed invocation input. Eval updated:
+  `test_stray_model_token_does_not_preanswer_stage0` now asserts the planner question IS asked.
+
 ## ship — 3.7.0 (2026-08-11)
 - **Third model option at Stage 0, plus a cross-model recommendation.** The planner/reviewer model
   picker (`AskUserQuestion`) now offers `claude-fable-5`, `claude-opus-5[1m]`, and `claude-sonnet-5`

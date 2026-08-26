@@ -1,10 +1,10 @@
 ---
 name: ship
-version: 3.7.0
+version: 4.0.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
-  gate. Use when the user runs `/ship <TICKET> [stage] [model] [--spec]` or asks to "ship a ticket",
+  gate. Use when the user runs `/ship <TICKET> [stage] [--spec]` or asks to "ship a ticket",
   "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
   (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
   for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
@@ -39,11 +39,9 @@ Parse from the invocation:
 
 - **`TICKET`** (required) — a Jira key like `LEX-1398`. If missing, ask the user; do not guess.
 - **`stage`** (optional) — e.g. `stage31`. Passed through to **QA only**. Absent ⇒ qa-agent uses its
-  default localhost/stage40 target.
-- **`model`** (optional) — one of `fable` | `opus` | `sonnet`. A shortcut that **pre-answers the
-  planner-model prompt** (Stage 0): if supplied, use it as the planner's model and skip that question.
-  `stage` and `model` are order-independent and unambiguous — a `stageN` token is the stage, a
-  `fable`/`opus`/`sonnet` token is the model. Any other value ⇒ ask the user rather than guessing.
+  default localhost/stage40 target. A `stageN` token is the only extra token the invocation accepts —
+  there is **no model shortcut** (Stage 0 always asks both model questions). Any other value ⇒ ask
+  the user rather than guessing.
 - **`--spec`** (optional flag) — when present, dispatch **spec-agent** first (new Stage 1, its own
   gate) before task-planner-agent; task-planner-agent then grounds its plan in the approved spec
   instead of re-reading the ticket. Absent ⇒ skip straight to task-planner-agent, unchanged from
@@ -55,9 +53,10 @@ Before Stage 2 (Stage 1 when `--spec` is set), **ask the user which model to run
 reviewer on** using the `AskUserQuestion` tool — one call with **two questions**, each offering
 **`claude-fable-5`**, **`claude-opus-5[1m]`**, and **`claude-sonnet-5`**:
 
-- **Planner model** (Stage 2). If the `model` param was already supplied on invocation, **skip this
-  question** and use the param value.
+- **Planner model** (Stage 2).
 - **Reviewer model** (Stage 4).
+
+Both questions are **always asked** — nothing in the invocation pre-answers either of them.
 
 **Recommend, but do not require, a different model for the reviewer than the planner** — surface this
 alongside the question (e.g. in the question text or a preceding line). A reviewer running on a
@@ -333,9 +332,9 @@ never block, invalidate, or roll back an already-shipped PR.
   **reviewer** models (options `claude-fable-5`/`claude-opus-5[1m]`/`claude-sonnet-5`) before
   Stage 1/2, recommending — but not requiring — different models for the two roles. If none of the
   three fits (not available on the user's plan/access tier), they can pick "Other" and type any model
-  name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. The
-  `model` param pre-answers the planner question. Spec-agent (when run) reuses the planner-model
-  answer — no separate question.
+  name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. Both
+  questions are always asked — the invocation has no model shortcut. Spec-agent (when run) reuses
+  the planner-model answer — no separate question.
   Applies to planner + spec-agent + reviewer only.
 - **On a halt** (review cap reached or implementation failed): keep the parallel qa-agent instance
   alive, do not run its Phase B, and report whether its plan is ready or still authoring.
@@ -376,7 +375,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.7.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.0.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
