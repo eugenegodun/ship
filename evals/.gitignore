@@ -3,3 +3,4 @@ __pycache__/
 .deepeval/
 .deepeval-cache.json
 *.egg-info/
+e2e-report.xml

@@ -51,3 +51,13 @@ def test_clean_review_dispatches_haiku_git_agent(run_decision):
     assert "/tmp/worktrees/LEX-1398" in brief and "LEX-1398" in brief
     assert "draft" in brief.lower()
     assert "co-author" in brief.lower(), "the no-co-author rule must be relayed"
+
+
+@pytest.mark.llm
+def test_critical_on_sonnet_base_escalates_reviewer_to_opus(run_decision):
+    d = run_decision("review_fix_reported_sonnet_base")
+    rev = d.dispatches("reviewer-agent")
+    assert rev, "after a fix round the reviewer is re-dispatched fresh"
+    assert "opus" in rev[0].input_parameters.get("model", ""), (
+        "a Critical finding on a non-opus base escalates the re-review round to claude-opus-5[1m]"
+    )

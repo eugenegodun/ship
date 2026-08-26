@@ -30,6 +30,12 @@ jobs:
         working-directory: evals
     steps:
       - uses: actions/checkout@v4
+      - name: Require eval API keys
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY / OPENAI_API_KEY missing - eval job cannot run. Configure repo Actions secrets (fork PRs do not receive secrets)." >&2
+            exit 1
+          fi
       - uses: astral-sh/setup-uv@v4
       - run: uv sync --frozen
       - name: Unit tests (no model)

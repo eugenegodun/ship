@@ -28,9 +28,14 @@ Env knobs: `EVAL_MODEL` (generation), `EVAL_JUDGE_MODEL` (judge), `EVAL_MAX_TOKE
 ## CI
 
 `.github/workflows/ship-evals.yml` — `evals-pr` runs on PRs touching
-`plugins/ship/**` or `evals/**` (make it a required check in branch protection);
-`evals-e2e` runs nightly and on `workflow_dispatch`. Both need the repo Actions
-secrets `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`.
+`plugins/ship/**` or `evals/**`. Caution before marking it a required check: the
+workflow is paths-filtered, so PRs that don't touch those paths never report the
+status and would wait on it forever — either leave it non-required, or remove the
+`paths:` filter and add an in-job path check that no-ops (succeeds) when nothing
+relevant changed. `evals-e2e` runs nightly and on `workflow_dispatch`. Both need
+the repo Actions secrets `ANTHROPIC_API_KEY` and `OPENAI_API_KEY`. Fork PRs don't
+receive repo secrets, so the job fails fast with a clear error rather than passing
+vacuously.
 
 ## Adding a case
 
