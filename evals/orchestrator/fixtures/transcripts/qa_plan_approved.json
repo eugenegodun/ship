@@ -1,0 +1,313 @@
+{
+  "description": "GATE 3 approval. Must SendMessage qa-01 to resume Phase B, quoting the user's approval verbatim, the original /ship LEX-1398 invocation, and the PR URL.",
+  "messages": [
+    {
+      "role": "user",
+      "content": "/ship LEX-1398"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Starting the ship pipeline for LEX-1398. First, Stage 0: choosing models."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_1",
+          "name": "TodoWrite",
+          "input": {
+            "todos": [
+              {
+                "content": "Plan (GATE 2)",
+                "status": "in_progress"
+              },
+              {
+                "content": "Implement",
+                "status": "pending"
+              },
+              {
+                "content": "QA-plan authoring (background)",
+                "status": "pending"
+              },
+              {
+                "content": "Review + fix loop",
+                "status": "pending"
+              },
+              {
+                "content": "Commit / Push / Draft PR",
+                "status": "pending"
+              },
+              {
+                "content": "QA (GATE 3)",
+                "status": "pending"
+              },
+              {
+                "content": "Final report",
+                "status": "pending"
+              },
+              {
+                "content": "Insights retro",
+                "status": "pending"
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_2",
+          "name": "AskUserQuestion",
+          "input": {
+            "questions": [
+              {
+                "question": "Which model should run the planner (Stage 2)? A different model for the reviewer is recommended - cross-model review catches blind spots.",
+                "header": "Planner model",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "claude-fable-5",
+                    "description": "Most capable"
+                  },
+                  {
+                    "label": "claude-opus-5[1m]",
+                    "description": "1M-context Opus"
+                  },
+                  {
+                    "label": "claude-sonnet-5",
+                    "description": "Fast and capable"
+                  }
+                ]
+              },
+              {
+                "question": "Which model should run the reviewer (Stage 4)?",
+                "header": "Reviewer model",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "claude-fable-5",
+                    "description": "Most capable"
+                  },
+                  {
+                    "label": "claude-opus-5[1m]",
+                    "description": "1M-context Opus"
+                  },
+                  {
+                    "label": "claude-sonnet-5",
+                    "description": "Fast and capable"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_1",
+          "content": "Todos updated"
+        },
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_2",
+          "content": "{\"Planner model\": \"claude-sonnet-5\", \"Reviewer model\": \"claude-opus-5[1m]\"}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Models chosen: planner on claude-sonnet-5, reviewer on claude-opus-5[1m]. Dispatching the planner."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_3",
+          "name": "Agent",
+          "input": {
+            "description": "Plan LEX-1398",
+            "prompt": "Plan the implementation for ticket LEX-1398. Read the ticket with the Jira CLI, study the codebase, and return an implementation plan for human review.",
+            "subagent_type": "task-planner-agent",
+            "model": "claude-sonnet-5"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_3",
+          "content": "[agent_id: planner-01] PLAN for LEX-1398 - Add reschedule action to lesson card\n\n## Approach\n1. Extend BookingService with a reschedule() method guarded by the 12h rule.\n2. Add RescheduleRequest model + tutor confirmation flow.\n3. Frontend: Reschedule button on LessonCard, slot picker modal.\n4. Tests: service unit tests, API tests, component tests.\n\n## Skills to use\n- frontend:design-system for the modal\n- superpowers:test-driven-development\n\nAwaiting your review - reply with changes or approval."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "Here is the planner's plan (verbatim): PLAN for LEX-1398 - Add reschedule action to lesson card. Approach: 1. Extend BookingService with a reschedule() method guarded by the 12h rule. 2. Add RescheduleRequest model + tutor confirmation flow. 3. Frontend: Reschedule button on LessonCard, slot picker modal. 4. Tests: service unit tests, API tests, component tests. Skills to use: frontend:design-system for the modal, superpowers:test-driven-development. Awaiting your approval at GATE 2."
+    },
+    {
+      "role": "user",
+      "content": "Approved \u2014 proceed."
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Plan approved. Dispatching the implementator-agent to build it in an isolated worktree."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_4",
+          "name": "Agent",
+          "input": {
+            "description": "Implement LEX-1398",
+            "prompt": "Implement the approved plan for LEX-1398: 1. Extend BookingService with a reschedule() method guarded by the 12h rule. 2. Add RescheduleRequest model + tutor confirmation flow. 3. Frontend: Reschedule button on LessonCard, slot picker modal. 4. Tests: service unit tests, API tests, component tests. Work in an isolated worktree on branch LEX-1398, TDD, verify tests then lint, and report back with the worktree path and branch name.",
+            "subagent_type": "implementator-agent"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_4",
+          "content": "[agent_id: impl-01] Implementation complete and verified. Worktree: /tmp/worktrees/LEX-1398, branch: LEX-1398. Changed files: lessons/services/booking.py, lessons/api.py, LessonCard.tsx (+3 tests). Tests: 218 passed. Lint: clean."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "First verified tree - launching qa-agent in the background to author the Phase-A test plan while review proceeds."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_5",
+          "name": "Agent",
+          "input": {
+            "description": "QA plan LEX-1398",
+            "prompt": "Author a Phase-A test plan for the reschedule feature on LEX-1398. The original invocation was: /ship LEX-1398. No PR exists yet for this ticket - opening the PR is deferred until after review and commit, so do not reference a PR number in the plan. Return the plan here for approval and wait - do not provision or browse until resumed.",
+            "subagent_type": "qa-agent",
+            "run_in_background": true
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_5",
+          "content": "[agent_id: qa-01] (authoring in background)"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Dispatching the reviewer-agent against the verified worktree."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_6",
+          "name": "Agent",
+          "input": {
+            "description": "Review LEX-1398",
+            "prompt": "Review the uncommitted diff at worktree /tmp/worktrees/LEX-1398, branch LEX-1398. Re-run lint and tests and return Critical/Important/Minor findings.",
+            "subagent_type": "reviewer-agent",
+            "model": "claude-opus-5[1m]"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_6",
+          "content": "[agent_id: rev-02] No Critical or Important findings. Minor: comment style. Ready to commit? [Yes]"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Review is clean. Dispatching the git agent on haiku to commit, push, and open a draft PR."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_7",
+          "name": "Agent",
+          "input": {
+            "description": "Commit + draft PR LEX-1398",
+            "prompt": "Commit and push the verified changes at worktree /tmp/worktrees/LEX-1398 on branch LEX-1398, then open a draft PR using the repo's PR template. Do not add a Co-Authored-By trailer - the repo convention is no co-author line on ship-authored commits.",
+            "subagent_type": "claude",
+            "model": "claude-haiku-5"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_7",
+          "content": "[agent_id: git-01] Committed on LEX-1398, pushed with -u. Draft PR created: #4321 https://github.com/preply/edu-frontend/pull/4321 (repo template used, no co-author line)."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Draft PR is up. Checking on qa-01's Phase-A plan, authored in the background during implementation."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_8",
+          "name": "TaskOutput",
+          "input": {
+            "task_id": "qa-01"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_8",
+          "content": "[agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. Awaiting approval - I will not provision or browse until resumed."
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": "Here is qa-01's Phase-A test plan (verbatim) for GATE 3: [agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. The draft PR is https://github.com/preply/edu-frontend/pull/4321. Awaiting your approval to run Phase B (provisioning + browser execution) against this plan."
+    },
+    {
+      "role": "user",
+      "content": "approved, run it"
+    }
+  ]
+}

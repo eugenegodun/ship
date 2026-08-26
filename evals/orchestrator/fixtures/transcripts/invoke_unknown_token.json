@@ -1,0 +1,6 @@
+{
+  "description": "Fresh /ship invocation with an unrecognized trailing token (gpt6): it is neither a stageN token nor a known model name, so the orchestrator must surface it back to the user as a question rather than guessing its meaning.",
+  "messages": [
+    {"role": "user", "content": "/ship LEX-1398 gpt6"}
+  ]
+}

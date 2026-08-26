@@ -1,0 +1,6 @@
+{
+  "description": "Fresh /ship invocation with --spec: Stage 0 model questions still apply, but the pipeline must reach spec-agent (not task-planner-agent) once models are chosen, since no spec exists yet.",
+  "messages": [
+    {"role": "user", "content": "/ship LEX-1398 --spec"}
+  ]
+}

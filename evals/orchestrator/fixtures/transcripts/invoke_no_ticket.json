@@ -1,0 +1,6 @@
+{
+  "description": "Bare /ship invocation with no ticket key at all: the orchestrator must ask for the ticket rather than guessing or dispatching anything.",
+  "messages": [
+    {"role": "user", "content": "/ship"}
+  ]
+}

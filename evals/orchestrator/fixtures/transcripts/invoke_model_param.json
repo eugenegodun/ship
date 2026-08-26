@@ -1,0 +1,6 @@
+{
+  "description": "Fresh /ship invocation with a bare model token (sonnet): this pre-answers the planner model question, so Stage 0 must not re-ask it.",
+  "messages": [
+    {"role": "user", "content": "/ship LEX-1398 sonnet"}
+  ]
+}
