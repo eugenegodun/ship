@@ -315,7 +315,7 @@
           "name": "SendMessage",
           "input": {
             "agent_id": "impl-01",
-            "message": "Reviewer findings for LEX-1398 (round 1) - Critical: refund maths uses list_price, overpays discounted orders (billing/refunds.py:18). Important: endpoint swallows exceptions (billing/api.py:47). Minor: naming. Please fix in place on the same worktree and report back when done."
+            "message": "Reviewer findings for LEX-1398 (round 2) - Critical: refund maths uses list_price, overpays discounted orders (billing/refunds.py:18). Important: endpoint swallows exceptions (billing/api.py:47). Minor: naming. Please fix in place on the same worktree and report back when done."
           }
         }
       ]
