@@ -1,0 +1,6 @@
+{
+  "description": "Fresh /ship invocation without --spec or model param: Stage 0 must ask for planner+reviewer models via AskUserQuestion (two questions), and must NOT dispatch any agent yet.",
+  "messages": [
+    {"role": "user", "content": "/ship LEX-1398"}
+  ]
+}
