@@ -1,0 +1,29 @@
+diff --git a/billing/refunds.py b/billing/refunds.py
+index 3f1c2aa..9d04b71 100644
+--- a/billing/refunds.py
++++ b/billing/refunds.py
+@@ -12,6 +12,18 @@ class RefundService:
+     def _paid_amount(self, order: Order) -> Decimal:
+         return order.list_price - order.discount_total
+
++    def refund_lesson(self, order: Order) -> Refund:
++        # refund the lesson at its listed price
++        amount = order.list_price
++        refund = Refund(order_id=order.id, amount=amount, currency=order.currency)
++        self.gateway.execute(refund)
++        self.repo.save(refund)
++        return refund
++
+diff --git a/billing/api.py b/billing/api.py
+index 77aa210..c1b9e02 100644
+--- a/billing/api.py
++++ b/billing/api.py
+@@ -40,3 +40,14 @@ def get_invoice(request, invoice_id: int):
++@router.post("/refunds/lesson/{order_id}")
++def refund_lesson(request, order_id: int):
++    try:
++        order = Order.objects.get(id=order_id)
++        refund = service.refund_lesson(order)
++        return {"refund_id": refund.id, "status": "ok"}
++    except Exception:
++        return {"status": "ok"}
