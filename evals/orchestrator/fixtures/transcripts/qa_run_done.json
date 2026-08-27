@@ -303,26 +303,33 @@
     },
     {
       "role": "assistant",
-      "content": "Here is qa-01's Phase-A test plan (verbatim) for GATE 3: [agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. The draft PR is https://github.com/preply/edu-frontend/pull/4321. Awaiting your approval to run Phase B (provisioning + browser execution) against this plan."
-    },
-    {
-      "role": "user",
-      "content": "approved, run it on stage34"
-    },
-    {
-      "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Resuming qa-01 for Phase B with the user's approval."
+          "text": "Here is qa-01's Phase-A test plan (verbatim) for GATE 3: [agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. The draft PR is https://github.com/preply/edu-frontend/pull/4321. Awaiting your approval to run Phase B (provisioning + browser execution) against this plan."
         },
         {
           "type": "tool_use",
           "id": "tu_9",
-          "name": "SendMessage",
+          "name": "AskUserQuestion",
           "input": {
-            "agent_id": "qa-01",
-            "message": "Resuming for Phase B. The user approved: \"approved, run it on stage34\" - target stage: stage34 (named in the GATE 3 approval; the PR's /dynamic environment is up). Provision the account with --stage stage34, execute TC1-TC3 against https://stage34.preply.org for the draft PR https://github.com/preply/edu-frontend/pull/4321, and post pass/fail results as a PR comment."
+            "questions": [
+              {
+                "question": "Record video of this QA run? The recording is uploaded to internal static hosting and linked under the verdict in the PR comment.",
+                "header": "QA recording",
+                "multiSelect": false,
+                "options": [
+                  {
+                    "label": "Yes",
+                    "description": "Record each browser session and upload the video"
+                  },
+                  {
+                    "label": "No",
+                    "description": "Run QA without recording"
+                  }
+                ]
+              }
+            ]
           }
         }
       ]
@@ -333,7 +340,39 @@
         {
           "type": "tool_result",
           "tool_use_id": "tu_9",
-          "content": "[agent_id: qa-01] Phase B done on stage34. TC1 PASS, TC2 PASS, TC3 PASS. Results posted to PR #4321."
+          "content": "{\"Record video of this QA run?\": \"Yes\"}"
+        },
+        {
+          "type": "text",
+          "text": "approved, run it on stage34"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Resuming qa-01 for Phase B with the user's approval."
+        },
+        {
+          "type": "tool_use",
+          "id": "tu_10",
+          "name": "SendMessage",
+          "input": {
+            "agent_id": "qa-01",
+            "message": "Resuming for Phase B. The user approved: \"approved, run it on stage34\" - target stage: stage34 (named in the GATE 3 approval; the PR's /dynamic environment is up). Provision the account with --stage stage34, execute TC1-TC3 against https://stage34.preply.org for the draft PR https://github.com/preply/edu-frontend/pull/4321, and post pass/fail results as a PR comment. Recording: the user asked for a video recording of this run - record each browser session and upload it per your recording workflow."
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "tu_10",
+          "content": "[agent_id: qa-01] Phase B done on stage34. TC1 PASS, TC2 PASS, TC3 PASS. Results posted to PR #4321 with the QA recording link (uploaded to internal static hosting)."
         }
       ]
     }

@@ -1,9 +1,9 @@
 {
-  "description": "GATE 3 approval naming the target stage, with the recording question answered Yes at the same gate stop (ship 4.1.0). Must SendMessage qa-01 to resume Phase B carrying the user's verdict, the stage34 target, the PR URL, and the recording request.",
+  "description": "Same join point as pr_created_qa_ready, but the invocation carried --record: the recording decision is pre-answered, so GATE 3 must surface the plan and STOP without asking the recording question.",
   "messages": [
     {
       "role": "user",
-      "content": "/ship LEX-1398"
+      "content": "/ship LEX-1398 --record"
     },
     {
       "role": "assistant",
@@ -298,53 +298,6 @@
           "type": "tool_result",
           "tool_use_id": "tu_8",
           "content": "[agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. Awaiting approval - I will not provision or browse until resumed."
-        }
-      ]
-    },
-    {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "Here is qa-01's Phase-A test plan (verbatim) for GATE 3: [agent_id: qa-01] Phase-A test plan for LEX-1398: TC1 happy-path reschedule (preconditions, steps, expected), TC2 lesson <12h hides action, TC3 third reschedule hidden. Flag exp_lesson_reschedule_v1 required. The draft PR is https://github.com/preply/edu-frontend/pull/4321. Awaiting your approval to run Phase B (provisioning + browser execution) against this plan."
-        },
-        {
-          "type": "tool_use",
-          "id": "tu_9",
-          "name": "AskUserQuestion",
-          "input": {
-            "questions": [
-              {
-                "question": "Record video of this QA run? The recording is uploaded to internal static hosting and linked under the verdict in the PR comment.",
-                "header": "QA recording",
-                "multiSelect": false,
-                "options": [
-                  {
-                    "label": "Yes",
-                    "description": "Record each browser session and upload the video"
-                  },
-                  {
-                    "label": "No",
-                    "description": "Run QA without recording"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "role": "user",
-      "content": [
-        {
-          "type": "tool_result",
-          "tool_use_id": "tu_9",
-          "content": "{\"Record video of this QA run?\": \"Yes\"}"
-        },
-        {
-          "type": "text",
-          "text": "approved, run it on stage34"
         }
       ]
     }

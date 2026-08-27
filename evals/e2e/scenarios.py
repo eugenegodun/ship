@@ -41,6 +41,10 @@ class Script:
         if tool == "TodoWrite":
             return "Todos updated"
         if tool == "AskUserQuestion":
+            asked = str(inp.get("questions", "")).lower()
+            if "record" in asked or "video" in asked:
+                # ship 4.1.0 GATE 3 recording question - decline; behavior stays as before.
+                return '{"Record video of this QA run?": "No"}'
             return '{"Planner model": "claude-sonnet-5", "Reviewer model": "claude-opus-5[1m]"}'
         if tool == "TaskOutput":
             return QA_PLAN
