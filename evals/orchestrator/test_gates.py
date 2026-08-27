@@ -6,10 +6,13 @@ from ship_evals.judges import rubric
 
 
 @pytest.mark.llm
-def test_plan_returned_surfaces_verbatim_and_stops(run_decision):
-    d = run_decision("plan_returned")
-    assert not d.named("Agent"), "GATE 2: no dispatch in the same turn as surfacing the plan"
-    assert not d.named("SendMessage"), "GATE 2: nothing to resume yet"
+def test_plan_returned_surfaces_verbatim_and_stops(run_window):
+    # Prose assertion -> multi-turn window (see conftest.Window). The window stops the
+    # moment the orchestrator yields the floor, so "no dispatch before the gate stop"
+    # still holds: a dispatch would have to happen before it yields, which is the violation.
+    w = run_window("plan_returned")
+    assert not w.named("Agent"), "GATE 2: no dispatch before surfacing the plan and stopping"
+    assert not w.named("SendMessage"), "GATE 2: nothing to resume yet"
     metric = rubric("gate2-discipline", [
         "The message surfaces the planner's plan to the user (the plan content - "
         "BookingService.reschedule, RescheduleRequest, the frontend button - is present, "
@@ -18,7 +21,7 @@ def test_plan_returned_surfaces_verbatim_and_stops(run_decision):
         "It does not claim implementation has started.",
     ], threshold=0.8)
     assert_test(LLMTestCase(input="planner returned its plan (GATE 2)",
-                            actual_output=d.text), [metric])
+                            actual_output=w.text), [metric])
 
 
 @pytest.mark.llm

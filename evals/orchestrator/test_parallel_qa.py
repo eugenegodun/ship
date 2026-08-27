@@ -27,11 +27,15 @@ def test_missing_worktree_is_chased_before_review(run_decision):
 
 
 @pytest.mark.llm
-def test_gate3_surfaces_queued_plan_without_new_qa_agent(run_decision):
-    d = run_decision("pr_created_qa_ready")
-    assert not d.dispatches("qa-agent"), "never dispatch a second qa-agent at Stage 6"
-    assert "TC1" in d.text, "the queued Phase-A plan is surfaced verbatim"
-    assert not d.named("SendMessage"), "Phase B starts only after GATE 3 approval"
+def test_gate3_surfaces_queued_plan_without_new_qa_agent(run_window):
+    # Prose assertion -> multi-turn window (see conftest.Window): the plan text may follow
+    # a mandated TodoWrite/TaskOutput turn rather than landing in the very next turn.
+    w = run_window("pr_created_qa_ready")
+    assert not w.dispatches("qa-agent"), "never dispatch a second qa-agent at Stage 6"
+    assert "TC1" in w.text, (
+        "the queued Phase-A plan is surfaced verbatim " + w.diagnostics()
+    )
+    assert not w.named("SendMessage"), "Phase B starts only after GATE 3 approval"
 
 
 @pytest.mark.llm
@@ -49,18 +53,20 @@ def test_gate3_asks_recording_question_when_no_record_flag(run_decision):
 
 
 @pytest.mark.llm
-def test_record_flag_preanswers_gate3_recording_question(run_decision):
+def test_record_flag_preanswers_gate3_recording_question(run_window):
     # /ship LEX-1398 --record: recording is already decided - the question must NOT
-    # be re-asked at GATE 3.
-    d = run_decision("pr_created_qa_ready_record_flag")
-    for a in d.named("AskUserQuestion"):
+    # be re-asked at GATE 3. Prose assertion -> multi-turn window (see conftest.Window).
+    w = run_window("pr_created_qa_ready_record_flag")
+    for a in w.named("AskUserQuestion"):
         for q in a.input_parameters["questions"]:
             text = (q["header"] + " " + q["question"]).lower()
             assert "record" not in text and "video" not in text, (
                 "--record pre-answers the recording question - it must not be re-asked"
             )
-    assert "TC1" in d.text, "the queued Phase-A plan is still surfaced verbatim"
-    assert not d.dispatches("qa-agent") and not d.named("SendMessage")
+    assert "TC1" in w.text, (
+        "the queued Phase-A plan is still surfaced verbatim " + w.diagnostics()
+    )
+    assert not w.dispatches("qa-agent") and not w.named("SendMessage")
 
 
 @pytest.mark.llm

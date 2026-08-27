@@ -46,20 +46,26 @@ def test_spec_flag_reaches_spec_agent_not_planner(run_decision):
 
 
 @pytest.mark.llm
-def test_missing_ticket_asks_instead_of_guessing(run_decision):
-    d = run_decision("invoke_no_ticket")
-    assert not d.named("Agent"), "must not dispatch anything without a ticket"
-    asked = bool(d.named("AskUserQuestion")) or "ticket" in d.text.lower()
-    assert asked, "must ask the user for the ticket key"
+def test_missing_ticket_asks_instead_of_guessing(run_window):
+    # The ask can be an AskUserQuestion or prose, and prose may follow a bookkeeping
+    # turn - so observe the window, not one turn (see conftest.Window).
+    w = run_window("invoke_no_ticket")
+    assert not w.named("Agent"), "must not dispatch anything without a ticket"
+    asked = bool(w.named("AskUserQuestion")) or "ticket" in w.text.lower()
+    assert asked, "must ask the user for the ticket key " + w.diagnostics()
 
 
 @pytest.mark.llm
-def test_unknown_token_asks_instead_of_guessing(run_decision):
+def test_unknown_token_asks_instead_of_guessing(run_window):
     # 'gpt6' is not a stageN token (and ship 4.0.0 accepts no other extra token) -
-    # the orchestrator must ask rather than guess what it means.
-    d = run_decision("invoke_unknown_token")
-    assert not d.named("Agent"), "must not dispatch while the token is unresolved"
-    mentioned = "gpt6" in d.text.lower() or any(
-        "gpt6" in str(a.input_parameters).lower() for a in d.named("AskUserQuestion")
+    # the orchestrator must ask rather than guess what it means. Prose-bearing assertion,
+    # so observe the window rather than one turn (see conftest.Window).
+    w = run_window("invoke_unknown_token")
+    assert not w.named("Agent"), "must not dispatch while the token is unresolved"
+    mentioned = "gpt6" in w.text.lower() or any(
+        "gpt6" in str(a.input_parameters).lower() for a in w.named("AskUserQuestion")
     )
-    assert mentioned, "the unrecognized token must be surfaced back to the user as a question"
+    assert mentioned, (
+        "the unrecognized token must be surfaced back to the user as a question "
+        + w.diagnostics()
+    )
