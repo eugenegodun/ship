@@ -1,5 +1,5 @@
 {
-  "description": "GATE 3 approval. Must SendMessage qa-01 to resume Phase B, quoting the user's approval verbatim, the original /ship LEX-1398 invocation, and the PR URL.",
+  "description": "GATE 3 approval naming the target stage (ship 4.0.0: the stage is a GATE 3 input - it exists only after the PR's /dynamic environment). Must SendMessage qa-01 to resume Phase B, carrying the user's verdict, the stage34 target exactly as the user named it, and the PR URL.",
   "messages": [
     {
       "role": "user",
@@ -307,7 +307,7 @@
     },
     {
       "role": "user",
-      "content": "approved, run it"
+      "content": "approved, run it on stage34"
     }
   ]
 }

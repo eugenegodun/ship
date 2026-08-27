@@ -8,9 +8,12 @@ def test_first_verified_tree_launches_background_qa(run_decision):
     assert qa, "first verified tree must launch qa-agent Phase A"
     assert qa[0].input_parameters.get("run_in_background") is True
     brief = qa[0].input_parameters["prompt"]
-    assert "/ship LEX-1398" in brief, "the user's invocation must be quoted verbatim"
     assert "PR" in brief and ("does not exist" in brief or "deferred" in brief.lower()), (
         "the deferred-PR instruction must be in the brief"
+    )
+    assert "stage" in brief.lower(), (
+        "the deferred-stage instruction must be in the brief - the target stage is "
+        "unknowable before the PR's /dynamic environment exists"
     )
 
 
@@ -32,11 +35,13 @@ def test_gate3_surfaces_queued_plan_without_new_qa_agent(run_decision):
 
 
 @pytest.mark.llm
-def test_gate3_approval_resume_carries_verbatim_quote_and_pr(run_decision):
+def test_gate3_approval_resume_carries_verdict_stage_and_pr(run_decision):
+    # ship 4.0.0: the stage arrives at GATE 3 in the user's approval ("approved, run
+    # it on stage34") and must be relayed in the Phase-B resume alongside the PR URL.
     d = run_decision("qa_plan_approved")
     sends = d.named("SendMessage")
     assert sends and "qa-01" in sends[0].input_parameters.get("agent_id", "")
     msg = sends[0].input_parameters["message"]
-    assert "approved, run it" in msg, "the user's approval must be quoted verbatim"
-    assert "/ship LEX-1398" in msg, "the original invocation re-confirms provenance"
+    assert "approv" in msg.lower(), "the resume must carry the user's verdict"
+    assert "stage34" in msg, "the stage named in the GATE 3 approval must be relayed"
     assert "pull/4321" in msg, "the PR URL is the deferred-PR handoff"

@@ -1,6 +1,6 @@
 {
   "name": "ship",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "AI orchestrator pipeline: spec -> plan -> implement -> review -> QA, with human approval gates.",
   "skills": "./skills/",
   "interface": {

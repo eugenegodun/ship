@@ -1,10 +1,10 @@
 ---
 name: ship
-version: 3.7.0
+version: 4.0.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
-  gate. Use when the user runs `/ship <TICKET> [stage] [model] [--spec]` or asks to "ship a ticket",
+  gate. Use when the user runs `/ship <TICKET> [--spec]` or asks to "ship a ticket",
   "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
   (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
   for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
@@ -21,7 +21,7 @@ dispatched only when `/ship` runs with `--spec` — **running in the main sessio
 can do neither).
 
 ```
-/ship <TICKET> [stage] [--spec]
+/ship <TICKET> [--spec]
   (Spec ──🛑GATE1──)? Plan ──🛑GATE2── Implement ──┬── Review⇄Fix loop ── Commit/Push/draft-PR ──┐
                                                    │                                              ├── QA-plan ──🛑GATE3── QA-run ── Results
                                                    └── QA-plan authoring (qa-agent Phase A, bg) ──┘
@@ -38,12 +38,11 @@ never wastes qa planning tokens.
 Parse from the invocation:
 
 - **`TICKET`** (required) — a Jira key like `LEX-1398`. If missing, ask the user; do not guess.
-- **`stage`** (optional) — e.g. `stage31`. Passed through to **QA only**. Absent ⇒ qa-agent uses its
-  default localhost/stage40 target.
-- **`model`** (optional) — one of `fable` | `opus` | `sonnet`. A shortcut that **pre-answers the
-  planner-model prompt** (Stage 0): if supplied, use it as the planner's model and skip that question.
-  `stage` and `model` are order-independent and unambiguous — a `stageN` token is the stage, a
-  `fable`/`opus`/`sonnet` token is the model. Any other value ⇒ ask the user rather than guessing.
+- The invocation accepts **no other tokens** — there is no model shortcut (Stage 0 always asks both
+  model questions) and **no stage param**: a PR's ephemeral stage exists only after the draft PR and
+  its `/dynamic` comment, so the QA target stage is named — if at all — in the user's **GATE 3
+  approval** (see Stage 6). Any extra token (a stray `stage34`, `sonnet`, …) ⇒ ask the user rather
+  than guessing.
 - **`--spec`** (optional flag) — when present, dispatch **spec-agent** first (new Stage 1, its own
   gate) before task-planner-agent; task-planner-agent then grounds its plan in the approved spec
   instead of re-reading the ticket. Absent ⇒ skip straight to task-planner-agent, unchanged from
@@ -55,9 +54,10 @@ Before Stage 2 (Stage 1 when `--spec` is set), **ask the user which model to run
 reviewer on** using the `AskUserQuestion` tool — one call with **two questions**, each offering
 **`claude-fable-5`**, **`claude-opus-5[1m]`**, and **`claude-sonnet-5`**:
 
-- **Planner model** (Stage 2). If the `model` param was already supplied on invocation, **skip this
-  question** and use the param value.
+- **Planner model** (Stage 2).
 - **Reviewer model** (Stage 4).
+
+Both questions are **always asked** — nothing in the invocation pre-answers either of them.
 
 **Recommend, but do not require, a different model for the reviewer than the planner** — surface this
 alongside the question (e.g. in the question text or a preceding line). A reviewer running on a
@@ -173,18 +173,15 @@ authored while the review→PR branch proceeds. Brief it with:
 
 - a **feature description** drawn from the approved plan + ticket,
 - the **worktree path** (so it can ground the plan on the real implemented code / selectors),
-- **`stage`** if one was supplied, **with its provenance**: quote the user's original `/ship`
-  invocation **verbatim** (e.g. *"the user invoked `/ship LEX-1544 stage34`"*) so the target is
-  traceable to the user's own words, not to your paraphrase. A relayed "use stageN" with no quoted
-  invocation is exactly what the permission layer must refuse for stage mutations,
 - the **authorization scope**: state that upon the human's plan approval at GATE 3, Phase B is
   authorized to provision disposable fixture data (client/tutor/tutoring/payments/lessons via
   `@prep/fixtures`) and drive a browser against the resolved target host, and to post results to
-  the PR — and that approval will arrive as the user's own message quoted verbatim,
-- an explicit **deferred-PR** instruction: *"The PR does not exist yet — you were launched in parallel
-  with the review/PR stage. Author the plan from the feature description / plan / ticket and the code
-  in the worktree; do not run `gh pr view` or infer a branch. I'll hand you the PR ref when I resume
-  you for Phase B."*
+  the PR,
+- an explicit **deferred-PR / deferred-stage** instruction: *"The PR does not exist yet — you were
+  launched in parallel with the review/PR stage, and the target stage (if any) will only exist once
+  the PR's `/dynamic` environment is created. Author the plan from the feature description / plan /
+  ticket and the code in the worktree; do not run `gh pr view`, infer a branch, or assume a stage.
+  I'll hand you the PR ref and the target stage when I resume you for Phase B."*
 
 It returns the plan as its Phase-A final message and waits. **Do not surface its plan yet** — it is
 queued until GATE 3 (Stage 6). Retain this qa-agent instance's id for later `SendMessage` resume. Then
@@ -245,15 +242,14 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 3.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
-   - **Approved** → the resume message carries the **user's approval quoted verbatim** (their exact
-     words, marked as a quote — e.g. *"the user replied: «approved, run it on stage34»"*), the
-     **user's original `/ship` invocation verbatim** (re-confirming the target stage's provenance),
-     and the **PR reference (URL from Stage 5)**, since it was launched in deferred-PR mode without
-     one. Never paraphrase the approval down to a bare "approved — run Phase B": qa-agent's Phase B
-     performs real stage mutations, and its permission layer weighs the user's own quoted words far
-     above an orchestrator's summary. It provisions a stage account, executes with Playwright, and
-     posts PASS/FAIL results to the PR (the plan itself was already shown to the human above at
-     GATE 3 — it is not separately posted).
+   - **Approved** → the resume message carries the **user's verdict**, the **PR reference (URL from
+     Stage 5)** (it was launched in deferred-PR mode without one), and the **target stage** when the
+     user's approval names one (e.g. "approved, run it on stage34" — typical once the PR's `/dynamic`
+     environment exists; the stage was unknowable at invocation time). Pass the stage exactly as the
+     user named it; if the approval names none, say so and qa-agent uses its default
+     localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
+     it provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
+     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
 
 ## Stage 7 — Final report
 
@@ -313,12 +309,11 @@ never block, invalidate, or roll back an already-shipped PR.
 - **Deferred-PR handoff**: the parallel qa-agent has no PR at launch. Pass the PR URL (from Stage 5)
   in the **Phase-B resume** `SendMessage`, not at initial dispatch. The PR is the join point of the
   two branches.
-- **Authorization is quoted, never paraphrased.** Subagents' permission layers judge intent from
-  *their own* context — they cannot see this session. So every handoff that authorizes stage
-  mutations carries the user's words verbatim: the `/ship` invocation (stage provenance) in the
-  qa-agent's initial brief, and the user's GATE 3 approval message in the Phase-B resume. An
-  orchestrator paraphrase ("approved — run Phase B", "use stage34") is a relay a permission
-  classifier can and should refuse for irreversible actions on shared environments.
+- **The QA target stage is a GATE 3 input, not an invocation param.** A PR's ephemeral stage exists
+  only after Stage 5 creates the draft PR and its `/dynamic` environment comes up, so it cannot be
+  named at `/ship` time. The user names it, if at all, in their GATE 3 approval; relay it in the
+  Phase-B resume exactly as they named it, and **never invent one** — no stage in the approval means
+  qa-agent's default localhost/stage40 target.
 - **Resume, don't re-spawn, across phases**: only **qa-agent** has an internal Phase A/B gate —
   relay its approval to the *same* instance via `SendMessage` so its context persists. The parallel
   qa-agent is launched once (after the first verified tree) and resumed for Phase B; never dispatch a
@@ -333,16 +328,15 @@ never block, invalidate, or roll back an already-shipped PR.
   **reviewer** models (options `claude-fable-5`/`claude-opus-5[1m]`/`claude-sonnet-5`) before
   Stage 1/2, recommending — but not requiring — different models for the two roles. If none of the
   three fits (not available on the user's plan/access tier), they can pick "Other" and type any model
-  name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. The
-  `model` param pre-answers the planner question. Spec-agent (when run) reuses the planner-model
-  answer — no separate question.
+  name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. Both
+  questions are always asked — the invocation has no model shortcut. Spec-agent (when run) reuses
+  the planner-model answer — no separate question.
   Applies to planner + spec-agent + reviewer only.
 - **On a halt** (review cap reached or implementation failed): keep the parallel qa-agent instance
   alive, do not run its Phase B, and report whether its plan is ready or still authoring.
 - **Never skip a gate**, and never commit when the review is unresolved after the cap.
 - **Git ops go through the Haiku agent** with: no co-author line, ff-only pulls on the same branch
   only, and the repo PR template.
-- Pass `stage` through to qa-agent unchanged; do not invent one.
 - **`--spec` changes only Stage 1's presence** — every other stage's mechanics (models, gates, loop
   cap, git ops, usage reporting) are unchanged whether or not it ran.
 - **Stage 8 never gates and never fails the run** — it always attempts to run after Stage 7, but any
@@ -376,13 +370,14 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 3.7.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.0.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥2.6.0 (both prefer reading `specs/<TICKET>/*.md` from the
-worktree when it exists, falling back to relayed text otherwise; `qa-agent` no longer posts its plan
-to the PR, only results, formatted as a verdict line + Test Case/Description/Status/Notes table), and
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.0.0 (prefers reading `specs/<TICKET>/*.md` from the
+worktree when it exists, falling back to relayed text otherwise; accepts the target stage with the
+Phase-B resume — no provenance challenge; posts only results to the PR, formatted as a verdict line
++ Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
 consumes it before bumping this list. Record every bump in

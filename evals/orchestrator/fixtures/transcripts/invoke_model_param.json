@@ -1,5 +1,5 @@
 {
-  "description": "Fresh /ship invocation with a bare model token (sonnet): this pre-answers the planner model question, so Stage 0 must not re-ask it.",
+  "description": "Fresh /ship invocation with a stray legacy model token (sonnet): ship 4.0.0 has no model shortcut, so nothing is pre-answered - Stage 0 must still ask both model questions (including the planner's) and must not dispatch any agent or silently adopt the token.",
   "messages": [
     {"role": "user", "content": "/ship LEX-1398 sonnet"}
   ]
