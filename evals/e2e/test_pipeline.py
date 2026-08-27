@@ -77,8 +77,10 @@ def test_critical_then_clean_escalates_to_opus_when_base_is_sonnet():
     class SonnetScript(Script):
         def __call__(self, tool, inp):
             if tool == "AskUserQuestion":
-                return ('{"Planner model": "claude-sonnet-5", '
-                        '"Reviewer model": "claude-sonnet-5"}')
+                asked = str(inp.get("questions", "")).lower()
+                if "record" not in asked and "video" not in asked:
+                    return ('{"Planner model": "claude-sonnet-5", '
+                            '"Reviewer model": "claude-sonnet-5"}')
             return super().__call__(tool, inp)
 
     script = SonnetScript(clean_review_round=2)  # round 1 Critical, round 2 clean
