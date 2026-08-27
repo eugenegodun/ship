@@ -43,6 +43,17 @@ vacuously.
   `ship_evals.judges.rubric` — judge steps must quote the contract being tested.
 - Decision-point tier: add a transcript JSON under
   `orchestrator/fixtures/transcripts/` (ends on a `user` message; every `tool_use`
-  answered) and a test using the `run_decision` fixture.
+  answered), then **pick the right observation window**:
+  - **`run_decision`** — one assistant turn. Use it *only* for assertions about the next
+    **tool call** (dispatch, resume-vs-respawn, model override, brief contents).
+  - **`run_window`** — several turns, up to the orchestrator's own stopping point, with
+    mandated bookkeeping answered. Use it for every assertion about **prose**.
+
+  This split is not stylistic. SKILL.md requires a TodoWrite stage table with every
+  update, so a compliant orchestrator may spend its next turn entirely on tool calls and
+  emit its prose a turn later. Asserting prose on a single turn made cases fail
+  intermittently on an empty string (`assert 'TC1' in ''`) while the model was behaving
+  correctly. Append `w.diagnostics()` to every prose assertion's failure message, so a
+  future failure carries the turn count, stop reason, tools called, and captured text.
 - A failing eval is a finding about `plugins/ship/*` (or a broken fixture) — never
   weaken a rubric or assert to make CI green.

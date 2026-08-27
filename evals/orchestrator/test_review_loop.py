@@ -29,15 +29,17 @@ def test_fix_report_redispatches_reviewer_fresh(run_decision):
 
 
 @pytest.mark.llm
-def test_cap_reached_halts_without_commit_and_keeps_qa_alive(run_decision):
-    d = run_decision("review_cap_reached")
-    assert not d.dispatches("claude"), "no git agent - never commit past the cap"
-    assert not d.named("SendMessage") or all(
-        "impl-01" not in s.input_parameters.get("agent_id", "") for s in d.named("SendMessage")
+def test_cap_reached_halts_without_commit_and_keeps_qa_alive(run_window):
+    # Prose assertion -> multi-turn window (see conftest.Window): a compliant orchestrator
+    # may spend its next turn on the mandated TodoWrite stage table and summarize after.
+    w = run_window("review_cap_reached")
+    assert not w.dispatches("claude"), "no git agent - never commit past the cap"
+    assert not w.named("SendMessage") or all(
+        "impl-01" not in s.input_parameters.get("agent_id", "") for s in w.named("SendMessage")
     ), "round cap is 3 - no fourth fix round"
-    text = d.text.lower()
+    text = w.text.lower()
     assert "qa" in text and ("alive" in text or "plan" in text), (
-        "halt summary must report the parallel qa instance state"
+        "halt summary must report the parallel qa instance state " + w.diagnostics()
     )
 
 
