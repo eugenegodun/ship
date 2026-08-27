@@ -22,15 +22,29 @@ class SimResult:
 
 def run_pipeline(invocation: str, respond: Callable[[str, dict], str],
                  user_replies: list[str], max_calls: int = 40) -> SimResult:
-    """Drive the ship orchestrator turn by turn.
+    """Drive the ship orchestrator turn by turn from a bare invocation.
 
     Every tool call is answered by respond(tool_name, input). Every turn that ends in
     plain text (a gate stop, halt, or final report) consumes the next entry of
     user_replies; when none remain, the run ends.
     """
+    return continue_transcript([{"role": "user", "content": invocation}], respond,
+                               user_replies, max_calls)
+
+
+def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str],
+                        user_replies: list[str] | None = None,
+                        max_calls: int = 40) -> SimResult:
+    """Same loop, resumed from an existing transcript instead of an invocation.
+
+    Use this when a decision spans more than one turn — e.g. Stage 7's report, which the
+    orchestrator may emit only after spending a turn on Stage 8 bookkeeping. A single-shot
+    decision eval would judge that bookkeeping turn instead of the report.
+    """
     system = load_skill("ship")
-    messages: list[dict] = [{"role": "user", "content": invocation}]
+    messages = list(messages)
     result = SimResult()
+    user_replies = user_replies or []
     replies = list(user_replies)
 
     for _ in range(max_calls):
@@ -39,8 +53,13 @@ def run_pipeline(invocation: str, respond: Callable[[str, dict], str],
         tool_uses = [b for b in blocks if b.type == "tool_use"]
         messages.append({"role": "assistant",
                          "content": [b.model_dump() if hasattr(b, "model_dump") else {"type": b.type, "text": b.text} for b in blocks]})
+        text = output_text(resp)
+        if text.strip() and tool_uses:
+            # Prose emitted alongside tool calls still counts as something the user reads
+            # (a stage note, or a report the model shipped in the same turn as bookkeeping).
+            result.texts.append(text)
         if not tool_uses:
-            result.texts.append(output_text(resp))
+            result.texts.append(text)
             if not replies:
                 result.stop_reason = "user_replies_exhausted"
                 return result
