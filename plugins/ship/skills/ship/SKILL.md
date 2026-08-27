@@ -1,10 +1,10 @@
 ---
 name: ship
-version: 4.0.0
+version: 4.1.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
-  gate. Use when the user runs `/ship <TICKET> [--spec]` or asks to "ship a ticket",
+  gate. Use when the user runs `/ship <TICKET> [--spec] [--record]` or asks to "ship a ticket",
   "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
   (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
   for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
@@ -21,7 +21,7 @@ dispatched only when `/ship` runs with `--spec` — **running in the main sessio
 can do neither).
 
 ```
-/ship <TICKET> [--spec]
+/ship <TICKET> [--spec] [--record]
   (Spec ──🛑GATE1──)? Plan ──🛑GATE2── Implement ──┬── Review⇄Fix loop ── Commit/Push/draft-PR ──┐
                                                    │                                              ├── QA-plan ──🛑GATE3── QA-run ── Results
                                                    └── QA-plan authoring (qa-agent Phase A, bg) ──┘
@@ -47,6 +47,10 @@ Parse from the invocation:
   gate) before task-planner-agent; task-planner-agent then grounds its plan in the approved spec
   instead of re-reading the ticket. Absent ⇒ skip straight to task-planner-agent, unchanged from
   today's behavior.
+- **`--record`** (optional flag) — when present, **pre-answers the GATE 3 recording question**
+  (Stage 6): the QA run is recorded without asking. Absent ⇒ the user is asked at GATE 3, alongside
+  the QA plan. Either way the decision travels in qa-agent's **Phase-B resume**, never its initial
+  brief — the same late-arrival slot as the PR URL and the target stage.
 
 ## Stage 0 — Choose models (startup prompt)
 
@@ -239,22 +243,30 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
 
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
-2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 3.
+2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 3. When surfacing the
+   plan, also settle the **recording decision**: if `--record` was passed on invocation, recording is
+   on — skip the question. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
+   (options Yes / No) as part of this same gate stop — never a separate later interruption.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
    - **Approved** → the resume message carries the **user's verdict**, the **PR reference (URL from
-     Stage 5)** (it was launched in deferred-PR mode without one), and the **target stage** when the
+     Stage 5)** (it was launched in deferred-PR mode without one), the **target stage** when the
      user's approval names one (e.g. "approved, run it on stage34" — typical once the PR's `/dynamic`
-     environment exists; the stage was unknowable at invocation time). Pass the stage exactly as the
+     environment exists; the stage was unknowable at invocation time), and the **recording decision**
+     (that the user asked for a recording — via `--record` or the GATE 3 answer — or that they
+     declined; omit recording instructions entirely on a decline). Pass the stage exactly as the
      user named it; if the approval names none, say so and qa-agent uses its default
      localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
-     it provisions a stage account, executes with Playwright, and posts PASS/FAIL results to the PR
-     (the plan itself was already shown to the human above at GATE 3 — it is not separately posted).
+     it provisions a stage account, executes with Playwright (recording the session when requested
+     and uploading the video via `devex:internal-static-hosting`), and posts PASS/FAIL results to
+     the PR (the plan itself was already shown to the human above at GATE 3 — it is not separately
+     posted).
 
 ## Stage 7 — Final report
 
 Return a concise summary: ticket key, branch, PR URL, review outcome (rounds + verdict), and the QA
-PASS/FAIL result with links to the PR comments.
+PASS/FAIL result with links to the PR comments (including the 🎥 recording URL when the run was
+recorded).
 
 End the report with a **token-usage pointer** (see § Usage reporting): tell the user to run `/cost`
 for the whole-flow session total, and that per-agent counts are on each completed task's line in the
@@ -337,6 +349,10 @@ never block, invalidate, or roll back an already-shipped PR.
 - **Never skip a gate**, and never commit when the review is unresolved after the cap.
 - **Git ops go through the Haiku agent** with: no co-author line, ff-only pulls on the same branch
   only, and the repo PR template.
+- **Recording is decided at GATE 3 and relayed in the Phase-B resume.** `--record` only pre-answers
+  the GATE 3 question; without it, ask when surfacing the QA plan. Never mention recording in
+  qa-agent's initial brief, and never turn recording on un-asked. Recording (and its upload) is
+  best-effort inside qa-agent — its failure never fails the run or the pipeline.
 - **`--spec` changes only Stage 1's presence** — every other stage's mechanics (models, gates, loop
   cap, git ops, usage reporting) are unchanged whether or not it ran.
 - **Stage 8 never gates and never fails the run** — it always attempts to run after Stage 7, but any
@@ -370,13 +386,15 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 4.0.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.1.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.0.0 (prefers reading `specs/<TICKET>/*.md` from the
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.1.0 (prefers reading `specs/<TICKET>/*.md` from the
 worktree when it exists, falling back to relayed text otherwise; accepts the target stage with the
-Phase-B resume — no provenance challenge; posts only results to the PR, formatted as a verdict line
+Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
+records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
+the results; posts only results to the PR, formatted as a verdict line
 + Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that

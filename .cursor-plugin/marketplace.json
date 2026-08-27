@@ -3,7 +3,7 @@
   "owner": { "name": "Eugene Godun" },
   "metadata": {
     "description": "Ship — AI orchestrator to deliver product features end-to-end",
-    "version": "1.7.0"
+    "version": "1.8.0"
   },
   "plugins": [
     {
@@ -11,7 +11,7 @@
       "displayName": "Ship",
       "source": "./plugins/ship",
       "description": "AI orchestrator pipeline: optional spec-agent -> task-planner-agent -> implementator-agent -> reviewer-agent -> qa-agent, with human gates at spec/plan/QA.",
-      "version": "1.7.0",
+      "version": "1.8.0",
       "keywords": ["orchestrator", "pipeline", "jira", "code-review", "qa", "agents"],
       "author": { "name": "Eugene Godun" }
     }

@@ -10,6 +10,30 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship — 4.1.0 (2026-08-27)
+- **Optional QA video recording, decided at GATE 3.** New `--record` flag on
+  `/ship <TICKET> [--spec] [--record]`. The flag only **pre-answers a new GATE 3 question**: without
+  it, the user is asked "Record video of this QA run?" via `AskUserQuestion` when the QA plan is
+  surfaced — never as a separate later interruption. The decision travels in qa-agent's **Phase-B
+  resume** alongside the PR URL and the target stage, never the initial brief. Additive (no flag +
+  "No" ⇒ behavior unchanged from 4.0.0), so MINOR. Compatibility floor bumped to `qa-agent` ≥3.1.0.
+  (Originally authored as 3.8.0 against the pre-4.0.0 contract; re-versioned and re-worded on rebase —
+  the removed `model`-param analogy no longer applies.)
+
+## qa-agent — 3.1.0 (2026-08-27)
+- **Optional session video recording** (companion to ship 4.1.0). New optional `record` input on the
+  **Phase-B resume** (the same late-arrival slot as the deferred PR ref and the target stage). When
+  requested: records each browser instance with `playwright-cli video-start`/`video-stop` to
+  `~/.ship/qa-recordings/<TICKET>/<TICKET>-qa-<timestamp>[-<role>].webm` (1280x800, timestamped so
+  re-runs never collide), annotates actions on screen (`video-show-actions`), and marks one
+  `video-chapter` per test case using the approved plan's case ids; then uploads via the
+  `devex:internal-static-hosting` skill (inferred-username prefix, `qa-recordings/<TICKET>/`,
+  hosted URL verified with `curl --head`) and appends `🎥 QA recording: <URL>` under the verdict
+  line in both the PR comment and the final report. Best-effort throughout: a recording or upload
+  failure never fails the run — the local path is reported instead, and local files are kept after
+  upload. Backward compatible: resumes without the input behave exactly as 3.0.0. (Originally
+  authored as 2.7.0; re-versioned on rebase over the 3.0.0 stage/provenance changes.)
+
 ## ship — 4.0.0 (2026-08-26)
 - **BREAKING (invocation contract).** The invocation slims to `/ship <TICKET> [--spec]` — both the
   `[model]` shortcut and the `[stage]` param are removed.
