@@ -1,6 +1,6 @@
 ---
 name: qa-agent
-version: 3.1.0
+version: 3.1.1
 description: >
   Use this agent to QA a feature end-to-end in a real browser. Given a feature description (and
   ideally a PR reference), it authors a test plan, returns it for human approval, and — once
@@ -257,3 +257,9 @@ given, fall back to the default when none was, and never invent one.
 - Test our integration with the feature, not third-party library internals.
 - The default fixture password is `happyV@l1dator!`; fixture data is disposable.
 - You do not write or commit product code. Surface bugs in your report and PR comment instead.
+- **Prefer the dedicated `Read`/`Grep`/`Glob` tools over shelling out via Bash for file search/reads.**
+  If Bash is genuinely required for something those tools can't do, never chain
+  `cd <dir> && <command with a relative path>` — a relative path after a dynamic `cd` can't be
+  statically resolved by the permission checker against `Read()` allow/deny rules, so an
+  otherwise-allowlisted command (e.g. `grep`) falls back to an interactive prompt instead of
+  auto-approving. Use absolute paths instead.
