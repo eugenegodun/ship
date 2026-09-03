@@ -1353,6 +1353,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "deepeval" },
+    { name = "openai" },
     { name = "pytest" },
 ]
 
@@ -1360,6 +1361,7 @@ dependencies = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.60" },
     { name = "deepeval", specifier = ">=3.4" },
+    { name = "openai", specifier = ">=1.50" },
     { name = "pytest", specifier = ">=8.0" },
 ]
 
