@@ -131,7 +131,22 @@ and `qa-agent` 3.0.0 came directly out of contract gaps its first live runs expo
 Cursor Settings → Plugins → add marketplace `eugenegodun/ship` → install **Ship**.
 
 ### Codex
-Clone this repo, then in Codex: `/plugins` → browse **Ship** → install.
+Add the marketplace and install **Ship** from `/plugins` as usual, then install the pipeline's
+agent roles — Codex plugins cannot bundle them, so this is a one-time copy into `~/.codex/agents/`:
+
+```
+bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/install-codex-agents.sh"
+```
+
+Restart the Codex session, then invoke the skill with a ticket as in Claude Code. Differences on
+Codex: there are no Stage 0 model questions (models are fixed per role in
+`plugins/ship/codex-agents/*.toml` — planner and reviewer `gpt-5.6 xhigh`, implementator
+`gpt-5.6 high`, QA `gpt-5.6 medium`, git ops `gpt-5.6-terra`), the three gates are plain prose
+questions, and the reviewer model-escalation step is a no-op. Re-run the install script after every
+plugin update (`--check` tells you whether you need to). The full mapping lives in
+[`plugins/ship/skills/ship/references/codex-dispatch.md`](plugins/ship/skills/ship/references/codex-dispatch.md);
+the role files are generated from `agents/*.md` by `plugins/ship/scripts/sync_codex_agents.py`, and
+CI fails if they drift.
 
 ## Versioning
 
@@ -142,7 +157,7 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 4.1.0, `qa-agent` 3.1.0,
+  or invocation input changes. Current: `ship` 4.2.0, `qa-agent` 3.1.0,
   `task-planner-agent` 2.1.0, `implementator-agent` 1.3.0, `reviewer-agent` 1.2.1,
   `spec-agent` 1.2.0.
 - **Plugin package version** — the installable package version, in each tool's

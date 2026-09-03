@@ -9,6 +9,7 @@ deepeval suite for the `/ship` orchestrator (`plugins/ship/`). Spec:
 |------|-------|------|----|
 | Agent-level | `agents/` | each agent's `.md` + fixture inputs, GEval-judged | blocking on PRs |
 | Decision-points | `orchestrator/` | SKILL.md + fixture transcript → assert the next tool call | blocking on PRs |
+| Codex decision-points | `orchestrator_codex/` | SKILL.md + `references/codex-dispatch.md` + fixture transcript, driven through the OpenAI API with Codex V2 tool schemas → assert the next tool call | blocking on PRs (own job) |
 | E2E | `e2e/` | multi-turn simulator with canned subagent replies | nightly, non-blocking |
 
 ## Run
@@ -20,10 +21,11 @@ export OPENAI_API_KEY=...      # GEval judge (default: gpt-4.1)
 
 uv run pytest tests -v                          # unit tests, no model calls
 uv run deepeval test run agents orchestrator -v # the blocking PR suite
+uv run pytest orchestrator_codex -m codex -v  # Codex dialect (needs OPENAI_API_KEY only)
 uv run pytest e2e -m "e2e" -v                   # the nightly tier
 ```
 
-Env knobs: `EVAL_MODEL` (generation), `EVAL_JUDGE_MODEL` (judge), `EVAL_MAX_TOKENS`.
+Env knobs: `EVAL_MODEL` (generation), `EVAL_JUDGE_MODEL` (judge), `EVAL_MAX_TOKENS`, `EVAL_CODEX_MODEL` (Codex-tier generation, default `gpt-4.1`).
 
 ## CI
 
@@ -55,5 +57,8 @@ vacuously.
   intermittently on an empty string (`assert 'TC1' in ''`) while the model was behaving
   correctly. Append `w.diagnostics()` to every prose assertion's failure message, so a
   future failure carries the turn count, stop reason, tools called, and captured text.
+- Codex tier: transcripts are OpenAI chat format (`assistant` turns carry `tool_calls`, replies are
+  `role: tool`); the system prompt is `SKILL.md` + `references/codex-dispatch.md`. Assert on
+  `spawn_agent`/`followup_task` shape (`agent_type`, `fork_turns`, `target`), never on model names.
 - A failing eval is a finding about `plugins/ship/*` (or a broken fixture) — never
   weaken a rubric or assert to make CI green.

@@ -10,6 +10,25 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.10.0 (2026-09-03)
+- **Codex support.** New `plugins/ship/codex-agents/` (six Codex custom-agent role TOMLs — five
+  generated verbatim from `agents/*.md` by `scripts/sync_codex_agents.py`, plus a hand-written
+  `ship-git-agent` for Stage 5), `scripts/install-codex-agents.sh` (copies them into
+  `~/.codex/agents/`; `--check` for preflight/CI), and `skills/ship/references/codex-dispatch.md`.
+  Codex plugins cannot bundle agent roles, hence the installer. Agent `.md` files are unchanged, so
+  agent versions do not move. Package MINOR (1.9.0 → 1.10.0, all 6 manifest locations).
+
+## ship — 4.2.0 (2026-09-03)
+- **Runs on Codex (multi-agent V2).** `SKILL.md` gains one trailing "Platform adaptation — Codex"
+  section: a runtime whose tool list has `spawn_agent`/`followup_task`/`wait_agent` reads
+  `references/codex-dispatch.md`, which maps `Agent`→`spawn_agent {agent_type: ship-*, fork_turns:
+  "none"}`, `SendMessage`→`followup_task` on the same `task_name`, gates→prose, `TodoWrite`→
+  `update_plan`, the Haiku git agent→`ship-git-agent`, and adds a preflight role check. On Codex the
+  Stage 0 model questions are skipped (models are baked per role) and the reviewer escalation to
+  `claude-opus-5[1m]` is a no-op. A Claude Code runtime is told to ignore the section; no other
+  text in `SKILL.md` changed, and the inter-stage contract is untouched — MINOR. Compatibility floors
+  unchanged. New eval tier `evals/orchestrator_codex/` (5 cases, own CI job) covers the dialect.
+
 ## ship package — 1.9.0 (2026-09-03)
 - **New Bash guardrail against a `cd && <relative-path grep>` permission-prompt false positive.**
   `task-planner-agent`, `implementator-agent`, `reviewer-agent`, and `qa-agent` (the four agents with
