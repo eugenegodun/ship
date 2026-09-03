@@ -1,6 +1,6 @@
 ---
 name: task-planner-agent
-version: 2.1.0
+version: 2.1.1
 description: >
   Use this agent to turn a Jira ticket into a reviewed implementation plan. Given a ticket reference,
   it fetches the ticket with the Jira CLI, studies the codebase, discovers the skills the
@@ -155,3 +155,9 @@ during implementation" section, matched to the tasks they fit.
   post no comment and do not transition the ticket.
 - Plans must reuse existing code/utilities where they exist and name them with file paths.
 - You plan only — you do not edit or commit product code, and you do not transition the ticket.
+- **Prefer the dedicated `Read`/`Grep`/`Glob` tools over shelling out via Bash for file search/reads
+  during codebase study.** If Bash is genuinely required for something those tools can't do, never
+  chain `cd <dir> && <command with a relative path>` — a relative path after a dynamic `cd` can't be
+  statically resolved by the permission checker against `Read()` allow/deny rules, so an
+  otherwise-allowlisted command (e.g. `grep`) falls back to an interactive prompt instead of
+  auto-approving. Use absolute paths instead.

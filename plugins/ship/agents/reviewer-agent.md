@@ -1,6 +1,6 @@
 ---
 name: reviewer-agent
-version: 1.2.1
+version: 1.2.2
 description: >
   Use this agent to code-review a feature BEFORE it is committed. It is the fourth stage of the
   pipeline (task-planner-agent → implementator-agent → reviewer-agent → qa-agent): it inspects the
@@ -121,3 +121,9 @@ You cannot launch plan mode or dispatch other agents — so simply review and re
 - Ground every finding in code you actually read; do not inflate nitpicks to Critical, and do not
   claim "looks good" on code you didn't review.
 - Severity and the `Ready to commit?` verdict follow the model above.
+- **Prefer the dedicated `Read`/`Grep`/`Glob` tools over shelling out via Bash for file search/reads.**
+  If Bash is genuinely required for something those tools can't do (e.g. running the check chain),
+  never chain `cd <dir> && <command with a relative path>` — a relative path after a dynamic `cd`
+  can't be statically resolved by the permission checker against `Read()` allow/deny rules, so an
+  otherwise-allowlisted command (e.g. `grep`) falls back to an interactive prompt instead of
+  auto-approving. Use absolute paths instead.

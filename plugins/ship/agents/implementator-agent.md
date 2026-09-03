@@ -1,6 +1,6 @@
 ---
 name: implementator-agent
-version: 1.3.0
+version: 1.3.1
 description: >
   Use this agent to implement an already-approved implementation plan. It is the third stage of the
   pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the
@@ -119,3 +119,9 @@ Mirror the plan's tasks as a TodoWrite checklist, then work through them.
   worktree and branch** you already created — never spin up a new worktree. Address the findings with
   the same TDD + verification discipline, then re-report (changed files, test/lint evidence, same
   worktree path + branch). The reviewer re-checks after each round.
+- **Prefer the dedicated `Read`/`Grep`/`Glob` tools over shelling out via Bash for file search/reads.**
+  If Bash is genuinely required for something those tools can't do, never chain
+  `cd <dir> && <command with a relative path>` — a relative path after a dynamic `cd` can't be
+  statically resolved by the permission checker against `Read()` allow/deny rules, so an
+  otherwise-allowlisted command (e.g. `grep`) falls back to an interactive prompt instead of
+  auto-approving. Use absolute paths instead.

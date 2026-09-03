@@ -10,6 +10,21 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.9.0 (2026-09-03)
+- **New Bash guardrail against a `cd && <relative-path grep>` permission-prompt false positive.**
+  `task-planner-agent`, `implementator-agent`, `reviewer-agent`, and `qa-agent` (the four agents with
+  both `Bash` and the dedicated `Read`/`Grep`/`Glob` tools) each gain a guardrail bullet: prefer the
+  dedicated tools for file search/reads, and if Bash is genuinely required, never chain
+  `cd <dir> && <command with a relative path>`. Root cause: a relative path resolved only after a
+  dynamic `cd` can't be statically checked by the permission checker against `Read()` allow/deny
+  rules, so an otherwise-allowlisted command (e.g. `grep`) falls back to an interactive prompt instead
+  of auto-approving — silently defeating `grep`/`cd` allow-listing. `spec-agent` is unaffected (no
+  `Read`/`Grep`/`Glob` tool, no codebase access). Wording-only guardrail addition, no workflow/handoff
+  change, so PATCH on each of the four agents: `task-planner-agent` 2.1.0 → 2.1.1,
+  `implementator-agent` 1.3.0 → 1.3.1, `reviewer-agent` 1.2.1 → 1.2.2, `qa-agent` 3.1.0 → 3.1.1.
+  Package version bumped MINOR (1.8.0 → 1.9.0, all 6 manifest locations) per convention — the package
+  version is what `claude plugin update` checks, not underlying agent-file content.
+
 ## ship — 4.1.0 (2026-08-27)
 - **Optional QA video recording, decided at GATE 3.** New `--record` flag on
   `/ship <TICKET> [--spec] [--record]`. The flag only **pre-answers a new GATE 3 question**: without
