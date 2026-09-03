@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 4.1.0
+version: 4.2.0
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -400,3 +400,12 @@ the results; posts only results to the PR, formatted as a verdict line
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
 consumes it before bumping this list. Record every bump in
 `plugins/ship/agents/CHANGELOG.md`.
+
+## Platform adaptation — Codex
+
+This skill is written in Claude Code's tool vocabulary (`Agent`, `SendMessage`, `AskUserQuestion`,
+`TodoWrite`). If your tool list instead has `spawn_agent`, `followup_task`, and `wait_agent`, you
+are running in **Codex**: before Stage 0, read `references/codex-dispatch.md` (next to this file)
+and follow its mapping for every dispatch, resume, gate, and the git stage. The pipeline — stages,
+gates, the 3-round cap, the handoff contract — is unchanged; only the tool calls differ. If your
+tool list has `Agent` and `SendMessage`, ignore this section entirely.
