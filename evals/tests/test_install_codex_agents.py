@@ -17,9 +17,9 @@ def test_installs_all_six_roles_then_reports_unchanged(tmp_path):
     first = run("--to", str(tmp_path))
     assert first.returncode == 0, first.stderr
     assert sorted(p.name for p in tmp_path.glob("*.toml")) == sorted(f"{r}.toml" for r in ROLES)
-    assert first.stdout.count("installed") == 6
+    assert first.stdout.count("installed  ") == 6
     second = run("--to", str(tmp_path))
-    assert second.returncode == 0 and second.stdout.count("unchanged") == 6
+    assert second.returncode == 0 and second.stdout.count("unchanged  ") == 6
 
 
 def test_check_mode_reports_missing_and_stale_without_writing(tmp_path):

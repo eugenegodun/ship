@@ -1,3 +1,5 @@
+import re
+
 import pytest
 
 
@@ -8,7 +10,7 @@ def test_roles_installed_first_dispatch_is_planner_role_with_clean_fork_and_no_m
     assert planner, "first dispatch must be spawn_agent with agent_type ship-task-planner-agent " + d.diagnostics()
     assert planner[0].input_parameters.get("fork_turns") == "none"
     assert "LEX-1398" in planner[0].input_parameters.get("task_name", "")
-    assert "which model" not in d.text.lower() and "planner model" not in d.text.lower(), (
+    assert not re.search(r"[^.?!]*\bmodel\b[^.?!]*\?", d.text, re.I), (
         "Stage 0 model questions are skipped on Codex " + d.diagnostics())
     assert not d.named("shell"), "preflight already passed - no second check"
 
@@ -27,7 +29,7 @@ def test_first_verified_tree_spawns_qa_role_with_deferred_pr_brief(run_codex_dec
     assert qa, "qa-agent Phase A is launched after the first verified tree " + d.diagnostics()
     assert qa[0].input_parameters.get("fork_turns") == "none"
     brief = qa[0].input_parameters["message"].lower()
-    assert "pr" in brief and any(k in brief for k in ("does not exist", "not exist", "no pr", "deferred", "not yet")), (
+    assert re.search(r"\bpr\b", brief) and any(k in brief for k in ("does not exist", "not exist", "no pr", "deferred", "not yet")), (
         "the deferred-PR instruction must be in the qa brief " + d.diagnostics())
     assert not [c for c in d.named("followup_task") if "implementator" in c.input_parameters.get("target", "")]
 
