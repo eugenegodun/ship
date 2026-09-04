@@ -91,8 +91,13 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
             ]
         messages.append(assistant_message)
 
+        text = message.content or ""
+        if text.strip() and tool_calls_raw:
+            # Prose emitted alongside tool calls still counts as something the user reads
+            # (a stage note, or a report the model shipped in the same turn as bookkeeping).
+            result.texts.append(text)
         if not tool_calls_raw:
-            result.texts.append(message.content or "")
+            result.texts.append(text)
             result.stop_reason = "no_tool_calls"
             return result
 
