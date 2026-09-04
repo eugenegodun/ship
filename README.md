@@ -140,9 +140,14 @@ bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/in
 
 Restart the Codex session, then invoke the skill with a ticket as in Claude Code. Differences on
 Codex: there are no Stage 0 model questions (models are fixed per role in
-`plugins/ship/codex-agents/*.toml` — planner and reviewer `gpt-5.6 xhigh`, implementator
-`gpt-5.6 high`, QA `gpt-5.6 medium`, git ops `gpt-5.6-terra`), the three gates are plain prose
-questions, and the reviewer model-escalation step is a no-op. Re-run the install script after every
+`plugins/ship/codex-agents/*.toml` — planner and reviewer `gpt-5.6-sol xhigh`, implementator and QA
+`gpt-5.6-terra` (`high`/`medium`), git ops `gpt-5.6-luna low`), the three gates are plain prose
+questions, and the reviewer model-escalation step is a no-op. `reviewer-agent`'s `code-review` and
+`security-review` skills are Claude Code built-ins that don't exist on Codex, so the Codex reviewer
+runs its own diff review + static checks only. Codex sandboxes also block network by default; the
+planner/spec, git, and qa roles need it, so set `network_access = true` under
+`[sandbox_workspace_write]` in `~/.codex/config.toml` (or run under an approval policy that lets
+subagents request escalation) before your first `/ship` run. Re-run the install script after every
 plugin update (`--check` tells you whether you need to). The full mapping lives in
 [`plugins/ship/skills/ship/references/codex-dispatch.md`](plugins/ship/skills/ship/references/codex-dispatch.md);
 the role files are generated from `agents/*.md` by `plugins/ship/scripts/sync_codex_agents.py`, and
@@ -157,8 +162,8 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 4.2.0, `qa-agent` 3.1.0,
-  `task-planner-agent` 2.1.0, `implementator-agent` 1.3.0, `reviewer-agent` 1.2.1,
+  or invocation input changes. Current: `ship` 4.2.0, `qa-agent` 3.1.1,
+  `task-planner-agent` 2.1.1, `implementator-agent` 1.3.1, `reviewer-agent` 1.2.2,
   `spec-agent` 1.2.0.
 - **Plugin package version** — the installable package version, in each tool's
   manifest (`plugins/ship/.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,

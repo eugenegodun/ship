@@ -105,12 +105,12 @@ TOML literal multi-line strings (`'''`) need no escaping; the generator fails if
 
 | Role (`agent_type`) | Source | model | effort | sandbox |
 |---|---|---|---|---|
-| `ship-spec-agent` | spec-agent.md | `gpt-5.6` | `xhigh` | `read-only` |
-| `ship-task-planner-agent` | task-planner-agent.md | `gpt-5.6` | `xhigh` | `read-only` |
-| `ship-implementator-agent` | implementator-agent.md | `gpt-5.6` | `high` | `workspace-write` |
-| `ship-reviewer-agent` | reviewer-agent.md | `gpt-5.6` | `xhigh` | `workspace-write` (re-runs tests/lint, which write caches; the body already forbids editing code) |
-| `ship-qa-agent` | qa-agent.md | `gpt-5.6` | `medium` | `workspace-write` |
-| `ship-git-agent` | hand-written | `gpt-5.6-terra` | `low` | `workspace-write` |
+| `ship-spec-agent` | spec-agent.md | `gpt-5.6-sol` | `xhigh` | `read-only` |
+| `ship-task-planner-agent` | task-planner-agent.md | `gpt-5.6-sol` | `xhigh` | `read-only` |
+| `ship-implementator-agent` | implementator-agent.md | `gpt-5.6-terra` | `high` | `workspace-write` |
+| `ship-reviewer-agent` | reviewer-agent.md | `gpt-5.6-sol` | `xhigh` | `workspace-write` (re-runs tests/lint, which write caches; the body already forbids editing code) |
+| `ship-qa-agent` | qa-agent.md | `gpt-5.6-terra` | `medium` | `workspace-write` |
+| `ship-git-agent` | hand-written | `gpt-5.6-luna` | `low` | `workspace-write` |
 
 Reviewer runs at a higher effort than the implementator on purpose — the closest Codex can get to
 "a different model reviews". `mcp_servers` is intentionally omitted (format unverified; the agents
@@ -133,10 +133,10 @@ context intact.
 | `SKILL.md` says | On Codex do |
 |---|---|
 | **Preflight** (new, before Stage 0) | `bash <plugin-cache>/scripts/install-codex-agents.sh --check`. If it fails: print the install command (`… install-codex-agents.sh`, no flag) for the user to run — the sandbox may block writes to `~/.codex/` — and **stop**. |
-| Stage 0 model questions | **Skip.** State the baked models once (planner/spec `gpt-5.6 xhigh`, reviewer `gpt-5.6 xhigh`, implementator `gpt-5.6 high`) and proceed. |
-| `Agent(subagent_type: X, model: M)` | `spawn_agent {task_name: "<TICKET>-<role>", agent_type: "ship-X", fork_turns: "none", message: <brief>}` — clean context, brief carries everything (as today). |
+| Stage 0 model questions | **Skip.** State the baked models once (planner/spec `gpt-5.6-sol xhigh`, reviewer `gpt-5.6-sol xhigh`, implementator `gpt-5.6-terra high`) and proceed. |
+| `Agent(subagent_type: X, model: M)` | `spawn_agent {task_name: "<TICKET>-<role>", agent_type: "ship-X", fork_turns: "none", message: <brief>}` — clean context, brief carries everything (as today). `<TICKET>-<role>` is what you *request*; `spawn_agent` returns its own canonical task name — retain that returned value. |
 | `Agent(run_in_background: true)` (qa Phase A) | same `spawn_agent`; it is already asynchronous — carry on with review. |
-| `SendMessage(agent_id)` (fix rounds, change requests, Phase-B resume) | `followup_task {target: "<TICKET>-<role>", message}` on the **same** `task_name` — never a second `spawn_agent` for that role. |
+| `SendMessage(agent_id)` (fix rounds, change requests, Phase-B resume) | `followup_task {target: <task_name spawn_agent returned>, message}` on the **same** task — never a second `spawn_agent` for that role, and never the requested `<TICKET>-<role>` string if `spawn_agent` returned a different canonical form. |
 | Collect the background QA plan (Stage 6) | if its result has not arrived in your mailbox, `wait_agent {timeout_ms: 300000}`; never poll under 60 s. |
 | `AskUserQuestion` (GATE 1/2/3, recording question) | end the turn with the plan/spec/QA-plan verbatim and the question in prose; the user's reply is the verdict. |
 | `TodoWrite` stage checklist | `update_plan`; the full stage table still goes in prose with every update. |
@@ -186,7 +186,7 @@ HEAD, Stage 5 commits locally and reports the App's "Create branch" hand-off ins
 
 | Risk | Mitigation |
 |---|---|
-| Codex model ids (`gpt-5.6`, `gpt-5.6-terra`) differ on the user's plan | `spawn_agent` errors are surfaced verbatim; the table is a one-line edit + re-run |
+| Codex model ids (`gpt-5.6-sol`, `gpt-5.6-terra`, `gpt-5.6-luna`) differ on the user's plan | `spawn_agent` errors are surfaced verbatim; the table is a one-line edit + re-run |
 | Roles installed into `~/.codex/agents/` are picked up only on session start | reference tells the orchestrator to ask the user to restart the Codex session on `unknown agent_type` |
 | Sandbox blocks the worktree path or `~/.codex` writes | preflight stops with the exact command for the user to run; worktree note in the reference |
 | `EVAL_CODEX_MODEL` default too weak to follow the reference | env-overridable; the tier is a separate job, never blocks Claude tiers |

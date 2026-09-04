@@ -386,7 +386,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 4.1.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),

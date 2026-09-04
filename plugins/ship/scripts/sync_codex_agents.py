@@ -22,11 +22,11 @@ import sys
 from pathlib import Path
 
 ROLES = {
-    "spec-agent": {"model": "gpt-5.6", "effort": "xhigh", "sandbox": "read-only"},
-    "task-planner-agent": {"model": "gpt-5.6", "effort": "xhigh", "sandbox": "read-only"},
-    "implementator-agent": {"model": "gpt-5.6", "effort": "high", "sandbox": "workspace-write"},
-    "reviewer-agent": {"model": "gpt-5.6", "effort": "xhigh", "sandbox": "workspace-write"},
-    "qa-agent": {"model": "gpt-5.6", "effort": "medium", "sandbox": "workspace-write"},
+    "spec-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "read-only"},
+    "task-planner-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "read-only"},
+    "implementator-agent": {"model": "gpt-5.6-terra", "effort": "high", "sandbox": "workspace-write"},
+    "reviewer-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "workspace-write"},
+    "qa-agent": {"model": "gpt-5.6-terra", "effort": "medium", "sandbox": "workspace-write"},
 }
 
 HEADER = (
@@ -67,7 +67,7 @@ def render_role(name, description, body, preamble, cfg):
     return (
         HEADER.format(name=name)
         + f'name = "ship-{name}"\n'
-        + f"description = {json.dumps(description)}\n"
+        + f"description = {json.dumps(description, ensure_ascii=False)}\n"
         + f'model = "{cfg["model"]}"\n'
         + f'model_reasoning_effort = "{cfg["effort"]}"\n'
         + f'sandbox_mode = "{cfg["sandbox"]}"\n'
