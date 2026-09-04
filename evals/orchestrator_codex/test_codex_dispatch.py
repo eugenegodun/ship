@@ -4,15 +4,15 @@ import pytest
 
 
 @pytest.mark.codex
-def test_roles_installed_first_dispatch_is_planner_role_with_clean_fork_and_no_model_question(run_codex_decision):
-    d = run_codex_decision("roles_installed_invoke")
-    planner = d.spawns("ship-task-planner-agent")
-    assert planner, "first dispatch must be spawn_agent with agent_type ship-task-planner-agent " + d.diagnostics()
+def test_roles_installed_first_dispatch_is_planner_role_with_clean_fork_and_no_model_question(run_codex_window):
+    w = run_codex_window("roles_installed_invoke")
+    planner = w.spawns("ship-task-planner-agent")
+    assert planner, "first dispatch must be spawn_agent with agent_type ship-task-planner-agent " + w.diagnostics()
     assert planner[0].input_parameters.get("fork_turns") == "none"
     assert "LEX-1398" in planner[0].input_parameters.get("task_name", "")
-    assert not re.search(r"[^.?!]*\bmodel\b[^.?!]*\?", d.text, re.I), (
-        "Stage 0 model questions are skipped on Codex " + d.diagnostics())
-    assert not d.named("shell"), "preflight already passed - no second check"
+    assert not re.search(r"[^.?!]*\bmodel\b[^.?!]*\?", w.text, re.I), (
+        "Stage 0 model questions are skipped on Codex " + w.diagnostics())
+    assert not w.named("shell"), "preflight already passed - no second check"
 
 
 @pytest.mark.codex

@@ -92,10 +92,12 @@ dispatches fresh each round.
    Critical finding. Models are per-role on Codex, so this is a no-op: run the round on
    `ship-reviewer-agent` as usual. Cap (3), verdict line, and halt behavior are unchanged.
 6. **Stage 5 git ops.** Instead of a Haiku `claude` agent: `spawn_agent {task_name: "<TICKET>-git",
-   agent_type: "ship-git-agent", fork_turns: "none", message: <brief>}` with the same brief
-   `SKILL.md` gives — commit on the ticket branch, **no `Co-Authored-By`**, `git push -u`,
-   `git pull --ff-only` only on a rejection, `gh pr create --draft` from the repo template, ticket in
-   the title, return PR number + URL. If it reports a detached HEAD it may not branch from (a Codex
+   agent_type: "ship-git-agent", fork_turns: "none", message: <brief>}`. The message must explicitly
+   state every one of: the **worktree path** (the role's first step is `cd` into it — omitting the
+   path leaves it nothing to `cd` into), the **branch name**, the **ticket id**, that there must be
+   **no `Co-Authored-By`**, `git push -u` with `git pull --ff-only` only on a rejection, a
+   `gh pr create --draft` from the repo template with the ticket in the title, and that it must
+   return the PR number + URL. If it reports a detached HEAD it may not branch from (a Codex
    App-managed worktree), it has committed locally: report the App's **Create branch** hand-off
    instead of a PR URL and wait for the user to provide the PR before Stage 6.
 7. **Stage 8.** Same two calls; "dispatch the `engineering-insights` skill" means read
