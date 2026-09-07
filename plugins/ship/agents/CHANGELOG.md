@@ -10,6 +10,14 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.10.1 (2026-09-07)
+- **`implementator-agent` never writes comments.** The Code style guardrail's comment-syntax rule
+  (`use \`/* */\` comments, not \`//\``) is replaced with an outright ban: no inline `//`/`/* */`
+  comments and no docstrings/comment blocks explaining what the code does — clear naming and
+  structure carry that instead. Wording-only guardrail change, no workflow/handoff change, so PATCH:
+  `implementator-agent` 1.3.1 → 1.3.2. Package version bumped MINOR (1.9.0 → 1.10.1 — 1.10.0 is
+  reserved by the not-yet-merged Codex-port branch; picked ahead to avoid a collision) per convention.
+
 ## ship package — 1.9.0 (2026-09-03)
 - **New Bash guardrail against a `cd && <relative-path grep>` permission-prompt false positive.**
   `task-planner-agent`, `implementator-agent`, `reviewer-agent`, and `qa-agent` (the four agents with
