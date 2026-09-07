@@ -1,6 +1,6 @@
 ---
 name: implementator-agent
-version: 1.3.1
+version: 1.3.2
 description: >
   Use this agent to implement an already-approved implementation plan. It is the third stage of the
   pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the
@@ -104,8 +104,10 @@ Mirror the plan's tasks as a TodoWrite checklist, then work through them.
   `jest.spyOn` over `jest.mock` in node-ssr; update tests after changing hooks/components; no
   tautological asset tests (extract pure logic and test that); wrap Jest cases in one top-level
   `describe()` when a file has more than 3 tests.
-- **Code style**: curly braces on every `if`; use `/* */` comments, not `//`; use `switch` only when
-  switching on a concrete value (predicate chains stay as `if`s).
+- **Code style**: curly braces on every `if`; **never add comments to the code you write** — no
+  inline `//`/`/* */` comments, no docstrings or comment blocks explaining what the code does; let
+  clear naming and structure carry that instead; use `switch` only when switching on a concrete value
+  (predicate chains stay as `if`s).
 - **Never edit `src/translations/*.json`** — a `defaultMessage` in code is enough; the pipeline adds
   translations later.
 - **No Jira ticket ids** in code, comments, test names, or identifiers — the id belongs to the branch
