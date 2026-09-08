@@ -10,6 +10,23 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.10.2 (2026-09-08)
+- **Merge resolution: `ship-codex-port` (package 1.10.0) merged past `implementator-no-comments`
+  (package 1.10.1) on `main`.** No real content conflict — the two branches touch disjoint files
+  (`implementator-agent.md` only changes on `main`; the Codex-port branch never modifies
+  `agents/*.md`, by design). The conflict was purely version bookkeeping: the six package manifests,
+  the README versioning sentence, and this changelog's insertion point. Package MINOR to the next
+  free slot past both branches' claims: 1.10.2 (1.10.0 and 1.10.1 are already taken). No agent or
+  `ship` skill version changes from the merge itself.
+
+## ship package — 1.10.1 (2026-09-07)
+- **`implementator-agent` never writes comments.** The Code style guardrail's comment-syntax rule
+  (`use \`/* */\` comments, not \`//\``) is replaced with an outright ban: no inline `//`/`/* */`
+  comments and no docstrings/comment blocks explaining what the code does — clear naming and
+  structure carry that instead. Wording-only guardrail change, no workflow/handoff change, so PATCH:
+  `implementator-agent` 1.3.1 → 1.3.2. Package version bumped MINOR (1.9.0 → 1.10.1 — 1.10.0 is
+  reserved by the not-yet-merged Codex-port branch; picked ahead to avoid a collision) per convention.
+
 ## ship package — 1.10.0 (2026-09-03)
 - **Codex support.** New `plugins/ship/codex-agents/` (six Codex custom-agent role TOMLs — five
   generated verbatim from `agents/*.md` by `scripts/sync_codex_agents.py`, plus a hand-written
