@@ -104,14 +104,15 @@ or upload fails, the run still passes and the local file path is reported instea
 ## Evals
 
 The pipeline's contracts are tested by a [deepeval](https://deepeval.com) suite in
-[`evals/`](evals/) — 42 cases in four tiers, run on GitHub Actions for every PR that
+[`evals/`](evals/) — 67 cases in five tiers, run on GitHub Actions for every PR that
 touches `plugins/ship/**` or `evals/**`:
 
 | Tier | Cases | What it checks |
 |------|-------|----------------|
-| Unit | 11 | The harness itself — artifact loading, tool schemas, the turn simulator. No model calls. |
+| Unit | 31 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
 | Agent-level | 6 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality. |
 | Decision points | 20 | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
+| Codex decision points | 5 | The same kind of assertion, driven through the OpenAI API against `SKILL.md` + `references/codex-dispatch.md` with Codex's V2 tool schemas. |
 | End-to-end | 5 | The orchestrator played multi-turn with stubbed subagents — dispatch order, gate stops, halt behavior. Nightly, non-blocking. |
 
 Generation runs on Claude, judging on OpenAI (a different family, to blunt
@@ -140,7 +141,7 @@ bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/in
 
 Restart the Codex session, then invoke the skill with a ticket as in Claude Code. Differences on
 Codex: there are no Stage 0 model questions (models are fixed per role in
-`plugins/ship/codex-agents/*.toml` — planner and reviewer `gpt-5.6-sol xhigh`, implementator and QA
+`plugins/ship/codex-agents/*.toml` — spec, planner, and reviewer `gpt-5.6-sol xhigh`, implementator and QA
 `gpt-5.6-terra` (`high`/`medium`), git ops `gpt-5.6-luna low`), the three gates are plain prose
 questions, and the reviewer model-escalation step is a no-op. `reviewer-agent`'s `code-review` and
 `security-review` skills are Claude Code built-ins that don't exist on Codex, so the Codex reviewer
