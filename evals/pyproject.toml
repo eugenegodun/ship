@@ -7,6 +7,7 @@ dependencies = [
     "deepeval>=3.4",
     "pytest>=8.0",
     "anthropic>=0.60",
+    "openai>=1.50",
 ]
 
 [build-system]
@@ -20,6 +21,7 @@ packages = ["src/ship_evals"]
 markers = [
     "e2e: multi-turn pipeline scenarios (nightly job only)",
     "llm: calls a live model (needs ANTHROPIC_API_KEY / OPENAI_API_KEY)",
+    "codex: Codex-dialect decision points via the OpenAI API (needs OPENAI_API_KEY)",
 ]
 addopts = "-m 'not e2e'"
-testpaths = ["tests", "agents", "orchestrator", "e2e"]
+testpaths = ["tests", "agents", "orchestrator", "orchestrator_codex", "e2e"]

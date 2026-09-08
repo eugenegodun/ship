@@ -2,12 +2,16 @@ import os
 
 import pytest
 
+_NEEDS = {
+    "llm": ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"),
+    "e2e": ("ANTHROPIC_API_KEY", "OPENAI_API_KEY"),
+    "codex": ("OPENAI_API_KEY",),
+}
+
 
 def pytest_collection_modifyitems(config, items):
-    missing = [k for k in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY") if not os.environ.get(k)]
-    if not missing:
-        return
-    skip = pytest.mark.skip(reason=f"missing API keys: {', '.join(missing)}")
     for item in items:
-        if "llm" in item.keywords or "e2e" in item.keywords:
-            item.add_marker(skip)
+        needed = {key for marker, keys in _NEEDS.items() if marker in item.keywords for key in keys}
+        missing = sorted(k for k in needed if not os.environ.get(k))
+        if missing:
+            item.add_marker(pytest.mark.skip(reason=f"missing API keys: {', '.join(missing)}"))
