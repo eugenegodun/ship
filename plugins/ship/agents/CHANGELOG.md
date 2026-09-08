@@ -10,6 +10,13 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship — 4.2.1 (2026-09-08)
+- Correct the orchestrator description: QA planning starts after the first verified working tree,
+  alongside review and PR creation. This aligns the description with the existing Stage 3 workflow
+  and evaluation contract; no handoff or workflow changes.
+- Align the README's diagram, agent and gate counts, QA defaults and recording failure behavior,
+  insights setup, evaluation tiers, and Codex role generation and retrospective limitations.
+
 ## ship package — 1.10.2 (2026-09-08)
 - **Merge resolution: `ship-codex-port` (package 1.10.0) merged past `implementator-no-comments`
   (package 1.10.1) on `main`.** No real content conflict — the two branches touch disjoint files

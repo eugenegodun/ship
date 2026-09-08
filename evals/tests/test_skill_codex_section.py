@@ -25,9 +25,9 @@ def test_codex_section_points_at_the_reference_and_tells_claude_to_ignore_it():
     assert "ignore this section" in section
 
 
-def test_skill_version_is_4_2_0():
+def test_skill_version_is_4_2_1():
     text = (PLUGIN_DIR / "skills" / "ship" / "SKILL.md").read_text()
-    assert "\nversion: 4.2.0\n" in text.split("\n---\n", 1)[0]
+    assert "\nversion: 4.2.1\n" in text.split("\n---\n", 1)[0]
 
 
 def test_dispatch_reference_names_every_role_and_the_installer():

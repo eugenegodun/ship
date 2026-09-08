@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 4.2.0
+version: 4.2.1
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -8,9 +8,9 @@ description: >
   "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
   (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
   for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
-  test plan is authored **in parallel** with implementation (launched right after the plan gate) so
-  it's ready the moment the PR lands. Do NOT use for one-off single-agent tasks (dispatch the relevant
-  agent directly instead).
+  test plan is authored **in parallel** with review and PR creation, launched after the first
+  verified working tree, so it can be ready when the PR lands. Do NOT use for one-off single-agent
+  tasks (dispatch the relevant agent directly instead).
 ---
 
 # ship — feature pipeline orchestrator
@@ -386,7 +386,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 4.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.2.1 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
