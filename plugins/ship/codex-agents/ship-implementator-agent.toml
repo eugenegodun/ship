@@ -94,8 +94,10 @@ Mirror the plan's tasks as a TodoWrite checklist, then work through them.
   `jest.spyOn` over `jest.mock` in node-ssr; update tests after changing hooks/components; no
   tautological asset tests (extract pure logic and test that); wrap Jest cases in one top-level
   `describe()` when a file has more than 3 tests.
-- **Code style**: curly braces on every `if`; use `/* */` comments, not `//`; use `switch` only when
-  switching on a concrete value (predicate chains stay as `if`s).
+- **Code style**: curly braces on every `if`; **never add comments to the code you write** — no
+  inline `//`/`/* */` comments, no docstrings or comment blocks explaining what the code does; let
+  clear naming and structure carry that instead; use `switch` only when switching on a concrete value
+  (predicate chains stay as `if`s).
 - **Never edit `src/translations/*.json`** — a `defaultMessage` in code is enough; the pipeline adds
   translations later.
 - **No Jira ticket ids** in code, comments, test names, or identifiers — the id belongs to the branch
