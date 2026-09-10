@@ -11,10 +11,12 @@ from openai import OpenAI
 
 from .artifacts import _strip_frontmatter
 from .codex_tools import CODEX_ORCHESTRATOR_TOOLS
+from .codex_responses import response_view, responses_input
 from .config import MAX_TOKENS, PLUGIN_DIR
 
 CODEX_MODEL = os.environ.get("EVAL_CODEX_MODEL", "gpt-6-astra")
 CODEX_EFFORT = os.environ.get("EVAL_CODEX_REASONING_EFFORT", "medium" if CODEX_MODEL == "gpt-6-astra" else "")
+CODEX_API = os.environ.get("EVAL_CODEX_API", "responses" if CODEX_MODEL == "gpt-6-astra" else "chat")
 REFERENCE = PLUGIN_DIR / "skills" / "ship" / "references" / "codex-dispatch.md"
 CODEX_SKILL = PLUGIN_DIR / "codex-skills" / "ship" / "SKILL.md"
 
@@ -45,21 +47,47 @@ def _write_trace(payload):
 
 
 def call_codex_model(system: str, messages: list[dict], tools: list[dict], model: str = CODEX_MODEL):
-    request = {"model": model, "max_completion_tokens": MAX_TOKENS,
-               "messages": [{"role": "system", "content": system}, *messages], "tools": tools}
-    if CODEX_EFFORT:
-        request["reasoning_effort"] = CODEX_EFFORT
+    if CODEX_API == "responses":
+        request = {"model": model, "instructions": system, "input": responses_input(messages),
+                   "max_output_tokens": MAX_TOKENS, "store": False,
+                   "include": ["reasoning.encrypted_content"],
+                   "tools": [{"type": "function", **tool["function"], "strict": False} for tool in tools]}
+        if CODEX_EFFORT:
+            request["reasoning"] = {"effort": CODEX_EFFORT}
+    elif CODEX_API == "chat":
+        request = {"model": model, "max_completion_tokens": MAX_TOKENS,
+                   "messages": [{"role": "system", "content": system}, *messages], "tools": tools}
+        if CODEX_EFFORT:
+            request["reasoning_effort"] = CODEX_EFFORT
+    else:
+        raise ValueError(f"Unsupported EVAL_CODEX_API: {CODEX_API}")
     response = None
     error = None
     try:
+        if CODEX_API == "responses":
+            response = _get_client().responses.create(**request)
+            return response_view(response)
         response = _get_client().chat.completions.create(**request)
         return response
     except Exception as exc:
         error = repr(exc)
         raise
     finally:
-        _write_trace({"kind": "api_call", "request": request, "error": error,
+        _write_trace({"kind": "api_call", "api": CODEX_API, "request": request, "error": error,
                       "response": response.model_dump(mode="json") if response is not None else None})
+
+
+def codex_assistant_message(response):
+    message = response.choices[0].message
+    result = {"role": "assistant", "content": message.content}
+    if message.tool_calls:
+        result["tool_calls"] = [
+            {"id": call.id, "type": "function", "function": {
+                "name": call.function.name, "arguments": call.function.arguments}}
+            for call in message.tool_calls]
+    if hasattr(response, "responses_output"):
+        result["_responses_output"] = response.responses_output
+    return result
 
 
 def codex_tool_calls(response) -> list[ToolCall]:
@@ -120,13 +148,7 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
             message = resp.choices[0].message
             tool_calls_raw = message.tool_calls or []
 
-            assistant_message = {"role": "assistant", "content": message.content}
-            if tool_calls_raw:
-                assistant_message["tool_calls"] = [
-                    {"id": tc.id, "type": tc.type,
-                     "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
-                    for tc in tool_calls_raw
-                ]
+            assistant_message = codex_assistant_message(resp)
             messages.append(assistant_message)
 
             text = message.content or ""

@@ -5,7 +5,7 @@ import tomllib
 
 import pytest
 
-from ship_evals.codex_harness import call_codex_model
+from ship_evals.codex_harness import call_codex_model, codex_assistant_message
 from ship_evals.codex_tools import SHELL
 from ship_evals.config import PLUGIN_DIR
 
@@ -48,16 +48,13 @@ def _run_role(instructions, messages, outputs, max_calls=6):
     executed = []
     for _ in range(max_calls):
         response = call_codex_model(instructions, messages, [SHELL])
+        finish = response.choices[0].finish_reason
+        assert finish in {"stop", "tool_calls"}, f"Incomplete implementer response: {finish}"
         message = response.choices[0].message
         calls = message.tool_calls or []
-        assistant = {"role": "assistant", "content": message.content}
+        assistant = codex_assistant_message(response)
         if not calls:
             return executed, message.content or ""
-        assistant["tool_calls"] = [
-            {"id": call.id, "type": call.type, "function": {
-                "name": call.function.name, "arguments": call.function.arguments}}
-            for call in calls
-        ]
         messages.append(assistant)
         for call in calls:
             assert call.function.name == "shell"

@@ -187,6 +187,7 @@ def test_direct_api_call_logs_full_response_without_forcing_tools(tmp_path, monk
     from unittest.mock import MagicMock
     from ship_evals.codex_harness import call_codex_model
     monkeypatch.setenv('EVAL_CODEX_TRACE_DIR', str(tmp_path))
+    monkeypatch.setattr("ship_evals.codex_harness.CODEX_API", "chat")
     client = MagicMock()
     client.chat.completions.create.return_value.model_dump.return_value = {
         'choices': [{'finish_reason': 'stop', 'message': {'content': 'Full response'}}]}

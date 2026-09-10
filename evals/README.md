@@ -102,3 +102,10 @@ remains optional at the API level: no forced tool calls or automatic continuatio
 Gate checks require the actual content and an approval request, not transport prefixes or punctuation.
 Independent lint can run after blocked integration setup; the final report must still disclose the
 blocked verification and must not claim success.
+
+
+The target uses the Responses API: Astra rejects reasoning plus function tools on Chat Completions.
+`EVAL_CODEX_API=responses` preserves returned reasoning items (including encrypted continuation data)
+when replaying tool results. GPT-4.1's comparison keeps `EVAL_CODEX_API=chat`; artifact metadata records
+the endpoint as well as the model. Preflight includes a function tool to validate the actual API
+capability, not merely text generation. An API incompatibility is not a behavioral test failure.

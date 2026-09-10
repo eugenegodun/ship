@@ -54,14 +54,17 @@ jobs:
       matrix:
         include:
           - check: evals-codex
+            api: responses
             model: gpt-6-astra
             effort: medium
             comparison: false
           - check: evals-codex-gpt41-comparison
+            api: chat
             model: gpt-4.1
             effort: ''
             comparison: true
     env:
+      EVAL_CODEX_API: ${{ matrix.api }}
       EVAL_CODEX_MODEL: ${{ matrix.model }}
       EVAL_CODEX_REASONING_EFFORT: ${{ matrix.effort }}
       EVAL_CODEX_TRACE_DIR: codex-traces
@@ -88,7 +91,8 @@ jobs:
           uv run python - <<'PYTHON'
           from ship_evals.codex_harness import CODEX_MODEL, CODEX_EFFORT, call_codex_model
           print(f"Checking API access: {CODEX_MODEL}, reasoning effort: {CODEX_EFFORT}")
-          call_codex_model("Reply OK.", [{"role": "user", "content": "OK?"}], [])
+          from ship_evals.codex_tools import WAIT_AGENT
+          call_codex_model("Reply OK.", [{"role": "user", "content": "OK?"}], [WAIT_AGENT])
           PYTHON
       - name: Codex live scenarios (three independent runs)
         shell: bash
