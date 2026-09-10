@@ -76,7 +76,7 @@ def test_focused_pass_continues_remaining_verification(implementer_instructions,
     })
     assert executed == [INTEGRATION, LINT], f"Premature milestone final: {final}"
     assert WORKTREE in final and "LEX-999" in final, final
-    assert "28" in final and "lint" in final.lower(), final
+    assert "28" in final and ("lint" in final.lower() or LINT in final), final
 
 
 def test_missing_credentials_reports_evidenced_blocker(implementer_instructions):

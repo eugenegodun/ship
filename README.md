@@ -116,12 +116,12 @@ See the [QA agent](plugins/ship/agents/qa-agent.md) for the execution and report
 ## Evals
 
 The pipeline's contracts are tested by a [deepeval](https://deepeval.com) suite in
-[`evals/`](evals/) — 120 cases in five tiers. GitHub Actions runs the first four tiers on
+[`evals/`](evals/) — 122 cases in five tiers. GitHub Actions runs the first four tiers on
 PRs touching `plugins/ship/**` or `evals/**`; end-to-end cases run nightly or manually:
 
 | Tier | Cases | What it checks |
 |------|-------|----------------|
-| Unit | 68 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
+| Unit | 70 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
 | Agent-level | 6 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality. |
 | Decision points | 20 | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
 | Codex | 21 | Standalone Codex workflow and generated-role scenarios, with simulated tools and no user nudges. CI runs the desktop target model three times and reports GPT-4.1 separately. |

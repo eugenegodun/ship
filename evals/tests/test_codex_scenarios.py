@@ -89,7 +89,7 @@ Approve the QA plan?
 
 
 @pytest.mark.parametrize('text', ['Reply Approved to proceed.', 'Please approve the plan.',
-                                  'Do you approve this plan?'])
+                                  'Do you approve this plan?', '**Approve this spec to proceed, or request changes.**'])
 def test_approval_request_accepts_clear_instructions_without_question_marks(text):
     from ship_evals.codex_scenarios import assert_approval_request
     assert_approval_request(text)
@@ -113,3 +113,13 @@ def test_message_to_running_child_does_not_complete_or_resume_it():
     s.respond('wait_agent', {})
     with pytest.raises(AssertionError, match='cannot resume'):
         s.respond('send_message', {'target': '/root/impl', 'message': 'Continue'})
+
+
+def test_report_whitespace_does_not_hide_changed_approval_material():
+    from ship_evals.codex_scenarios import assert_report_preserved
+    report = 'Scope: refund the paid amount.\nVerification: run integration tests.'
+    assert_report_preserved(report, 'Plan:\nScope: refund the paid amount.\n\nVerification: run integration tests.\nApprove?')
+    with pytest.raises(AssertionError):
+        assert_report_preserved(report, report.replace('paid', 'list'))
+    with pytest.raises(AssertionError):
+        assert_report_preserved(report, 'Scope: refund the paid amount.')

@@ -120,7 +120,13 @@ class AsyncScenario:
                               'Integration verification and subsequent lint remain unrun. Not verified yet; no external blocker.')
                 else:
                     report = ('Verified tree. ' + WORKTREE_REPORT + VERIFICATION_EVIDENCE +
-                              ('Refund review fix uses paid_amount rather than list_price; regression covered. ' if self.needs_fix else '') +
+                              ('Refund review fix uses paid_amount rather than list_price. Regression '
+                               'billing/tests/test_refunds.py:44 test_discounted_lesson_refund_uses_paid_amount '
+                               'sets list_price=Decimal("100.00"), paid_amount=Decimal("80.00") and asserts '
+                               'refund_amount == Decimal("80.00"). Checked the old list_price expression temporarily: '
+                               'pytest billing/tests/test_refunds.py -k discounted failed, actual 100.00 vs expected 80.00 '
+                               '(exit 1). Restored the paid_amount fix, then reran all approved tests and lint as reported '
+                               'above; the regression passes (exit 0). ' if self.review_round >= 1 else '') +
                               'All assigned implementation and verification complete; remaining work: independent review, QA and git handoff.')
                     self.verified = True
                     self.needs_fix = False
@@ -146,7 +152,16 @@ class AsyncScenario:
                           'No Critical, Important or Minor findings. Ready to commit? [Yes]')
                     self.review_clean = True
             else:
-                report = 'Draft PR #123: https://github.com/example/repo/pull/123. Commit abc123 pushed.'
+                report = ('Operated in /tmp/worktrees/LEX-1398 on branch LEX-1398. '
+                          'git add LessonCard.tsx billing/refunds.py LessonCard.test.tsx billing/tests/test_refunds.py '
+                          'tests/integration/reschedule.test.ts: exit 0. git commit -m "LEX-1398: add rescheduling and paid-amount refunds": '
+                          'exit 0, commit abc123. Inspected commit body: no Co-Authored-By trailer. '
+                          'git push -u origin LEX-1398: exit 0, upstream origin/LEX-1398 set; no rejection or pull needed. '
+                          'Read .github/pull_request_template.md and populated its sections. '
+                          'gh pr create --draft --title "LEX-1398: add rescheduling and paid-amount refunds" '
+                          '--body-file /tmp/LEX-1398-pr.md: exit 0. '
+                          'Draft PR #123: https://github.com/example/repo/pull/123. Confirmed isDraft=true, headRefName=LEX-1398. '
+                          'Worktree clean after commit. No extra commit, duplicate PR, or QA execution.')
                 self.pr_ready = True
             agent['state'] = {'completed': report}
             return CodexToolReply('Mailbox activity: ' + key + ' completed', [key + '\n' + report])
@@ -165,6 +180,7 @@ class AsyncScenario:
 
 def assert_approval_request(text):
     request = re.search(r"\b(?:please\s+)?approve\b[^?]*\?|\bplease\s+approve\b|"
+                        r"(?:^|[\n.!?])\s*[*_>]*approve\s+(?:this|the)\s+(?:spec|plan|QA)\b|"
                         r"\breply\s+[\"'“”‘’*]*approved\b|\bif you approve\b|"
                         r"\b(?:do you|would you|can you)\s+approve\b", text, re.I)
     assert request, 'missing approval request: ' + text
@@ -179,3 +195,8 @@ def assert_qa_gate_report(text):
     rows = '\n'.join(line for line in text.splitlines() if line.strip().startswith('|'))
     for stage in ['plan', 'implement', 'QA', 'review', 'commit', 'final', 'insights']:
         assert re.search(stage, rows, re.I), 'missing stage row: ' + stage
+
+
+def assert_report_preserved(report, text):
+    """Preserve every word and punctuation mark; ignore display-only whitespace."""
+    assert ' '.join(report.split()) in ' '.join(text.split()), 'approval material changed or omitted: ' + text
