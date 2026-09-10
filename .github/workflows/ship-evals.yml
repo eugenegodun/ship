@@ -47,26 +47,10 @@ jobs:
     # Blocking check for the Codex dispatch dialect only. Separate job so a failure here is
     # visibly Codex-only and never masks the Claude-tier result above.
     if: github.event_name == 'pull_request'
-    name: ${{ matrix.check }}
-    continue-on-error: ${{ matrix.comparison }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - check: evals-codex
-            api: responses
-            model: gpt-6-astra
-            effort: medium
-            comparison: false
-          - check: evals-codex-gpt41-comparison
-            api: chat
-            model: gpt-4.1
-            effort: ''
-            comparison: true
     env:
-      EVAL_CODEX_API: ${{ matrix.api }}
-      EVAL_CODEX_MODEL: ${{ matrix.model }}
-      EVAL_CODEX_REASONING_EFFORT: ${{ matrix.effort }}
+      EVAL_CODEX_API: responses
+      EVAL_CODEX_MODEL: gpt-6-astra
+      EVAL_CODEX_REASONING_EFFORT: medium
       EVAL_CODEX_TRACE_DIR: codex-traces
     runs-on: ubuntu-latest
     defaults:
@@ -111,7 +95,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: codex-evals-${{ matrix.check }}
+          name: codex-evals-evals-codex
           path: |
             evals/codex-traces/
             evals/codex-run-*.xml
