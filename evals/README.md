@@ -90,8 +90,7 @@ if an auto-loaded plugin requires a socket unavailable in the sandbox, use
 The Codex workflow is now self-contained: the Codex manifest and evals both load generated `codex-skills/ship/SKILL.md`, whose body comes
 from the dispatch reference, instead of combining Claude instructions and a translation appendix. CI explicitly uses `gpt-6-astra` with
 medium effort, matching the inspected desktop configuration, and runs three independent repetitions.
-GPT-4.1 is a separate non-blocking comparison, also repeated three times; its result cannot make the
-target-model check pass. If the API account does not support the target model, the check fails visibly;
+If the API account does not support the target model, the check fails visibly;
 there is no fallback to a different model. `EVAL_CODEX_MODEL` and `EVAL_CODEX_REASONING_EFFORT` can
 select another explicitly evaluated configuration locally.
 
@@ -106,6 +105,6 @@ blocked verification and must not claim success.
 
 The target uses the Responses API: Astra rejects reasoning plus function tools on Chat Completions.
 `EVAL_CODEX_API=responses` preserves returned reasoning items (including encrypted continuation data)
-when replaying tool results. GPT-4.1's comparison keeps `EVAL_CODEX_API=chat`; artifact metadata records
-the endpoint as well as the model. Preflight includes a function tool to validate the actual API
+when replaying tool results. Local comparisons can select `EVAL_CODEX_API=chat`; artifact metadata
+records the endpoint as well as the model. Preflight includes a function tool to validate the actual API
 capability, not merely text generation. An API incompatibility is not a behavioral test failure.
