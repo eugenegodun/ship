@@ -29,6 +29,10 @@ class AsyncScenario:
         if name == 'list_agents':
             return json.dumps({'agents': [{'agent_name': key, 'agent_status': value['state']}
                                          for key, value in self.agents.items()]})
+        if name == 'send_message':
+            key = args['target']
+            assert key in self.agents and self.agents[key]['state'] == 'running', 'message cannot resume an idle child'
+            return 'Message queued; child remains running'
         if name == 'spawn_agent':
             key = '/root/' + args['task_name']
             role = args['agent_type']

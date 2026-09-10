@@ -197,3 +197,22 @@ def test_direct_api_call_logs_full_response_without_forcing_tools(tmp_path, monk
     assert trace['response']['choices'][0]['message']['content'] == 'Full response'
     assert trace['response']['choices'][0]['finish_reason'] == 'stop'
     assert 'tool_choice' not in trace['request']
+
+
+@pytest.mark.parametrize('ending,expected', [('final', 'no_tool_calls'), ('action', 'observed_action'), ('bookkeeping', 'max_calls')])
+def test_bounded_action_observation_never_nudges_a_final(ending, expected):
+    bookkeeping = fake_openai_response('', [{'id': 'p', 'name': 'update_plan', 'arguments': {}}])
+    final = fake_openai_response('I will dispatch later')
+    action = fake_openai_response('', [
+        {'id': 's', 'name': 'spawn_agent', 'arguments': {'agent_type': 'ship-git-agent'}},
+        {'id': 'f', 'name': 'followup_task', 'arguments': {'target': 'unexpected'}}])
+    responses = [bookkeeping, {'final': final, 'action': action, 'bookkeeping': bookkeeping}[ending]]
+    replies = []
+    with patch('ship_evals.codex_harness.call_codex_model', side_effect=responses) as call:
+        result = continue_codex_transcript([], lambda name, args: replies.append(name) or 'ok',
+                                          max_calls=2, stop_after_tools={'spawn_agent'})
+    assert call.call_count == 2
+    assert result.stop_reason == expected
+    if ending == 'action':
+        assert [e.name for e in result.events] == ['update_plan', 'spawn_agent', 'followup_task']
+        assert replies == ['update_plan']

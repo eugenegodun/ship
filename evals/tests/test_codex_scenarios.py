@@ -100,3 +100,16 @@ def test_approval_status_alone_is_not_a_request(text):
     from ship_evals.codex_scenarios import assert_approval_request
     with pytest.raises(AssertionError):
         assert_approval_request(text)
+
+
+def test_message_to_running_child_does_not_complete_or_resume_it():
+    s = AsyncScenario()
+    s.respond('spawn_agent', {'task_name': 'impl', 'agent_type': 'ship-implementator-agent'})
+    s.respond('send_message', {'target': '/root/impl', 'message': 'Full approved context'})
+    assert s.impl_round == 0 and s.agents['/root/impl']['state'] == 'running'
+    with pytest.raises(AssertionError, match='premature'):
+        s.assert_terminal(CodexSimResult(stop_reason='no_tool_calls'))
+    s.respond('wait_agent', {})
+    s.respond('wait_agent', {})
+    with pytest.raises(AssertionError, match='cannot resume'):
+        s.respond('send_message', {'target': '/root/impl', 'message': 'Continue'})

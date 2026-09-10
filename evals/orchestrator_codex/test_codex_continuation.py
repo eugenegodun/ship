@@ -8,8 +8,18 @@ from ship_evals.codex_harness import continue_codex_transcript
 from ship_evals.codex_scenarios import AsyncScenario, assert_qa_gate_report, assert_approval_request
 
 
+PREFLIGHT = [
+    {'role': 'assistant', 'content': None, 'tool_calls': [
+        {'id': 'preflight', 'type': 'function', 'function': {'name': 'shell',
+         'arguments': json.dumps({'command': 'bash ~/.codex/plugins/cache/ship/ship/1.11.0/scripts/install-codex-agents.sh --check'})}}]},
+    {'role': 'tool', 'tool_call_id': 'preflight', 'content': '\n'.join(
+        'unchanged  ship-' + role + '-agent.toml' for role in
+        ['git', 'implementator', 'qa', 'reviewer', 'spec', 'task-planner']) + '\n(exit 0)'},
+]
+
 APPROVED = [
-    {'role': 'user', 'content': '/ship LEX-1398. No video recording.'},
+    {'role': 'user', 'content': '/ship LEX-1398. Repository /tmp/repo, current working directory /tmp/repo. No video recording.'},
+    *PREFLIGHT,
     {'role': 'assistant', 'content': 'Codex preflight passed; all roles unchanged. GATE 2 plan: add rescheduling and paid-amount refund checks in LessonCard.tsx and billing/refunds.py. Verify focused and integration tests, lint. Approve?'},
     {'role': 'user', 'content': 'Approved. Continue through review and draft PR to the QA plan gate.'},
 ]
@@ -91,6 +101,7 @@ def test_incomplete_handoff_and_internal_question_resume_same_child(report, requ
 def test_planning_child_completion_is_awaited_before_gate(role, gate, report):
     messages = [
         {'role': 'user', 'content': '/ship LEX-1398' + (' --spec' if gate == 'GATE 1' else '')},
+        *PREFLIGHT,
         {'role': 'assistant', 'content': 'Codex preflight passed, roles unchanged. Dispatching.',
          'tool_calls': [{'id': 'planning', 'type': 'function', 'function': {
              'name': 'spawn_agent', 'arguments': json.dumps({'task_name': 'planning',
@@ -102,6 +113,12 @@ def test_planning_child_completion_is_awaited_before_gate(role, gate, report):
         from ship_evals.codex_harness import CodexToolReply
         if name == 'update_plan':
             return 'Plan updated'
+        if name == 'list_agents':
+            state = 'running' if len(waits) < 2 else {'completed': report}
+            return json.dumps({'agents': [{'agent_name': '/root/planning', 'agent_status': state}]})
+        if name == 'send_message':
+            assert args['target'] == '/root/planning' and len(waits) < 2
+            return 'Message queued; child remains running'
         assert name == 'wait_agent', 'unexpected action while waiting: ' + name
         waits.append(args)
         if len(waits) == 1:

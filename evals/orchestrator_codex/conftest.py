@@ -85,3 +85,33 @@ def run_codex_window():
         return CodexWindow(continue_codex_transcript(messages, respond=codex_bookkeeping_responder,
                                                       max_calls=max_calls))
     return _run
+
+
+@pytest.fixture
+def run_codex_transition():
+    """Allow bounded bookkeeping; observe the first substantive action or final."""
+    def _run(transcript_name: str) -> CodexWindow:
+        import json
+        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        # Reconstruct retained identities from fixture tool evidence, not guessed agents.
+        agents = {}
+        for message in messages:
+            if message['role'] == 'tool':
+                content = message['content']
+                if content.startswith('{'):
+                    entry = json.loads(content)
+                    if 'task_name' in entry:
+                        agents[entry['task_name']] = 'running'
+                for key in agents:
+                    if key.rsplit('/', 1)[-1] + ' completed:' in content:
+                        agents[key] = {'completed': content}
+        def respond(name, args):
+            if name == 'update_plan':
+                return 'Plan updated'
+            assert name == 'list_agents', 'unexpected bookkeeping: ' + name
+            return json.dumps({'agents': [{'agent_name': key, 'agent_status': state}
+                                          for key, state in agents.items()]})
+        actions = {'spawn_agent', 'followup_task', 'send_message', 'wait_agent', 'shell'}
+        return CodexWindow(continue_codex_transcript(messages, respond, max_calls=4,
+                                                    stop_after_tools=actions))
+    return _run

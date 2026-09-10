@@ -128,13 +128,14 @@ class CodexSimResult:
 
 
 def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict], str | CodexToolReply],
-                              max_calls: int = 40) -> CodexSimResult:
+                              max_calls: int = 40, stop_after_tools: set[str] | None = None) -> CodexSimResult:
     """Multi-turn driver for the Codex dialect, analogous to ship_evals.simulator.continue_transcript.
 
     Resumes from an existing OpenAI chat-completions transcript, answering every tool call via
     respond(tool_name, input) until a turn comes back with no tool calls (Codex tier has no
     multi-turn user-reply/gate-approval concept in these tests, so that's always the stop) or
-    max_calls is exhausted.
+    max_calls is exhausted. Decision-only probes may set stop_after_tools to observe
+    the complete first substantive call batch without simulating its execution.
     """
     system = load_codex_system()
     tools = CODEX_ORCHESTRATOR_TOOLS
@@ -166,6 +167,15 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
             if not tool_calls_raw:
                 result.texts.append(text)
                 result.stop_reason = "no_tool_calls"
+                return result
+
+            # Decision probes observe the whole call batch, without executing a new stage.
+            if stop_after_tools and any(tc.function.name in stop_after_tools for tc in tool_calls_raw):
+                for tc in tool_calls_raw:
+                    event = CodexToolEvent(tc.function.name, json.loads(tc.function.arguments or "{}"))
+                    result.events.append(event)
+                    turn.tools.append(event)
+                result.stop_reason = "observed_action"
                 return result
 
             mailbox = []
