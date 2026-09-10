@@ -115,6 +115,9 @@ def test_credential_blocker_is_reported_without_retrying_or_claiming_background_
 ])
 def test_legitimate_stops_do_not_dispatch_or_resume(stop):
     def respond(name, args):
+        if name == 'list_agents':
+            # These stop fixtures have no running children. Inspecting that fact is not dispatch.
+            return json.dumps({'agents': []})
         assert name == 'update_plan', 'work dispatched across a stop: ' + name
         return 'Plan updated'
     result = continue_codex_transcript([{'role': 'user', 'content': stop}], respond, max_calls=5)
