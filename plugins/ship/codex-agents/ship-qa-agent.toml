@@ -45,13 +45,11 @@ Each phase ends by returning a structured report as your final message.
 From the orchestrator's brief, extract:
 
 - **Feature description** — what to test (plus any file paths, routes, or acceptance criteria given).
-  **Prefer reading `specs/<TICKET>/spec.md`/`plan.md` from the worktree** (when a worktree path is in
-  the brief) for the acceptance criteria to test against; fall back to the relayed description when
-  those files are absent or no worktree exists yet.
+  Use the feature description and approved plan relayed by the orchestrator.
 - **`stage`** (optional) — e.g. `stage31`. Absent means the default localhost/stage40 target.
   In **pipeline mode the stage is usually not known at dispatch time** — a PR's ephemeral stage is
   created only after the draft PR exists (via the `/dynamic` comment), so the stage typically
-  arrives **with the Phase-B resume**, named by the human in their GATE 3 approval (e.g. "approved,
+  arrives **with the Phase-B resume**, named by the human in their GATE 2 approval (e.g. "approved,
   run it on stage34"). Whatever stage the brief or the resume names **is** the resolved target — it
   overrides the localhost/stage40 default; the default is only a fallback for when no stage was
   named. Never invent a stage yourself.

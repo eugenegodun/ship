@@ -1,14 +1,25 @@
 # Pipeline Changelog
 
-SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and its subagents (four
-always, five when `spec-agent` runs via `--spec`). Bump rules live in
+SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and its four subagents. Bump rules live in
 `plugins/ship/skills/ship/SKILL.md` § Versioning.
 
 - **MAJOR** — breaking contract change (a stage's inputs/outputs, gate structure, or inter-stage
-  handoff: approved-spec text, approved-plan text, worktree path + branch, PR URL, reviewer verdict
+  handoff: approved-plan text, worktree path + branch, PR URL, reviewer verdict
   line).
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
+
+## ship package — 1.12.0 (2026-09-10)
+- Removes the unused optional spec stage and its agent, generated Codex role, and spec-generation
+  evals. Invocation is now `/ship <TICKET> [--record]`; the planner reads Jira and linked specs.
+- **Breaking pipeline contract:** `ship` 5.0.0 renumbers Plan through Insights to Stages 1–7, with
+  plan approval at GATE 1 and QA approval at GATE 2. No spec approval or spec-text handoff remains.
+- `task-planner-agent` 3.0.0 drops the approved-spec input; `implementator-agent` 2.0.0 drops
+  spec/plan persistence; `reviewer-agent` 2.0.0 receives the approved plan inline.
+  `qa-agent` 3.1.2 uses relayed requirements and the updated QA gate number;
+  `engineering-insights` 1.0.1 updates its stage reference.
+- Updates documentation, role generation, installer expectations, and remaining eval fixtures.
+  The former `--spec` routing eval now checks unsupported-token handling.
 
 ## ship package — 1.11.0 (2026-09-10)
 - Follow-up after live CI: make the Codex reference a self-contained workflow, preserve strict

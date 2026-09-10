@@ -92,8 +92,8 @@ Approve the QA plan?
                                   'Do you approve this plan?', '**Approve this spec to proceed, or request changes.**',
                                   '**Approve this specification to proceed to planning, or request changes.** Video recording is declined.',
                                   '**GATE 1 — Approve this spec or request changes.** Video recording is declined.',
-                                  'GATE 2: Approve the plan to proceed.',
-                                  'GATE 3 - Approve the QA plan to proceed.'])
+                                  'GATE 1: Approve the plan to proceed.',
+                                  'GATE 2 - Approve the QA plan to proceed.'])
 def test_approval_request_accepts_clear_instructions_without_question_marks(text):
     from ship_evals.codex_scenarios import assert_approval_request
     assert_approval_request(text)
@@ -101,8 +101,8 @@ def test_approval_request_accepts_clear_instructions_without_question_marks(text
 
 @pytest.mark.parametrize('text', ['QA needs approval', 'Approval pending', 'Plan approved yesterday',
                                 'GATE 1 — Specification awaiting approval.',
-                                'GATE 2: Do not approve this plan yet.',
-                                'GATE 3 - The user will approve the QA plan later.'])
+                                'GATE 1: Do not approve this plan yet.',
+                                'GATE 2 - The user will approve the QA plan later.'])
 def test_approval_status_alone_is_not_a_request(text):
     from ship_evals.codex_scenarios import assert_approval_request
     with pytest.raises(AssertionError):

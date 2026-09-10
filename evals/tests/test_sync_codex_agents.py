@@ -9,7 +9,7 @@ from ship_evals.artifacts import load_agent
 from ship_evals.config import PLUGIN_DIR
 
 SCRIPT = PLUGIN_DIR / "scripts" / "sync_codex_agents.py"
-GENERATED = ["spec-agent", "task-planner-agent", "implementator-agent", "reviewer-agent", "qa-agent"]
+GENERATED = ["task-planner-agent", "implementator-agent", "reviewer-agent", "qa-agent"]
 
 
 def _load():

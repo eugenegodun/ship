@@ -5,7 +5,7 @@ from ship_evals.config import PLUGIN_DIR
 
 # NB: not "agent_type" - it is a substring of the Claude tool param "subagent_type" used throughout.
 CODEX_WORDS = ("spawn_agent", "followup_task", "wait_agent", "codex-dispatch")
-ROLES = ["ship-spec-agent", "ship-task-planner-agent", "ship-implementator-agent",
+ROLES = ["ship-task-planner-agent", "ship-implementator-agent",
          "ship-reviewer-agent", "ship-qa-agent", "ship-git-agent"]
 
 
@@ -25,9 +25,9 @@ def test_codex_section_points_at_the_reference_and_tells_claude_to_ignore_it():
     assert "ignore this section" in section
 
 
-def test_skill_version_is_4_2_1():
+def test_skill_version_is_5_0_0():
     text = (PLUGIN_DIR / "skills" / "ship" / "SKILL.md").read_text()
-    assert "\nversion: 4.2.1\n" in text.split("\n---\n", 1)[0]
+    assert "\nversion: 5.0.0\n" in text.split("\n---\n", 1)[0]
 
 
 def test_dispatch_reference_names_every_role_and_the_installer():

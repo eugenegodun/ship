@@ -51,7 +51,7 @@ def test_critical_finding_resumes_implementator_via_followup_task(run_codex_tran
 def test_clean_review_spawns_git_role_with_worktree_draft_and_no_coauthor(run_codex_transition):
     d = run_codex_transition("review_clean")
     git = d.spawns("ship-git-agent")
-    assert git, "clean verdict exits the loop into Stage 5's git role " + d.diagnostics()
+    assert git, "clean verdict exits the loop into Stage 4's git role " + d.diagnostics()
     brief = git[0].input_parameters["message"].lower()
     assert "/tmp/worktrees/lex-1398" in brief and "draft" in brief and "co-author" in brief
     assert git[0].input_parameters.get("fork_turns") == "none"

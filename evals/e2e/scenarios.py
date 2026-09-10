@@ -20,9 +20,7 @@ REVIEW_DIRTY = ("[agent_id: rev-{n}] Critical: refund maths uses list_price "
 REVIEW_CLEAN = "[agent_id: rev-{n}] Only Minor notes. Ready to commit? [Yes]"
 GIT_OK = ("[agent_id: git-01] Committed and pushed LEX-1398. Draft PR: #4321 "
           "https://github.com/preply/edu-frontend/pull/4321")
-SPEC = ("[agent_id: spec-01] SPEC LEX-1398 - user stories + EARS criteria: WHEN a booked "
-        "lesson starts more than 12 hours from now THE SYSTEM SHALL show a Reschedule "
-        "action. Awaiting review.")
+
 
 
 class Script:
@@ -43,7 +41,7 @@ class Script:
         if tool == "AskUserQuestion":
             asked = str(inp.get("questions", "")).lower()
             if "record" in asked or "video" in asked:
-                # ship 4.1.0 GATE 3 recording question - decline; behavior stays as before.
+                # ship 4.1.0 GATE 2 recording question - decline; behavior stays as before.
                 return '{"Record video of this QA run?": "No"}'
             return '{"Planner model": "claude-sonnet-5", "Reviewer model": "claude-opus-5[1m]"}'
         if tool == "TaskOutput":
@@ -56,13 +54,11 @@ class Script:
                 return IMPL_FIXED
             if "qa" in target:
                 return QA_DONE
-            if "planner" in target or "spec" in target:
-                return PLAN if "planner" in target else SPEC
+            if "planner" in target:
+                return PLAN
             return "ok"
         if tool == "Agent":
             sub = inp.get("subagent_type", "")
-            if sub == "spec-agent":
-                return SPEC
             if sub == "task-planner-agent":
                 return PLAN
             if sub == "implementator-agent":

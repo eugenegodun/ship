@@ -46,7 +46,7 @@ def test_loop_records_events_feeds_replies_and_stops(monkeypatch):
 
 
 def test_continue_transcript_resumes_and_captures_prose_beside_tool_calls(monkeypatch):
-    # Stage-7 shape: the report arrives in the same turn as Stage-8 bookkeeping, then a
+    # Stage-6 shape: the report arrives in the same turn as Stage-7 bookkeeping, then a
     # trailing text-only turn ends the run. Both texts must be captured.
     turns = [
         tooluse("Skill", {"skill": "engineering-insights", "args": "/p/INSIGHTS.md"},

@@ -4,10 +4,9 @@ AI orchestrator to deliver product features end-to-end, from a Jira ticket to a
 reviewed, QA'd pull request.
 
 ```
-/ship <TICKET> [--spec] [--record]
+/ship <TICKET> [--record]
 ```
 
-- `--spec` — write a reviewed spec (WHAT/WHY) before planning the HOW.
 - `--record` — record the QA browser session as video, uploaded and linked on the PR.
   Without the flag you're asked at the QA gate.
 
@@ -22,12 +21,7 @@ for both the browser and fixtures.
 
 ```mermaid
 flowchart TD
-    Start(["/ship TICKET"]) --> Optional{"--spec?"}
-    Optional -->|Yes| Spec["Write spec"]
-    Spec --> SG{"Approve spec"}
-    SG -->|Revise| Spec
-    SG -->|Approved| Plan["Write implementation plan"]
-    Optional -->|No| Plan
+    Start(["/ship TICKET"]) --> Plan["Write implementation plan"]
 
     Plan --> PG{"Approve plan"}
     PG -->|Revise| Plan
@@ -52,12 +46,11 @@ flowchart TD
 
     classDef approval fill:#fff3cd,stroke:#9a6700,color:#24292f
     classDef stop fill:#ffebe9,stroke:#cf222e,color:#24292f
-    class SG,PG,QG approval
+    class PG,QG approval
     class Halt stop
 ```
 
-The normal flow has **two approval gates**, or **three with `--spec`**: the optional
-spec, the implementation plan, and the QA plan. Claude Code also asks for model choices
+The normal flow has **two approval gates**: the implementation plan and the QA plan. Claude Code also asks for model choices
 at startup. Implementation failures, unresolved findings after three review rounds, or
 other blockers can require additional user input.
 
@@ -66,12 +59,9 @@ creation. Its plan is shown for approval only when both the plan and draft PR ar
 Fix rounds reuse the implementator's worktree and do not launch another QA agent. The
 full contract lives in the [orchestrator skill](plugins/ship/skills/ship/SKILL.md).
 
-The pipeline uses four core agents, an optional spec agent, and a git agent:
+The pipeline uses four core agents and a git agent:
 
-- **spec-agent** (optional, `--spec`) — turns the ticket into a reviewed spec: user
-  stories, EARS-format acceptance criteria, or an "Invariants to preserve" section for
-  refactor/migration tickets. No codebase access.
-- **task-planner-agent** — turns the ticket (or the approved spec) into a reviewed
+- **task-planner-agent** — turns the ticket into a reviewed
   implementation plan, grounded in the real codebase.
 - **implementator-agent** — implements the approved plan with TDD in an isolated git
   worktree.
@@ -89,7 +79,7 @@ The pipeline uses four core agents, an optional spec agent, and a git agent:
 
 Two bundled skills run alongside the pipeline:
 
-- **`engineering-insights`** — invoked automatically at Stage 8 to capture non-obvious
+- **`engineering-insights`** — invoked automatically at Stage 7 to capture non-obvious
   lessons from the run (pipeline friction, and project gotchas when the ticket touched
   `edu-frontend/`). Set `SHIP_REPO_PATH` to an existing local Ship clone to capture
   pipeline lessons in its `INSIGHTS.md`; that call is skipped when the variable is unset
@@ -116,16 +106,16 @@ See the [QA agent](plugins/ship/agents/qa-agent.md) for the execution and report
 ## Evals
 
 The pipeline's contracts are tested by a [deepeval](https://deepeval.com) suite in
-[`evals/`](evals/) — 130 cases in five tiers. GitHub Actions runs the first four tiers on
+[`evals/`](evals/) — five tiers. GitHub Actions runs the first four tiers on
 PRs touching `plugins/ship/**` or `evals/**`; end-to-end cases run nightly or manually:
 
-| Tier | Cases | What it checks |
-|------|-------|----------------|
-| Unit | 78 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
-| Agent-level | 6 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality. |
-| Decision points | 20 | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
-| Codex | 21 | Standalone Codex workflow and generated-role scenarios, with simulated tools and no user nudges. CI runs the desktop target model three times. |
-| End-to-end | 5 | The orchestrator played multi-turn with stubbed subagents — dispatch order, gate stops, halt behavior. Nightly, non-blocking. |
+| Tier | What it checks |
+|------|----------------|
+| Unit | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
+| Agent-level | Each agent's own `.md` against fixture inputs, LLM-judged: plan grounding, seeded-bug detection, QA plan quality. |
+| Decision points | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
+| Codex | Standalone Codex workflow and generated-role scenarios, with simulated tools and no user nudges. CI runs the desktop target model three times. |
+| End-to-end | The orchestrator played multi-turn with stubbed subagents — dispatch order, gate stops, halt behavior. Nightly, non-blocking. |
 
 Claude generates the agent-level, decision-point, and end-to-end responses. OpenAI
 generates the Codex-tier responses and judges the agent-level evaluations, using a
@@ -159,20 +149,20 @@ bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/in
 
 Restart the Codex session, then invoke the skill with a ticket as in Claude Code. Differences on
 Codex: there are no Stage 0 model questions (models are fixed per role in
-`plugins/ship/codex-agents/*.toml` — spec, planner, and reviewer `gpt-5.6-sol xhigh`, implementator and QA
+`plugins/ship/codex-agents/*.toml` — planner and reviewer `gpt-5.6-sol xhigh`, implementator and QA
 `gpt-5.6-terra` (`high`/`medium`), git ops `gpt-5.6-luna low`), the approval gates are plain prose
 questions, and the reviewer model-escalation step is a no-op. `reviewer-agent`'s `code-review` and
 `security-review` skills are Claude Code built-ins that don't exist on Codex, so the Codex reviewer
 runs its own diff review + static checks only. Codex sandboxes also block network by default; the
-planner/spec, git, and qa roles need it, so set `network_access = true` under
+planner, git, and qa roles need it, so set `network_access = true` under
 `[sandbox_workspace_write]` in `~/.codex/config.toml` (or run under an approval policy that lets
 subagents request escalation) before your first `/ship` run. Re-run the install script after every
 plugin update (`--check` tells you whether you need to). The full mapping lives in
 [`plugins/ship/skills/ship/references/codex-dispatch.md`](plugins/ship/skills/ship/references/codex-dispatch.md);
-five role files are generated from unchanged `agents/*.md` sources plus optional
+four role files are generated from `agents/*.md` sources plus optional
 Codex-only `codex-agents/overlays/<agent>.md` instructions by
 [`sync_codex_agents.py`](plugins/ship/scripts/sync_codex_agents.py), and CI fails if they drift.
-The sixth, [`ship-git-agent.toml`](plugins/ship/codex-agents/ship-git-agent.toml), is handwritten.
+The fifth, [`ship-git-agent.toml`](plugins/ship/codex-agents/ship-git-agent.toml), is handwritten.
 
 The Codex manifest loads generated `codex-skills/` entry points. Ship's Codex body comes entirely
 from `skills/ship/references/codex-dispatch.md`; the other skills and resources are copied unchanged.
@@ -182,7 +172,6 @@ Codex keeps the parent active after dispatching work, resumes partial implementa
 advances finished fixes to re-review. Progress updates do not end the run; final responses are for
 approval gates, explicit stops, evidenced blockers, or completion. These are prompt instructions,
 not a background scheduler: app shutdowns and runtime interruptions can still require recovery.
-Claude's shared skill and agent instructions are unchanged.
 
 After updating the plugin, reinstall the roles and start a fresh session. If your invocation uses
 a local copy such as `~/.codex/skills/ship/SKILL.md`, replace it with the generated `codex-skills/ship/` entry point; a cache update alone may not update
@@ -201,9 +190,8 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 4.2.1, `qa-agent` 3.1.1,
-  `task-planner-agent` 2.1.1, `implementator-agent` 1.3.2, `reviewer-agent` 1.2.2,
-  `spec-agent` 1.2.0.
+  or invocation input changes. Current: `ship` 5.0.0, `qa-agent` 3.1.2,
+  `task-planner-agent` 3.0.0, `implementator-agent` 2.0.0, `reviewer-agent` 2.0.0.
 - **Plugin package version** — the installable package version, in each tool's
   manifest (`plugins/ship/.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
   `.codex-plugin/plugin.json`) and the root marketplace indexes. Bump all of these

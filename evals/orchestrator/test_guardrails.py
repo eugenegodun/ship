@@ -11,11 +11,11 @@ TOKEN_FIGURE = re.compile(r"\b\d[\d,.]*\s*(?:k\s*)?tokens\b", re.I)
 
 @pytest.mark.llm
 def test_final_report_never_invents_token_numbers(run_window):
-    # Stage 8 runs immediately after Stage 7, so the report and the retro bookkeeping share
+    # Stage 7 runs immediately after Stage 6, so the report and the retro bookkeeping share
     # the same stretch of turns. The shared window (conftest.Window) answers the bookkeeping
     # and collects every turn's prose, so the report is judged rather than an interim ack.
     w = run_window("qa_run_done")
-    assert w.text.strip(), f"the orchestrator must produce a Stage-7 report {w.diagnostics()}"
+    assert w.text.strip(), f"the orchestrator must produce a Stage-6 report {w.diagnostics()}"
     assert not TOKEN_FIGURE.search(w.text), (
         "the orchestrator has no tool to read usage - any token figure is fabricated "
         + w.diagnostics()
@@ -26,5 +26,5 @@ def test_final_report_never_invents_token_numbers(run_window):
         "It points the user to /cost for the session total instead of quoting any token "
         "figure.",
     ], threshold=0.8)
-    assert_test(LLMTestCase(input="pipeline finished (Stage 7 report + Stage 8 retro)",
+    assert_test(LLMTestCase(input="pipeline finished (Stage 6 report + Stage 7 retro)",
                             actual_output=w.text), [metric])

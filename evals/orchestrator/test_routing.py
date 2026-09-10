@@ -36,13 +36,13 @@ def test_stray_model_token_does_not_preanswer_stage0(run_decision):
 
 
 @pytest.mark.llm
-def test_spec_flag_reaches_spec_agent_not_planner(run_decision):
-    d = run_decision("invoke_spec_flag")
-    # Stage 0 still runs first; whichever agent is dispatched first must never be
-    # the planner while --spec is set and no spec exists yet.
-    assert not d.dispatches("task-planner-agent"), (
-        "--spec means spec-agent precedes task-planner-agent"
+def test_removed_spec_flag_asks_instead_of_dispatching(run_window):
+    w = run_window("invoke_spec_flag")
+    assert not w.named("Agent"), "must not dispatch while the removed flag is unresolved"
+    mentioned = "--spec" in w.text or any(
+        "--spec" in str(a.input_parameters) for a in w.named("AskUserQuestion")
     )
+    assert mentioned, "must surface the unsupported flag " + w.diagnostics()
 
 
 @pytest.mark.llm

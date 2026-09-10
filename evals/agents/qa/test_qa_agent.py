@@ -45,7 +45,7 @@ def test_phase_a_plan_quality():
 @pytest.mark.llm
 def test_stage_at_resume_is_adopted_without_challenge():
     # ship 4.0.0 / qa-agent 3.0.0: the target stage arrives with the Phase-B resume,
-    # named by the human in their GATE 3 approval. The 2.x provenance challenge is
+    # named by the human in their GATE 2 approval. The 2.x provenance challenge is
     # retired — the agent must adopt the delivered stage, not question it.
     plan = ask([{"role": "user", "content": PLAN_TURN}])
     resume = (

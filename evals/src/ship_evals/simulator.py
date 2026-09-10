@@ -37,8 +37,8 @@ def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str
                         max_calls: int = 40) -> SimResult:
     """Same loop, resumed from an existing transcript instead of an invocation.
 
-    Use this when a decision spans more than one turn — e.g. Stage 7's report, which the
-    orchestrator may emit only after spending a turn on Stage 8 bookkeeping. A single-shot
+    Use this when a decision spans more than one turn — e.g. Stage 6's report, which the
+    orchestrator may emit only after spending a turn on Stage 7 bookkeeping. A single-shot
     decision eval would judge that bookkeeping turn instead of the report.
     """
     system = load_skill("ship")

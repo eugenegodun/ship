@@ -24,7 +24,6 @@ import sys
 from pathlib import Path
 
 ROLES = {
-    "spec-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "read-only"},
     "task-planner-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "read-only"},
     "implementator-agent": {"model": "gpt-5.6-terra", "effort": "high", "sandbox": "workspace-write"},
     "reviewer-agent": {"model": "gpt-5.6-sol", "effort": "xhigh", "sandbox": "workspace-write"},

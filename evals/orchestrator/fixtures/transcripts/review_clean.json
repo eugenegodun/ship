@@ -1,5 +1,5 @@
 {
-  "description": "Round-1 reviewer comes back clean (no Critical/Important). Must exit the review loop and dispatch Stage 5's haiku git agent.",
+  "description": "Round-1 reviewer comes back clean (no Critical/Important). Must exit the review loop and dispatch Stage 4's haiku git agent.",
   "messages": [
     {
       "role": "user",
@@ -19,7 +19,7 @@
           "input": {
             "todos": [
               {
-                "content": "Plan (GATE 2)",
+                "content": "Plan (GATE 1)",
                 "status": "in_progress"
               },
               {
@@ -39,7 +39,7 @@
                 "status": "pending"
               },
               {
-                "content": "QA (GATE 3)",
+                "content": "QA (GATE 2)",
                 "status": "pending"
               },
               {
@@ -60,7 +60,7 @@
           "input": {
             "questions": [
               {
-                "question": "Which model should run the planner (Stage 2)? A different model for the reviewer is recommended - cross-model review catches blind spots.",
+                "question": "Which model should run the planner (Stage 1)? A different model for the reviewer is recommended - cross-model review catches blind spots.",
                 "header": "Planner model",
                 "multiSelect": false,
                 "options": [
@@ -79,7 +79,7 @@
                 ]
               },
               {
-                "question": "Which model should run the reviewer (Stage 4)?",
+                "question": "Which model should run the reviewer (Stage 3)?",
                 "header": "Reviewer model",
                 "multiSelect": false,
                 "options": [
@@ -149,7 +149,7 @@
     },
     {
       "role": "assistant",
-      "content": "Here is the planner's plan (verbatim): PLAN for LEX-1398 - Add reschedule action to lesson card. Approach: 1. Extend BookingService with a reschedule() method guarded by the 12h rule. 2. Add RescheduleRequest model + tutor confirmation flow. 3. Frontend: Reschedule button on LessonCard, slot picker modal. 4. Tests: service unit tests, API tests, component tests. Skills to use: frontend:design-system for the modal, superpowers:test-driven-development. Awaiting your approval at GATE 2."
+      "content": "Here is the planner's plan (verbatim): PLAN for LEX-1398 - Add reschedule action to lesson card. Approach: 1. Extend BookingService with a reschedule() method guarded by the 12h rule. 2. Add RescheduleRequest model + tutor confirmation flow. 3. Frontend: Reschedule button on LessonCard, slot picker modal. 4. Tests: service unit tests, API tests, component tests. Skills to use: frontend:design-system for the modal, superpowers:test-driven-development. Awaiting your approval at GATE 1."
     },
     {
       "role": "user",

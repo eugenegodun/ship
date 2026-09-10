@@ -17,7 +17,7 @@ CODEX_BOOKKEEPING = {
     "update_plan": "Plan updated",
     "shell": ("unchanged  ship-git-agent.toml\nunchanged  ship-implementator-agent.toml\n"
               "unchanged  ship-qa-agent.toml\nunchanged  ship-reviewer-agent.toml\n"
-              "unchanged  ship-spec-agent.toml\nunchanged  ship-task-planner-agent.toml\n(exit 0)"),
+              "unchanged  ship-task-planner-agent.toml\n(exit 0)"),
 }
 
 
