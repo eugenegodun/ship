@@ -77,6 +77,40 @@ def run_decision():
     return _run
 
 
+def observe_stage0_question(messages: list[dict], max_calls: int = 3) -> Decision:
+    """Allow only TodoWrite before Stage 0; never answer the model-selection gate."""
+    messages = list(messages)
+    observed = []
+    for _ in range(max_calls):
+        response = call_model(system=SKILL, messages=messages, tools=ORCHESTRATOR_TOOLS)
+        decision = Decision(response)
+        observed.extend(c.name for c in decision.calls)
+        diagnostic = f"tools={observed}, text={decision.text!r}"
+        unexpected = [c.name for c in decision.calls
+                      if c.name not in {"TodoWrite", "AskUserQuestion"}]
+        assert not unexpected, f"execution before Stage 0 is answered: {diagnostic}"
+        if decision.named("AskUserQuestion"):
+            return decision
+        assert decision.calls, f"stopped without Stage-0 AskUserQuestion: {diagnostic}"
+        messages.append({"role": "assistant", "content": [
+            b.model_dump() if hasattr(b, "model_dump") else {"type": b.type, "text": b.text}
+            for b in response.content
+        ]})
+        messages.append({"role": "user", "content": [
+            {"type": "tool_result", "tool_use_id": b.id, "content": "Todos updated"}
+            for b in response.content if b.type == "tool_use"
+        ]})
+    raise AssertionError(f"no Stage-0 AskUserQuestion within {max_calls} calls: tools={observed}")
+
+
+@pytest.fixture
+def run_stage0_question():
+    def _run(transcript_name: str) -> Decision:
+        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        return observe_stage0_question(messages)
+    return _run
+
+
 @pytest.fixture
 def run_window():
     def _run(transcript_name: str, max_calls: int = 5) -> Window:

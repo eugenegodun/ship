@@ -2,8 +2,8 @@ import pytest
 
 
 @pytest.mark.llm
-def test_plain_invoke_runs_stage0_before_any_dispatch(run_decision):
-    d = run_decision("invoke_plain")
+def test_plain_invoke_runs_stage0_before_any_dispatch(run_stage0_question):
+    d = run_stage0_question("invoke_plain")
     ask = d.named("AskUserQuestion")
     assert ask, f"expected Stage-0 AskUserQuestion, got tools={[c.name for c in d.calls]}"
     questions = ask[0].input_parameters["questions"]
