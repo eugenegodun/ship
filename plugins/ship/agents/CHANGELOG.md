@@ -10,6 +10,21 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.11.0 (2026-09-10)
+- Follow-up after live CI: make the Codex reference a self-contained workflow, preserve strict
+  premature-exit detection, correct prefix/lint false failures, and retain full live traces.
+  Explicit target-model repetitions and a separate GPT-4.1 comparison replace the implicit default.
+- Codex-only continuation: keep the parent active after asynchronous dispatch/resume, distinguish
+  partial child reports from verified stages, and advance completed fixes to re-review. Preserve
+  existing approval gates and report genuine blockers explicitly.
+- Add an optional Codex implementer overlay to role generation so milestones do not end assigned
+  work. Shared ship and Claude agent sources/versions are unchanged (4.2.1 / 1.3.2).
+- Add stateful Codex continuation regressions, premature-final negative controls, separate mailbox
+  delivery, and generated-role completion evals. Runtime interruptions still require recovery;
+  these instructions do not add a scheduler or background automation.
+- Update the plugin, reinstall Codex roles, and start a fresh session. Local skill copies must also
+  resolve to the updated Codex reference; updating the plugin cache alone may not update them.
+
 ## ship — 4.2.1 (2026-09-08)
 - Correct the orchestrator description: QA planning starts after the first verified working tree,
   alongside review and PR creation. This aligns the description with the existing Stage 3 workflow

@@ -1,3 +1,18 @@
+---
+name: ship
+version: 4.2.1
+description: >
+  Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
+  → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
+  gate. Use when the user runs `/ship <TICKET> [--spec] [--record]` or asks to "ship a ticket",
+  "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
+  (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
+  for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
+  test plan is authored **in parallel** with review and PR creation, launched after the first
+  verified working tree, so it can be ready when the PR lands. Do NOT use for one-off single-agent
+  tasks (dispatch the relevant agent directly instead).
+---
+
 # ship on Codex — executable workflow
 
 This is the complete Codex orchestration prompt. Use it when `spawn_agent`, `followup_task`,
