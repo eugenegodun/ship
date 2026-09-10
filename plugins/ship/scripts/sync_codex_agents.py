@@ -6,8 +6,10 @@ definitions in plugins/ship/agents/*.md. Stdlib only.
 Codex plugins cannot bundle agent roles, so the roles live in
 plugins/ship/codex-agents/ship-<agent>.toml and are copied into
 ~/.codex/agents/ by scripts/install-codex-agents.sh. The .md files stay the
-single source of truth: this script prepends codex-agents/_preamble.md (the
-Codex tool-name adapter) to each agent body verbatim.
+source of truth for shared agent behavior. This script prepends
+codex-agents/_preamble.md (the Codex tool-name adapter) and, when present,
+codex-agents/overlays/<agent>.md (Codex-only behavior) to each agent body
+verbatim. Overlays do not modify the Claude agent sources.
 
   sync_codex_agents.py                 # (re)write the TOMLs
   sync_codex_agents.py --check         # exit 1 if any TOML differs from what
@@ -58,14 +60,18 @@ def parse_agent(text):
     return name_match.group(1), " ".join(paragraph), body
 
 
-def render_role(name, description, body, preamble, cfg):
-    instructions = f"{preamble.rstrip()}\n\n{body}"
+def render_role(name, description, body, preamble, cfg, overlay=""):
+    prefix = f"{preamble.rstrip()}\n\n"
+    if overlay:
+        prefix += f"{overlay.rstrip()}\n\n"
+    instructions = prefix + body
     if not instructions.endswith("\n"):
         instructions += "\n"
     if "'''" in instructions:
         raise ValueError(f"{name}: developer_instructions contains ''' which TOML literal strings cannot hold")
     return (
         HEADER.format(name=name)
+        + (f"# Codex overlay: codex-agents/overlays/{name}.md\n" if overlay else "")
         + f'name = "ship-{name}"\n'
         + f"description = {json.dumps(description, ensure_ascii=False)}\n"
         + f'model = "{cfg["model"]}"\n'
@@ -83,7 +89,9 @@ def generate(plugin_dir):
         name, description, body = parse_agent((plugin_dir / "agents" / f"{agent}.md").read_text())
         if name != agent:
             raise ValueError(f"{agent}.md declares name {name!r}")
-        out[f"ship-{agent}.toml"] = render_role(name, description, body, preamble, cfg)
+        overlay_path = plugin_dir / "codex-agents" / "overlays" / f"{agent}.md"
+        overlay = overlay_path.read_text() if overlay_path.exists() else ""
+        out[f"ship-{agent}.toml"] = render_role(name, description, body, preamble, cfg, overlay)
     return out
 
 

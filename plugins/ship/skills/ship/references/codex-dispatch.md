@@ -25,6 +25,61 @@ just read instead: `<skill dir>/../../scripts/install-codex-agents.sh --check`.
 - If a later `spawn_agent` fails with `unknown agent_type`, the session predates the install: ask
   the user to restart Codex and re-run `/ship`.
 
+## Codex continuation — own the run until a real stop
+
+Every spawn and follow-up is asynchronous. A successful dispatch means the child was started,
+not that the assigned stage is complete. **Do not end your turn after dispatching or resuming
+work.** Child completion may be queued for your next active turn; it is not a promise that a
+finalized parent will automatically wake up. Keep the parent active with work or `wait_agent`.
+
+After **every** dispatch, resume, mailbox event, and timeout, apply this loop:
+
+1. Retain each role's exact canonical identity and its current stage, pending work, review round,
+   worktree/branch, and latest evidence. Process results by identity, not arrival order.
+2. If independent pipeline work is ready, dispatch it (for example QA planning alongside review).
+   Otherwise wait for running children with `wait_agent {timeout_ms: 60000}`. The wait reports
+   activity; consume the separately delivered mailbox message for the actual result. If a completion
+   is announced without a report, use `list_agents` to inspect its state/result.
+3. A timeout means no mailbox update arrived, not failure or completion. If the required child is
+   still running, wait again. Do not resume or replace a running child because a wait timed out.
+4. A child's final message ends **its turn**, not necessarily its assigned stage. Inspect the
+   substance: completed assigned scope, required handoff fields, and verification evidence.
+   A focused test passing while integration verification remains is **incomplete**, not a verified
+   tree and not the outright implementation failure described in Stage 3. Resume that same child
+   with the specific remaining authorized work using `followup_task`, then keep waiting.
+   Request missing worktree/branch or verification evidence from that child before advancing.
+5. Resolve a child's internal question from the approved plan and available context when possible;
+   resume it with the answer. Only a genuinely missing user decision/authorization needs a gate.
+   If incomplete results repeat without progress, send a diagnostic follow-up asking for the exact
+   failure, attempted recovery, and remaining prerequisite. If it still cannot proceed, explicitly
+   report the stall and needed decision; do not endlessly resend the same brief or claim it is active.
+6. A verified implementation result advances immediately to QA-plan dispatch and review. A completed
+   fix result advances immediately to the next fresh reviewer within the existing three-round cap.
+   Apply the same completeness check to fix results, git results, and QA results. A missing PR URL
+   is not a finished git stage; preserve the existing App-managed branch handoff exception.
+7. Queue early QA plans while review/PR work continues. Their arrival must not end the parent turn
+   or surface GATE 3 early. Reach the QA approval gate only at the existing join point.
+
+**Progress is commentary, not a final answer.** Describe observed state accurately: running,
+awaiting a result, incomplete and resumed, verified, or blocked. End user-facing updates with the
+existing full stage table. Report meaningful milestones and provide a brief truthful update at
+least every 60 seconds while active, using bounded waits; follow higher-priority host cadence rules
+if different. Do not invent percentage progress, activity, or completion from elapsed time.
+When the user asks for status during authorized work, answer in commentary and continue that work.
+Only an explicit pause/cancel or changed authorization stops the execution scope.
+
+**Before any final answer**, check that it represents one of: an existing approval gate, an
+explicit user pause/cancel, an evidenced blocker/stall requiring user action, the review cap, the
+existing git/App handoff, or pipeline completion (including the non-gating retrospective attempt).
+Otherwise another dispatch, result-processing step, or wait is required in the same active turn.
+Never finalize with “the implementer is applying fixes” as a substitute for monitoring those fixes.
+
+At a genuine halt, include the completed and remaining work, exact blocker/error, worktree/branch
+when available, queued/running QA state, and required user action. Preserve the existing gates and
+permissions: do not retry missing credentials blindly or bypass a gate to keep moving. A review
+halt may retain the QA child as the shared skill specifies; do not run its Phase B without approval.
+These rules implement the existing pipeline on Codex; they do not change Claude's workflow.
+
 ## Roles
 
 | `SKILL.md` agent | Codex `agent_type` | model / effort | sandbox |
@@ -53,7 +108,7 @@ medium, git gpt-5.6-luna."* — then build the checklist with `update_plan` and 
 | `Agent(subagent_type: X, model: M, prompt: B)` | `spawn_agent {task_name: "<TICKET>-<role>", agent_type: "ship-X", fork_turns: "none", message: B}` |
 | `Agent(…, run_in_background: true)` | the same `spawn_agent` — every spawn is already asynchronous; keep working |
 | `SendMessage(agent_id, message)` | `followup_task {target: <the task_name spawn_agent returned>, message}` — retain and pass back the exact string `spawn_agent` returned, not a re-derived one |
-| `TaskOutput` / waiting for a background agent | `wait_agent {timeout_ms: 300000}`; a child's final answer also lands in your mailbox at the start of your next turn |
+| `TaskOutput` / waiting for a background agent | `wait_agent {timeout_ms: 60000}`; process the separate child mailbox result before deciding the next stage |
 | `AskUserQuestion` | nothing — end the turn with the material and the question in prose |
 | `TodoWrite` | `update_plan` |
 | `Skill(skill, args)` | read that skill's `SKILL.md` from `~/.codex/plugins/cache/<marketplace>/<plugin>/<version>/skills/<skill>/SKILL.md` and follow it with the same `args` |
@@ -84,8 +139,7 @@ dispatches fresh each round.
    passed. The user's next message is the verdict.
 4. **Parallel QA branch.** After the first verified tree, `spawn_agent` the qa-agent with the
    deferred-PR brief from `SKILL.md` and continue immediately with the reviewer. At Stage 6, if the
-   qa-agent's plan has not reached your mailbox, `wait_agent {timeout_ms: 300000}` — never poll with
-   short timeouts. `wait_agent` returns on *any* child's activity; if the qa-agent's plan arrives
+   qa-agent's plan has not reached your mailbox, `wait_agent {timeout_ms: 60000}` — use bounded waits that allow progress commentary, not busy polling. `wait_agent` returns on *any* child's activity; if the qa-agent's plan arrives
    before the reviewer's result, keep it queued (`SKILL.md`: do not surface it yet) and `wait_agent`
    again.
 5. **Reviewer escalation.** `SKILL.md` escalates a re-review round to `claude-opus-5[1m]` after a

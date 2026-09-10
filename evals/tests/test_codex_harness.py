@@ -132,3 +132,25 @@ def test_continue_codex_transcript_skips_empty_text_with_tool_calls():
     # Whitespace-only text alongside tool calls should be skipped
     # Only the text from the final no-tool-calls turn should be captured
     assert result.texts == ["Final."]
+
+
+def test_mailbox_delivery_follows_all_tool_replies():
+    from ship_evals.codex_harness import CodexToolReply
+    seen = []
+    responses = iter([
+        fake_openai_response('Waiting', [
+            {'id': 'a', 'name': 'wait_agent', 'arguments': {}},
+            {'id': 'b', 'name': 'list_agents', 'arguments': {}}]),
+        fake_openai_response('Gate'),
+    ])
+    def call(system, messages, tools):
+        seen.append(list(messages))
+        return next(responses)
+    with patch('ship_evals.codex_harness.call_codex_model', side_effect=call):
+        result = continue_codex_transcript([], lambda name, args: CodexToolReply('activity', ['child result'])
+                                           if name == 'wait_agent' else 'states')
+    assert [m['role'] for m in seen[1]] == ['assistant', 'tool', 'tool', 'user']
+    assert 'child result' in seen[1][-1]['content']
+    assert result.turns[0].tools[0].name == 'wait_agent'
+    assert result.turns[1].text == 'Gate'
+    assert result.turns[1].tools == []

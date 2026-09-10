@@ -9,7 +9,7 @@ deepeval suite for the `/ship` orchestrator (`plugins/ship/`). Spec:
 |------|-------|------|----|
 | Agent-level | `agents/` | each agent's `.md` + fixture inputs, GEval-judged | blocking on PRs |
 | Decision-points | `orchestrator/` | SKILL.md + fixture transcript → assert the next tool call | blocking on PRs |
-| Codex decision-points | `orchestrator_codex/` | SKILL.md + `references/codex-dispatch.md` + fixture transcript, driven through the OpenAI API with Codex V2 tool schemas → assert the next tool call | blocking on PRs (own job) |
+| Codex decision-points and continuation | `orchestrator_codex/` | SKILL.md + `references/codex-dispatch.md` + fixture transcript, driven through the OpenAI API with Codex V2 tool schemas → assert the next tool call | blocking on PRs (own job) |
 | E2E | `e2e/` | multi-turn simulator with canned subagent replies | nightly, non-blocking |
 
 ## Run
@@ -62,3 +62,26 @@ vacuously.
   `spawn_agent`/`followup_task` shape (`agent_type`, `fork_turns`, `target`), never on model names.
 - A failing eval is a finding about `plugins/ship/*` (or a broken fixture) — never
   weaken a rubric or assert to make CI green.
+
+
+## Codex asynchronous continuation
+
+`test_codex_continuation.py` drives simulated asynchronous children through partial implementation,
+review fixes, queued QA, and draft PR creation to the QA gate. Additional cases cover active-work
+status questions, missing handoff evidence, internal questions, repeated partial results, credentials
+blockers, planner/spec waiting, cancellation, and the review cap. No tool executes product commands.
+`test_codex_implementator_completion.py` loads the generated Codex role (including its overlay),
+then tests remaining verification and honest blocker reports using simulated shell results.
+
+The driver records ordered assistant turns and keeps child mailbox delivery separate from tool
+responses. `AsyncScenario` checks stage state independently of the model's final prose. Text-only
+responses stop the driver; it never sends a “continue” nudge to rescue premature finalization.
+Offline negative controls reject the original dispatch/resume-then-final sequence, an incomplete
+QA gate report, and call-budget exhaustion. These tests cannot validate the desktop scheduler or
+measure commentary cadence: the chat-completions API does not expose Codex commentary/final channels.
+
+Run the Codex tier three times with `EVAL_CODEX_MODEL` set to the model being evaluated when comparing
+prompt changes. Record each outcome; do not silently retry failures. Missing `OPENAI_API_KEY` skips
+live cases and is not behavioral verification. Offline checks run with `uv run pytest tests -v`;
+if an auto-loaded plugin requires a socket unavailable in the sandbox, use
+`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest tests -v`.

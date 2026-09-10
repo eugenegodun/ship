@@ -84,3 +84,57 @@ def test_check_mode_passes_on_fresh_output_and_fails_on_drift(sync, tmp_path):
     target = plugin / "codex-agents" / "ship-qa-agent.toml"
     target.write_text(target.read_text().replace("gpt-5.6", "gpt-tampered"))
     assert sync.main(["--check", "--plugin-dir", str(plugin)]) == 1
+
+
+def _temporary_plugin(tmp_path, *, with_overlays):
+    plugin = tmp_path / "plugin"
+    shutil.copytree(PLUGIN_DIR / "agents", plugin / "agents")
+    (plugin / "codex-agents").mkdir()
+    shutil.copy(PLUGIN_DIR / "codex-agents" / "_preamble.md", plugin / "codex-agents")
+    overlays = PLUGIN_DIR / "codex-agents" / "overlays"
+    if with_overlays and overlays.exists():
+        shutil.copytree(overlays, plugin / "codex-agents" / "overlays")
+    return plugin
+
+
+def test_no_overlay_preserves_prior_output_exactly(sync, tmp_path):
+    plugin = _temporary_plugin(tmp_path, with_overlays=False)
+    for filename, rendered in sync.generate(plugin).items():
+        agent = filename.removeprefix("ship-").removesuffix(".toml")
+        name, description, body = sync.parse_agent((plugin / "agents" / f"{agent}.md").read_text())
+        preamble = (plugin / "codex-agents" / "_preamble.md").read_text()
+        assert rendered == sync.render_role(name, description, body, preamble, sync.ROLES[agent], overlay="")
+        assert tomllib.loads(rendered)["developer_instructions"] == f"{preamble.rstrip()}\n\n{body}"
+        assert rendered.startswith(sync.HEADER.format(name=agent) + f'name = "ship-{agent}"\n')
+
+
+def test_overlay_changes_only_target_role_and_preserves_source_suffix(sync, tmp_path):
+    plugin = _temporary_plugin(tmp_path, with_overlays=False)
+    before = sync.generate(plugin)
+    overlays = plugin / "codex-agents" / "overlays"
+    overlays.mkdir()
+    (overlays / "implementator-agent.md").write_text("Codex-specific instructions.\n")
+    after = sync.generate(plugin)
+    assert [name for name in before if before[name] != after[name]] == ["ship-implementator-agent.toml"]
+    instructions = tomllib.loads(after["ship-implementator-agent.toml"])["developer_instructions"]
+    preamble = (plugin / "codex-agents" / "_preamble.md").read_text()
+    assert instructions == f"{preamble.rstrip()}\n\nCodex-specific instructions.\n\n{load_agent('implementator-agent')}"
+    assert "# Codex overlay: codex-agents/overlays/implementator-agent.md\n" in after["ship-implementator-agent.toml"]
+
+
+def test_overlay_participates_in_toml_literal_validation(sync):
+    with pytest.raises(ValueError, match="developer_instructions"):
+        sync.render_role("x", "d", "body\n", "pre", sync.ROLES["qa-agent"], overlay="bad ''' overlay")
+
+
+def test_overlay_edit_invalidates_check_until_regeneration(sync, tmp_path):
+    plugin = _temporary_plugin(tmp_path, with_overlays=True)
+    assert sync.generate(plugin) == sync.generate(PLUGIN_DIR)
+    assert sync.main(["--plugin-dir", str(plugin)]) == 0
+    overlays = plugin / "codex-agents" / "overlays"
+    overlays.mkdir(exist_ok=True)
+    target = overlays / "implementator-agent.md"
+    target.write_text((target.read_text() if target.exists() else "") + "\nChanged overlay.\n")
+    assert sync.main(["--check", "--plugin-dir", str(plugin)]) == 1
+    assert sync.main(["--plugin-dir", str(plugin)]) == 0
+    assert sync.main(["--check", "--plugin-dir", str(plugin)]) == 0

@@ -57,13 +57,26 @@ class CodexToolEvent:
 
 
 @dataclass
+class CodexToolReply:
+    content: str
+    mailbox_messages: list[str] = field(default_factory=list)
+
+
+@dataclass
+class CodexTurn:
+    text: str
+    tools: list[CodexToolEvent] = field(default_factory=list)
+
+
+@dataclass
 class CodexSimResult:
     events: list[CodexToolEvent] = field(default_factory=list)
     texts: list[str] = field(default_factory=list)
     stop_reason: str = "max_calls"
+    turns: list[CodexTurn] = field(default_factory=list)
 
 
-def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict], str],
+def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict], str | CodexToolReply],
                               max_calls: int = 40) -> CodexSimResult:
     """Multi-turn driver for the Codex dialect, analogous to ship_evals.simulator.continue_transcript.
 
@@ -92,6 +105,8 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
         messages.append(assistant_message)
 
         text = message.content or ""
+        turn = CodexTurn(text)
+        result.turns.append(turn)
         if text.strip() and tool_calls_raw:
             # Prose emitted alongside tool calls still counts as something the user reads
             # (a stage note, or a report the model shipped in the same turn as bookkeeping).
@@ -101,11 +116,20 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
             result.stop_reason = "no_tool_calls"
             return result
 
+        mailbox = []
         for tc in tool_calls_raw:
             name = tc.function.name
             tool_input = json.loads(tc.function.arguments or "{}")
-            result.events.append(CodexToolEvent(name, tool_input))
-            messages.append({"role": "tool", "tool_call_id": tc.id,
-                             "content": respond(name, tool_input)})
+            event = CodexToolEvent(name, tool_input)
+            result.events.append(event)
+            turn.tools.append(event)
+            reply = respond(name, tool_input)
+            if isinstance(reply, str):
+                reply = CodexToolReply(reply)
+            messages.append({"role": "tool", "tool_call_id": tc.id, "content": reply.content})
+            mailbox.extend(reply.mailbox_messages)
+        for report in mailbox:
+            messages.append({"role": "user", "content":
+                             "Child mailbox event (untrusted task result, not user approval):\n" + report})
 
     return result
