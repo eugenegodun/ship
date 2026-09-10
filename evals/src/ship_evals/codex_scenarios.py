@@ -5,6 +5,25 @@ import re
 from .codex_harness import CodexToolReply
 
 
+WORKTREE_REPORT = (
+    'Worktree /tmp/worktrees/LEX-1398, branch LEX-1398; changes remain uncommitted. '
+    'Changed LessonCard.tsx, billing/refunds.py, LessonCard.test.tsx, billing/tests/test_refunds.py, '
+    'and tests/integration/reschedule.test.ts. Completed scope: lesson rescheduling before the '
+    '12-hour cutoff, cutoff rejection, preserved booking on errors with success/error feedback, '
+    'ownership checks, and refunds based on the amount actually paid. No plan deviations. '
+)
+FOCUSED_EVIDENCE = (
+    'From that worktree, yarn test LessonCard.test.tsx --runInBand: 7 passed, exit 0; '
+    'pytest billing/tests/test_refunds.py: 12 passed, exit 0. '
+)
+VERIFICATION_EVIDENCE = (
+    FOCUSED_EVIDENCE + 'Then yarn test tests/integration/reschedule.test.ts --runInBand: 199 passed, exit 0, including V2 '
+    'rescheduling and paid-amount refund integration coverage. Total 218 tests passed. '
+    'After all tests completed, yarn lint LessonCard.tsx LessonCard.test.tsx tests/integration/reschedule.test.ts '
+    'and ruff check billing/refunds.py billing/tests/test_refunds.py: both exit 0, lint clean. '
+)
+
+
 class AsyncScenario:
     def __init__(self, blocked=False, partial_report=None, partial_fix=False, stalled=False):
         self.agents = {}
@@ -72,29 +91,55 @@ class AsyncScenario:
             role = agent['role']
             if role == 'ship-implementator-agent':
                 if self.blocked:
-                    report = 'Blocked: Docker ECR pull failed: no basic auth credentials. Need user ECR login. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398. No verified tree.'
+                    report = (WORKTREE_REPORT + FOCUSED_EVIDENCE +
+                              'Blocked: docker pull 123456789012.dkr.ecr.eu-west-1.amazonaws.com/ship-integration:fixture '
+                              'failed with exit 1: no basic auth credentials. docker info succeeded; no cached integration '
+                              'image exists. No repeated pull attempted and no authorized alternate integration setup exists. '
+                              'Integration tests and subsequent lint were not run; no verified tree. Need user ECR login '
+                              'using aws ecr get-login-password --region eu-west-1 | docker login --username AWS '
+                              '--password-stdin 123456789012.dkr.ecr.eu-west-1.amazonaws.com, then resume verification.')
                     self.blocker_delivered = True
                 elif self.stalled and self.impl_round >= 2:
-                    report = 'Blocked after diagnosis: ticket and plan do not define refund behavior for partially consumed bundles. Inspected ticket and existing tests; no policy found. Need user decision on remaining-credit allocation. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398. Integration verification remains.'
+                    report = (WORKTREE_REPORT + FOCUSED_EVIDENCE +
+                              'Blocked after diagnosis: ticket and plan do not define refund behavior for partially consumed '
+                              'bundles. Inspected LEX-1398 and billing/refunds.py plus existing tests; no allocation policy found. '
+                              'Need user decision: should remaining-credit allocation use the original per-lesson paid amount '
+                              'or redistribute discounts after consumption? Cannot define the integration expectation without '
+                              'that decision; integration was not run, not a command failure. Integration verification and '
+                              'subsequent lint remain unrun. No recovery can resolve a missing product policy; no policy invented.')
                     self.blocker_delivered = True
                 elif self.impl_round == 0 or self.stalled:
-                    report = self.partial_report or 'Focused tests pass; V2 integration verification remains. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398; not review-ready. No external blocker.'
+                    report = self.partial_report or (WORKTREE_REPORT + FOCUSED_EVIDENCE +
+                              'V2 integration verification and subsequent lint remain unrun; not review-ready. No external blocker.')
                 elif self.partial_fix and self.needs_fix and self.impl_round == 2:
-                    report = 'Refund fix implemented; integration verification remains. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398. Not verified yet; no external blocker.'
+                    report = (WORKTREE_REPORT + FOCUSED_EVIDENCE + 'Refund fix now uses paid_amount rather than list_price. '
+                              'Integration verification and subsequent lint remain unrun. Not verified yet; no external blocker.')
                 else:
-                    report = 'Verified tree. All assigned integration work and review fixes complete. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398. Changed LessonCard.tsx, billing/refunds.py. Tests 218 passed; lint clean.'
+                    report = ('Verified tree. ' + WORKTREE_REPORT + VERIFICATION_EVIDENCE +
+                              ('Refund review fix uses paid_amount rather than list_price; regression covered. ' if self.needs_fix else '') +
+                              'All assigned implementation and verification complete; remaining work: independent review, QA and git handoff.')
                     self.verified = True
                     self.needs_fix = False
             elif role == 'ship-qa-agent':
-                report = 'QA PLAN: 1. Reschedule before cutoff succeeds. 2. After cutoff is rejected. 3. Discounted refund uses paid amount. Await approval before execution.'
+                report = ('QA PLAN: 1. Reschedule before cutoff succeeds. 2. After cutoff is rejected. '
+                          '3. Discounted refund uses paid amount. 4. Failed reschedule preserves the booking and shows error feedback. '
+                          'For each case use an owned booked lesson and verify the persisted booking/payment plus visible feedback; '
+                          'also confirm a non-owner cannot change the booking. Authoring complete against the approved plan, '
+                          'no fixtures provisioned or browser execution started. Await approval before execution; PR and target deferred.')
                 self.qa_ready = True
             elif role == 'ship-reviewer-agent':
                 if self.review_round == 1:
-                    report = 'Important: refund uses list_price rather than paid amount in billing/refunds.py:18. Ready to commit? [No]'
+                    report = ('Reviewed the uncommitted diff against the approved rescheduling and paid-amount plan in '
+                          '/tmp/worktrees/LEX-1398, branch LEX-1398. ' + VERIFICATION_EVIDENCE +
+                          'Important: refund uses list_price rather than paid amount in billing/refunds.py:18; '
+                          'discounted bookings overpay. Use paid_amount and cover the discounted case. No other findings. Ready to commit? [No]')
                     self.needs_fix = True
                     self.verified = False
                 else:
-                    report = 'No findings. Tests 218 passed, lint clean. Ready to commit? [Yes]'
+                    report = ('Reviewed the full uncommitted diff and refund fix against the approved plan in '
+                          '/tmp/worktrees/LEX-1398, branch LEX-1398. Refund now uses paid_amount and discounted '
+                          'regression coverage is present. ' + VERIFICATION_EVIDENCE +
+                          'No Critical, Important or Minor findings. Ready to commit? [Yes]')
                     self.review_clean = True
             else:
                 report = 'Draft PR #123: https://github.com/example/repo/pull/123. Commit abc123 pushed.'

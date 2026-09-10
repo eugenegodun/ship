@@ -4,8 +4,8 @@ import pytest
 
 
 @pytest.mark.codex
-def test_roles_installed_first_dispatch_is_planner_role_with_clean_fork_and_no_model_question(run_codex_window):
-    w = run_codex_window("roles_installed_invoke")
+def test_roles_installed_first_dispatch_is_planner_role_with_clean_fork_and_no_model_question(run_codex_transition):
+    w = run_codex_transition("roles_installed_invoke")
     planner = w.spawns("ship-task-planner-agent")
     assert planner, "first dispatch must be spawn_agent with agent_type ship-task-planner-agent " + w.diagnostics()
     assert planner[0].input_parameters.get("fork_turns") == "none"

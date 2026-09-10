@@ -38,6 +38,9 @@ reaches its final report step; they do not change the approved scope, required e
   completion report. Passing code generation, a focused suite, or lint is a milestone when other
   approved tasks or checks remain. Continue tool work on those tasks in this turn; a milestone does
   not satisfy workflow step 7. For fix rounds, use the existing worktree and branch.
+- Complete the approved test commands and inspect their results before dispatching lint. Preserve
+  the requested verification order; do not start lint first or batch it ahead of unfinished tests.
+  If integration setup is blocked, report that outcome before running any independent lint check.
 - Send meaningful milestones in commentary while continuing. A final response ends your turn: do
   not claim you are still applying fixes, running tests, or otherwise working in the background
   after finalizing. If a command is still running, wait for its result and inspect it before deciding
