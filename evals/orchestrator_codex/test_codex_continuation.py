@@ -5,7 +5,7 @@ import re
 import pytest
 
 from ship_evals.codex_harness import continue_codex_transcript
-from ship_evals.codex_scenarios import AsyncScenario, assert_qa_gate_report
+from ship_evals.codex_scenarios import AsyncScenario, assert_qa_gate_report, assert_approval_request
 
 
 APPROVED = [
@@ -111,8 +111,8 @@ def test_planning_child_completion_is_awaited_before_gate(role, gate, report):
     result = continue_codex_transcript(messages, respond, max_calls=8)
     assert len(waits) == 2, 'parent finalized without awaiting child'
     assert result.stop_reason == 'no_tool_calls'
-    assert report in result.turns[-1].text
-    assert re.search(r'\bapprov[^?]*\?', result.turns[-1].text, re.I)
+    assert report.split(': ', 1)[1] in result.turns[-1].text
+    assert_approval_request(result.turns[-1].text)
 
 
 @pytest.mark.codex

@@ -11,6 +11,9 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **PATCH** — wording/clarity/typo, no behavior change.
 
 ## ship package — 1.11.0 (2026-09-10)
+- Follow-up after live CI: make the Codex reference a self-contained workflow, preserve strict
+  premature-exit detection, correct prefix/lint false failures, and retain full live traces.
+  Explicit target-model repetitions and a separate GPT-4.1 comparison replace the implicit default.
 - Codex-only continuation: keep the parent active after asynchronous dispatch/resume, distinguish
   partial child reports from verified stages, and advance completed fixes to re-review. Preserve
   existing approval gates and report genuine blockers explicitly.

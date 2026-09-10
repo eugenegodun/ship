@@ -99,15 +99,26 @@ class AsyncScenario:
             return CodexToolReply('Mailbox activity: ' + key + ' completed', [key + '\n' + report])
         raise AssertionError('Unexpected tool: ' + name)
 
+    def snapshot(self):
+        return dict(vars(self))
+
     def assert_terminal(self, result):
-        assert result.stop_reason == 'no_tool_calls', 'scenario exhausted its call budget'
+        detail = json.dumps({'state': self.snapshot(), 'texts': result.texts}, indent=2)
+        assert result.stop_reason == 'no_tool_calls', 'scenario exhausted its call budget: ' + detail
         running = [k for k, a in self.agents.items() if a['state'] == 'running']
-        assert not running, 'premature final with running children: ' + str(running)
-        assert self.blocker_delivered or (self.pr_ready and self.qa_ready and self.review_clean), 'premature final before expected gate/blocker'
+        assert not running, 'premature final with running children: ' + detail
+        assert self.blocker_delivered or (self.pr_ready and self.qa_ready and self.review_clean), 'premature final before expected gate/blocker: ' + detail
+
+
+def assert_approval_request(text):
+    request = re.search(r"\b(?:please\s+)?approve\b[^?]*\?|\bplease\s+approve\b|"
+                        r"\breply\s+[\"'“”‘’*]*approved\b|\bif you approve\b|"
+                        r"\b(?:do you|would you|can you)\s+approve\b", text, re.I)
+    assert request, 'missing approval request: ' + text
 
 
 def assert_qa_gate_report(text):
-    assert re.search(r'\bapprov[^?]*\?', text, re.I), 'missing approval question'
+    assert_approval_request(text)
     for case in ['Reschedule before cutoff succeeds', 'After cutoff is rejected',
                  'Discounted refund uses paid amount']:
         assert case in text, 'QA plan missing: ' + case

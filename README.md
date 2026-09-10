@@ -116,15 +116,15 @@ See the [QA agent](plugins/ship/agents/qa-agent.md) for the execution and report
 ## Evals
 
 The pipeline's contracts are tested by a [deepeval](https://deepeval.com) suite in
-[`evals/`](evals/) — 95 cases in five tiers. GitHub Actions runs the first four tiers on
+[`evals/`](evals/) — 111 cases in five tiers. GitHub Actions runs the first four tiers on
 PRs touching `plugins/ship/**` or `evals/**`; end-to-end cases run nightly or manually:
 
 | Tier | Cases | What it checks |
 |------|-------|----------------|
-| Unit | 43 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
+| Unit | 59 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
 | Agent-level | 6 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality. |
 | Decision points | 20 | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
-| Codex | 21 | OpenAI decision points plus asynchronous continuation and generated-role completion scenarios, with simulated child tools and no user nudges. |
+| Codex | 21 | Standalone Codex workflow and generated-role scenarios, with simulated tools and no user nudges. CI runs the desktop target model three times and reports GPT-4.1 separately. |
 | End-to-end | 5 | The orchestrator played multi-turn with stubbed subagents — dispatch order, gate stops, halt behavior. Nightly, non-blocking. |
 
 Claude generates the agent-level, decision-point, and end-to-end responses. OpenAI
@@ -174,6 +174,10 @@ Codex-only `codex-agents/overlays/<agent>.md` instructions by
 [`sync_codex_agents.py`](plugins/ship/scripts/sync_codex_agents.py), and CI fails if they drift.
 The sixth, [`ship-git-agent.toml`](plugins/ship/codex-agents/ship-git-agent.toml), is handwritten.
 
+The Codex manifest loads generated `codex-skills/` entry points. Ship's Codex body comes entirely
+from `skills/ship/references/codex-dispatch.md`; the other skills and resources are copied unchanged.
+Run `python3 plugins/ship/scripts/sync_codex_skills.py` after source edits; CI checks drift.
+
 Codex keeps the parent active after dispatching work, resumes partial implementation results, and
 advances finished fixes to re-review. Progress updates do not end the run; final responses are for
 approval gates, explicit stops, evidenced blockers, or completion. These are prompt instructions,
@@ -181,8 +185,7 @@ not a background scheduler: app shutdowns and runtime interruptions can still re
 Claude's shared skill and agent instructions are unchanged.
 
 After updating the plugin, reinstall the roles and start a fresh session. If your invocation uses
-a local copy such as `~/.codex/skills/ship/SKILL.md`, verify that its adjacent
-`references/codex-dispatch.md` matches the updated plugin too; a cache update alone may not update
+a local copy such as `~/.codex/skills/ship/SKILL.md`, replace it with the generated `codex-skills/ship/` entry point; a cache update alone may not update
 that copy. The role installer's `--check` verifies roles, not copied skill references.
 
 If git operations encounter a detached HEAD in an App-managed worktree that the agent

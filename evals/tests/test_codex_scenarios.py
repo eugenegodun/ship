@@ -86,3 +86,17 @@ Approve the QA plan?
     assert_qa_gate_report(report)
     with pytest.raises(AssertionError, match='missing stage row: insights'):
         assert_qa_gate_report(report.replace('| Insights | pending |', ''))
+
+
+@pytest.mark.parametrize('text', ['Reply Approved to proceed.', 'Please approve the plan.',
+                                  'Do you approve this plan?'])
+def test_approval_request_accepts_clear_instructions_without_question_marks(text):
+    from ship_evals.codex_scenarios import assert_approval_request
+    assert_approval_request(text)
+
+
+@pytest.mark.parametrize('text', ['QA needs approval', 'Approval pending', 'Plan approved yesterday'])
+def test_approval_status_alone_is_not_a_request(text):
+    from ship_evals.codex_scenarios import assert_approval_request
+    with pytest.raises(AssertionError):
+        assert_approval_request(text)

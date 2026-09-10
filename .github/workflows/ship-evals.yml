@@ -47,6 +47,24 @@ jobs:
     # Blocking check for the Codex dispatch dialect only. Separate job so a failure here is
     # visibly Codex-only and never masks the Claude-tier result above.
     if: github.event_name == 'pull_request'
+    name: ${{ matrix.check }}
+    continue-on-error: ${{ matrix.comparison }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - check: evals-codex
+            model: gpt-6-astra
+            effort: medium
+            comparison: false
+          - check: evals-codex-gpt41-comparison
+            model: gpt-4.1
+            effort: ''
+            comparison: true
+    env:
+      EVAL_CODEX_MODEL: ${{ matrix.model }}
+      EVAL_CODEX_REASONING_EFFORT: ${{ matrix.effort }}
+      EVAL_CODEX_TRACE_DIR: codex-traces
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -54,7 +72,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Codex role files match the agent definitions
-        run: python3 ../plugins/ship/scripts/sync_codex_agents.py --check
+        run: |
+          python3 ../plugins/ship/scripts/sync_codex_agents.py --check
+          python3 ../plugins/ship/scripts/sync_codex_skills.py --check
       - name: Require OpenAI key
         run: |
           if [ -z "$OPENAI_API_KEY" ]; then
@@ -63,8 +83,34 @@ jobs:
           fi
       - uses: astral-sh/setup-uv@v4
       - run: uv sync --frozen
-      - name: Codex decision-point evals (blocking)
-        run: uv run pytest orchestrator_codex -m codex -v
+      - name: Verify selected model API access
+        run: |
+          uv run python - <<'PYTHON'
+          from ship_evals.codex_harness import CODEX_MODEL, CODEX_EFFORT, call_codex_model
+          print(f"Checking API access: {CODEX_MODEL}, reasoning effort: {CODEX_EFFORT}")
+          call_codex_model("Reply OK.", [{"role": "user", "content": "OK?"}], [])
+          PYTHON
+      - name: Codex live scenarios (three independent runs)
+        shell: bash
+        run: |
+          result=0
+          echo "Model: $EVAL_CODEX_MODEL; effort: $EVAL_CODEX_REASONING_EFFORT" >> "$GITHUB_STEP_SUMMARY"
+          for repetition in 1 2 3; do
+            if uv run pytest orchestrator_codex -m codex -v --junitxml="codex-run-$repetition.xml"; then
+              echo "Run $repetition: passed" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "Run $repetition: failed (see test output and traces)" >> "$GITHUB_STEP_SUMMARY"
+              result=1
+            fi
+          done
+          exit "$result"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: codex-evals-${{ matrix.check }}
+          path: |
+            evals/codex-traces/
+            evals/codex-run-*.xml
 
   evals-e2e:
     # Nightly / manual: multi-turn pipeline scenarios. Never a required check.

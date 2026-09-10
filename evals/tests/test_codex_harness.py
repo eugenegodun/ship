@@ -154,3 +154,45 @@ def test_mailbox_delivery_follows_all_tool_replies():
     assert result.turns[0].tools[0].name == 'wait_agent'
     assert result.turns[1].text == 'Gate'
     assert result.turns[1].tools == []
+
+
+def test_runtime_prompt_is_the_codex_reference_without_claude_translation():
+    from ship_evals.codex_harness import REFERENCE, load_codex_system
+    assert load_codex_system() == REFERENCE.read_text()
+
+
+def test_failure_trace_includes_full_output_and_pending_state(tmp_path, monkeypatch):
+    import json
+    from ship_evals.codex_scenarios import AsyncScenario
+    monkeypatch.setenv('EVAL_CODEX_TRACE_DIR', str(tmp_path))
+    scenario = AsyncScenario()
+    with patch('ship_evals.codex_harness.call_codex_model', return_value=fake_openai_response('Still working')):
+        result = continue_codex_transcript([], scenario.respond)
+    trace = json.loads(next(tmp_path.glob('*.json')).read_text())
+    assert trace['result']['turns'][-1]['text'] == 'Still working'
+    assert trace['state']['pr_ready'] is False
+    assert result.stop_reason == 'no_tool_calls'
+
+
+def test_token_exhaustion_is_not_reported_as_a_final_answer():
+    response = fake_openai_response('partial output')
+    response.choices[0].finish_reason = 'length'
+    with patch('ship_evals.codex_harness.call_codex_model', return_value=response):
+        result = continue_codex_transcript([], lambda name, args: 'ok')
+    assert result.stop_reason == 'length'
+    assert result.turns[-1].finish_reason == 'length'
+
+
+def test_direct_api_call_logs_full_response_without_forcing_tools(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    from ship_evals.codex_harness import call_codex_model
+    monkeypatch.setenv('EVAL_CODEX_TRACE_DIR', str(tmp_path))
+    client = MagicMock()
+    client.chat.completions.create.return_value.model_dump.return_value = {
+        'choices': [{'finish_reason': 'stop', 'message': {'content': 'Full response'}}]}
+    with patch('ship_evals.codex_harness._get_client', return_value=client):
+        call_codex_model('system', [{'role': 'user', 'content': 'brief'}], [])
+    trace = json.loads(next(tmp_path.glob('*.json')).read_text())
+    assert trace['response']['choices'][0]['message']['content'] == 'Full response'
+    assert trace['response']['choices'][0]['finish_reason'] == 'stop'
+    assert 'tool_choice' not in trace['request']

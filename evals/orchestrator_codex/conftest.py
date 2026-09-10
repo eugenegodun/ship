@@ -40,7 +40,7 @@ class CodexDecision:
                 if c.input_parameters.get("agent_type") == agent_type]
 
     def diagnostics(self) -> str:
-        return f"[tools={[(c.name, c.input_parameters.get('agent_type') or c.input_parameters.get('target')) for c in self.calls]} text={self.text[:300]!r}]"
+        return f"[tools={[(c.name, c.input_parameters.get('agent_type') or c.input_parameters.get('target')) for c in self.calls]} text={self.text!r}]"
 
 
 @pytest.fixture
@@ -75,7 +75,7 @@ class CodexWindow:
         return (f"[turns_with_text={len(self.result.texts)} "
                 f"stop={self.result.stop_reason} "
                 f"tools={[c.name for c in self.calls]} "
-                f"text={self.text[:400]!r}]")
+                f"text={self.text!r}]")
 
 
 @pytest.fixture
