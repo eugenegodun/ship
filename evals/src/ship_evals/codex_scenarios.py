@@ -180,7 +180,8 @@ class AsyncScenario:
 
 def assert_approval_request(text):
     request = re.search(r"\b(?:please\s+)?approve\b[^?]*\?|\bplease\s+approve\b|"
-                        r"(?:^|[\n.!?])\s*[*_>]*approve\s+(?:this|the)\s+(?:spec(?:ification)?|plan|QA)\b|"
+                        r"(?:^|[\n.!?])\s*[*_>]*(?:gate\s+[1-3]\s*[:—–-]\s*)?"
+                        r"approve\s+(?:this|the)\s+(?:spec(?:ification)?|plan|QA)\b|"
                         r"\breply\s+[\"'“”‘’*]*approved\b|\bif you approve\b|"
                         r"\b(?:do you|would you|can you)\s+approve\b", text, re.I)
     assert request, 'missing approval request: ' + text
@@ -198,5 +199,6 @@ def assert_qa_gate_report(text):
 
 
 def assert_report_preserved(report, text):
-    """Preserve every word and punctuation mark; ignore display-only whitespace."""
-    assert ' '.join(report.split()) in ' '.join(text.split()), 'approval material changed or omitted: ' + text
+    """Preserve report content, allowing whitespace and a Markdown blockquote wrapper."""
+    unquoted = re.sub(r'(?m)^[ \t]{0,3}>[ \t]?', '', text)
+    assert ' '.join(report.split()) in ' '.join(unquoted.split()), 'approval material changed or omitted: ' + text

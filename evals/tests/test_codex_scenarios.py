@@ -90,13 +90,19 @@ Approve the QA plan?
 
 @pytest.mark.parametrize('text', ['Reply Approved to proceed.', 'Please approve the plan.',
                                   'Do you approve this plan?', '**Approve this spec to proceed, or request changes.**',
-                                  '**Approve this specification to proceed to planning, or request changes.** Video recording is declined.'])
+                                  '**Approve this specification to proceed to planning, or request changes.** Video recording is declined.',
+                                  '**GATE 1 — Approve this spec or request changes.** Video recording is declined.',
+                                  'GATE 2: Approve the plan to proceed.',
+                                  'GATE 3 - Approve the QA plan to proceed.'])
 def test_approval_request_accepts_clear_instructions_without_question_marks(text):
     from ship_evals.codex_scenarios import assert_approval_request
     assert_approval_request(text)
 
 
-@pytest.mark.parametrize('text', ['QA needs approval', 'Approval pending', 'Plan approved yesterday'])
+@pytest.mark.parametrize('text', ['QA needs approval', 'Approval pending', 'Plan approved yesterday',
+                                'GATE 1 — Specification awaiting approval.',
+                                'GATE 2: Do not approve this plan yet.',
+                                'GATE 3 - The user will approve the QA plan later.'])
 def test_approval_status_alone_is_not_a_request(text):
     from ship_evals.codex_scenarios import assert_approval_request
     with pytest.raises(AssertionError):
@@ -124,3 +130,16 @@ def test_report_whitespace_does_not_hide_changed_approval_material():
         assert_report_preserved(report, report.replace('paid', 'list'))
     with pytest.raises(AssertionError):
         assert_report_preserved(report, 'Scope: refund the paid amount.')
+
+
+def test_report_blockquote_preserves_content_but_not_changes_or_omissions():
+    from ship_evals.codex_scenarios import assert_report_preserved
+    report = 'Scope: refund the paid amount.\nVerification: run integration tests.'
+    quoted = '> Scope: refund the paid amount.\n>\n> Verification: run integration tests.'
+    assert_report_preserved(report, 'Spec:\n\n' + quoted + '\n\nReply Approved to proceed.')
+    with pytest.raises(AssertionError):
+        assert_report_preserved(report, quoted.replace('paid', 'list'))
+    with pytest.raises(AssertionError):
+        assert_report_preserved(report, '> Scope: refund the paid amount.')
+    with pytest.raises(AssertionError):
+        assert_report_preserved('Cutoff: hours > 12.', '> Cutoff: hours 12.')
