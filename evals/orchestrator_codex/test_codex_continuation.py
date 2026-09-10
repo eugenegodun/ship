@@ -200,5 +200,6 @@ def test_repeated_partial_results_are_diagnosed_then_reported_as_a_stall():
     followups = [e for e in result.events if e.name == 'followup_task']
     assert len(followups) == 2
     assert re.search(r'diagnos|block|failure|prerequisite|why', followups[-1].input['message'], re.I)
-    assert re.search(r'partially[\s-]+consumed', result.turns[-1].text, re.I)
-    assert re.search(r'decision|clarif|allocat', result.turns[-1].text, re.I)
+    assert 'SHIP_INTEGRATION_CLIENT_CERT' in result.turns[-1].text
+    assert '/tmp/worktrees/LEX-1398' in result.turns[-1].text
+    assert re.search(r'provision|provid|configur|supply', result.turns[-1].text, re.I)

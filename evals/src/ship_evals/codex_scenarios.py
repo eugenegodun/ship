@@ -101,12 +101,16 @@ class AsyncScenario:
                     self.blocker_delivered = True
                 elif self.stalled and self.impl_round >= 2:
                     report = (WORKTREE_REPORT + FOCUSED_EVIDENCE +
-                              'Blocked after diagnosis: ticket and plan do not define refund behavior for partially consumed '
-                              'bundles. Inspected LEX-1398 and billing/refunds.py plus existing tests; no allocation policy found. '
-                              'Need user decision: should remaining-credit allocation use the original per-lesson paid amount '
-                              'or redistribute discounts after consumption? Cannot define the integration expectation without '
-                              'that decision; integration was not run, not a command failure. Integration verification and '
-                              'subsequent lint remain unrun. No recovery can resolve a missing product policy; no policy invented.')
+                              'Blocked after diagnosis: yarn test tests/integration/reschedule.test.ts --runInBand '
+                              'exits 2 before executing tests: SHIP_INTEGRATION_CLIENT_CERT is not set. '
+                              'The existing integration service requires an externally issued client certificate. '
+                              'Inspected tests/integration/setup.ts:18 and the repository integration runbook: '
+                              'the environment has no configured certificate and none is present in the approved '
+                              'secret mount. The runbook requires the user/platform owner to provision the certificate; '
+                              'this agent has no credential-issuance capability or authorized alternate integration service. '
+                              'No unchanged retry or bypass attempted. Required user action: provision '
+                              'SHIP_INTEGRATION_CLIENT_CERT for this worktree, then resume. Integration tests were '
+                              'not executed and subsequent lint remains unrun; no verified tree.')
                     self.blocker_delivered = True
                 elif self.impl_round == 0 or self.stalled:
                     report = self.partial_report or (WORKTREE_REPORT + FOCUSED_EVIDENCE +
