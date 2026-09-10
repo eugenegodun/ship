@@ -89,7 +89,8 @@ Approve the QA plan?
 
 
 @pytest.mark.parametrize('text', ['Reply Approved to proceed.', 'Please approve the plan.',
-                                  'Do you approve this plan?', '**Approve this spec to proceed, or request changes.**'])
+                                  'Do you approve this plan?', '**Approve this spec to proceed, or request changes.**',
+                                  '**Approve this specification to proceed to planning, or request changes.** Video recording is declined.'])
 def test_approval_request_accepts_clear_instructions_without_question_marks(text):
     from ship_evals.codex_scenarios import assert_approval_request
     assert_approval_request(text)

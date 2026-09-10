@@ -180,7 +180,7 @@ class AsyncScenario:
 
 def assert_approval_request(text):
     request = re.search(r"\b(?:please\s+)?approve\b[^?]*\?|\bplease\s+approve\b|"
-                        r"(?:^|[\n.!?])\s*[*_>]*approve\s+(?:this|the)\s+(?:spec|plan|QA)\b|"
+                        r"(?:^|[\n.!?])\s*[*_>]*approve\s+(?:this|the)\s+(?:spec(?:ification)?|plan|QA)\b|"
                         r"\breply\s+[\"'“”‘’*]*approved\b|\bif you approve\b|"
                         r"\b(?:do you|would you|can you)\s+approve\b", text, re.I)
     assert request, 'missing approval request: ' + text
