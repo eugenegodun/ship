@@ -30,4 +30,4 @@ def test_every_manifest_carries_the_same_package_version():
         found = _versions(json.loads(path.read_text()))
         assert found, f"{path} declares no version"
         versions |= found
-    assert versions == {"1.13.0"}, versions
+    assert versions == {"1.13.1"}, versions

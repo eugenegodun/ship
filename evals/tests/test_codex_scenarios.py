@@ -143,3 +143,17 @@ def test_report_blockquote_preserves_content_but_not_changes_or_omissions():
         assert_report_preserved(report, '> Scope: refund the paid amount.')
     with pytest.raises(AssertionError):
         assert_report_preserved('Cutoff: hours > 12.', '> Cutoff: hours 12.')
+
+
+@pytest.mark.parametrize('command', [
+    'bash /tmp/ship-plugin/scripts/install-codex-agents.sh --check',
+    'bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/install-codex-agents.sh" --check',
+])
+def test_repeated_preflight_stays_rejected_with_explicit_diagnostics(command):
+    with pytest.raises(AssertionError, match='Repeated preflight after recorded exit-0 success'):
+        AsyncScenario().respond('shell', {'command': command})
+
+
+def test_other_shell_commands_remain_rejected():
+    with pytest.raises(AssertionError, match='Unexpected tool: shell'):
+        AsyncScenario().respond('shell', {'command': 'git status'})

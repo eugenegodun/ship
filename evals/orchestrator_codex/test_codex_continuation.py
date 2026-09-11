@@ -11,7 +11,7 @@ from ship_evals.codex_scenarios import AsyncScenario, assert_qa_gate_report, ass
 PREFLIGHT = [
     {'role': 'assistant', 'content': None, 'tool_calls': [
         {'id': 'preflight', 'type': 'function', 'function': {'name': 'shell',
-         'arguments': json.dumps({'command': 'bash ~/.codex/plugins/cache/ship/ship/1.11.0/scripts/install-codex-agents.sh --check'})}}]},
+         'arguments': json.dumps({'command': 'bash /tmp/ship-plugin/scripts/install-codex-agents.sh --check'})}}]},
     {'role': 'tool', 'tool_call_id': 'preflight', 'content': '\n'.join(
         'unchanged  ship-' + role + '-agent.toml' for role in
         ['git', 'implementator', 'qa', 'reviewer', 'task-planner']) + '\n(exit 0)'},

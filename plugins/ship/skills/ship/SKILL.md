@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 6.0.0
+version: 6.0.1
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -351,9 +351,9 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 6.0.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 6.0.1 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
-`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.0.0
+`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.0.1
 (accepts the target stage with the Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
 records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
 the results; publishes results in the PR description’s `Evidence` section, or `QA` when the applied

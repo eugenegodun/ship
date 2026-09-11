@@ -9,6 +9,15 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.13.1 (2026-09-11)
+- `qa-agent` 4.0.1 makes the report example retain the resolved environment and each changed flag's
+  original/tested states. The complete proposed report and in-session report retain these facts
+  even when publication fails or read-back differs; observed persisted content stays separate.
+- `ship` 6.0.1 retains successful Codex preflight evidence across approvals, resumes and review
+  rounds. Successful checks through resolved paths count without rediscovering the installer.
+- Remove the continuation fixture's stale version-specific installer path and add focused
+  regressions/diagnostics for incomplete reporting payloads and repeated preflight.
+
 ## ship package — 1.13.0 (2026-09-11)
 - **Breaking QA reporting contract:** `qa-agent` 4.0.0 publishes results in the PR description’s
   `Evidence` section by default. If the applied PR template has no `Evidence`, it reuses or creates

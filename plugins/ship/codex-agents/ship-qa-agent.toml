@@ -197,6 +197,8 @@ given, fall back to the default when none was, and never invent one.
    ```
    <!-- qa-agent-results -->
    **Overall: <passed>/<total> passed** ✅|❌
+   Environment: <resolved stage/host>
+   Flags: <flag name>: <original state> → <tested state>
 
    | Test Case | Description | Status | Notes |
    |---|---|---|---|
@@ -207,7 +209,13 @@ given, fall back to the default when none was, and never invent one.
 
    Use the case id/title exactly as it appeared in the approved Phase-A plan — don't rename or
    renumber. The verdict emoji is ✅ only when every case passed, ❌ if any failed. Include relevant
-   stage/environment and flag-state notes inside this owned block. When recording was made, add one
+   stage/environment and flag-state notes inside this owned block. Before preparing any write,
+   include the known resolved stage/host and each changed flag name with its original and tested
+   states. If no flags changed, say so; never invent missing facts. This complete report is the
+   source for both the proposed PR block and the in-session report. Publication errors or a
+   mismatched read-back must not remove these facts from either report. Keep the observed
+   read-back separate from the intended report; never claim the proposal was saved when it was not.
+   When recording was made, add one
    line per video directly under the verdict line:
    `🎥 QA recording: <hosted URL>` (note that the host is VPN-only), or
    `🎥 QA recording (upload failed): <local path>` when the upload didn't succeed. Include recording

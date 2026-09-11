@@ -468,3 +468,22 @@ def test_publication_evaluator_rejects_unverified_or_false_persistence(outcome, 
         response["saved_body"] = "## Summary\nInvented saved content.\n"
     with pytest.raises(AssertionError):
         assert_publication_result(case, response)
+
+
+@pytest.mark.parametrize("missing_from", [None, "proposed_body", "final_report"])
+def test_readback_mismatch_preserves_environment_in_both_reports(missing_from):
+    case = next(item for item in REPORTING_CASES if item["id"] == "readback_mismatch")
+    _, _, report = _sample_reporting_body()
+    structured = {
+        "proposed_body": case["body"] + "\n" + report,
+        "saved_body": case["readback_body"],
+        "publication_status": "failed",
+        "final_report": report + "\nPublication failed: read-back differs from the proposed body.",
+    }
+    if missing_from:
+        structured[missing_from] = structured[missing_from].replace(
+            case["executed_results"]["environment"], "")
+        with pytest.raises(AssertionError):
+            assert_publication_result(case, structured)
+    else:
+        assert_publication_result(case, structured)

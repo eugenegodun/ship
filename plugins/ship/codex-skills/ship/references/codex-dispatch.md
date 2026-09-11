@@ -50,7 +50,13 @@ Inputs: ticket key; optional `--record`. Ask for a missing ticket or unexplained
 argument. Preserve explicit user constraints such as base branch and declined recording. There are
 no model questions on Codex. A target stage is passed at QA approval when known, not invented.
 
-Before the first dispatch, run the installer check unless this run already recorded a successful check:
+Preflight is a once-per-run prerequisite. First inspect the retained tool evidence: a completed
+installer check with exit 0 and all five roles unchanged sets `preflight_passed = true`. Retain that
+result across approval gates, child resumes, partial reports, and review rounds. Those transitions
+do not invalidate it; do not repeat installer discovery or `--check` when it is true. A successful
+check through a resolved installer path counts even if the example below uses a different path.
+
+Only when this run has no successful check, run the installer before the first dispatch:
 
 ```sh
 bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/install-codex-agents.sh" --check
@@ -76,7 +82,8 @@ Reviewers are fresh each round. Models are fixed per role; no reviewer model esc
 
 ## State and mailbox handling
 
-Retain ticket, flags, approved plan, role identities, worktree/branch, verification evidence,
+Retain `preflight_passed` and its tool evidence, ticket, flags, approved plan, role identities,
+worktree/branch, verification evidence,
 review count, queued QA plan, PR URL, and approval decisions. `update_plan` is bookkeeping only.
 
 `wait_agent` returns an activity/timeout summary; read the separate child mailbox message for its
