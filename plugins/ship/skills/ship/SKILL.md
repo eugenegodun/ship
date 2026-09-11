@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 5.0.0
+version: 6.0.0
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -146,8 +146,8 @@ authored while the review→PR branch proceeds. Brief it with:
 - the **worktree path** (so it can ground the plan on the real implemented code / selectors),
 - the **authorization scope**: state that upon the human's plan approval at GATE 2, Phase B is
   authorized to provision disposable fixture data (client/tutor/tutoring/payments/lessons via
-  `@prep/fixtures`) and drive a browser against the resolved target host, and to post results to
-  the PR,
+  `@prep/fixtures`) and drive a browser against the resolved target host, and to publish results in
+  the PR description using qa-agent’s `Evidence`/`QA` placement rules,
 - an explicit **deferred-PR / deferred-stage** instruction: *"The PR does not exist yet — you were
   launched in parallel with the review/PR stage, and the target stage (if any) will only exist once
   the PR's `/dynamic` environment is created. Author the plan from the feature description / plan /
@@ -225,15 +225,17 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
      user named it; if the approval names none, say so and qa-agent uses its default
      localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
      it provisions a stage account, executes with Playwright (recording the session when requested
-     and uploading the video via `devex:internal-static-hosting`), and posts PASS/FAIL results to
-     the PR (the plan itself was already shown to the human above at GATE 2 — it is not separately
-     posted).
+     and uploading the video via `devex:internal-static-hosting`), and publishes PASS/FAIL results in
+     the PR description using its `Evidence`/`QA` placement rules. The plan stays in-session.
+     Relay any explicit user override of the results destination in the Phase-B resume.
 
 ## Stage 6 — Final report
 
 Return a concise summary: ticket key, branch, PR URL, review outcome (rounds + verdict), and the QA
-PASS/FAIL result with links to the PR comments (including the 🎥 recording URL when the run was
-recorded).
+PASS/FAIL result with a link to the results in the PR description (including the 🎥 recording URL
+when the run was recorded). If publication failed, include the results and failure reason in-session;
+do not claim they were published or substitute a results-comment link. Honor an explicit user
+override of the results destination when reporting the link.
 
 End the report with a **token-usage pointer** (see § Usage reporting): tell the user to run `/cost`
 for the whole-flow session total, and that per-agent counts are on each completed task's line in the
@@ -349,13 +351,14 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 5.0.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 6.0.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
-`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥3.1.2
+`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.0.0
 (accepts the target stage with the Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
 records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
-the results; posts only results to the PR, formatted as a verdict line
-+ Test Case/Description/Status/Notes table), and
+the results; publishes results in the PR description’s `Evidence` section, or `QA` when the applied
+template has no `Evidence`, preserving human content and replacing its owned block on reruns;
+returns a description link with the verdict line + Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 7 — takes a target path via `args`, no
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
 consumes it before bumping this list. Record every bump in

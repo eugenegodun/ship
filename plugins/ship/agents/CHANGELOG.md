@@ -9,6 +9,18 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.13.0 (2026-09-11)
+- **Breaking QA reporting contract:** `qa-agent` 4.0.0 publishes results in the PR description’s
+  `Evidence` section by default. If the applied PR template has no `Evidence`, it reuses or creates
+  `QA`. A bounded results block makes reruns replaceable while preserving human-authored content.
+- Uses a fresh PR body, a temporary body file, and read-back verification. Ambiguous markers or
+  publication failures are reported in-session, separately from the QA verdict, without silently
+  falling back to a comment. Explicit user destination instructions still take precedence.
+- `ship` 6.0.0 updates both orchestrators to return the description link instead of a results-comment
+  URL. The verdict/table, optional recording links, QA gate, and execution workflow remain intact.
+- Adds reporting regressions and updates completion transcripts, generated Codex artifacts, and
+  documentation. All six package/marketplace manifests advance together.
+
 ## ship package — 1.12.0 (2026-09-10)
 - Removes the unused optional spec stage and its agent, generated Codex role, and spec-generation
   evals. Invocation is now `/ship <TICKET> [--record]`; the planner reads Jira and linked specs.

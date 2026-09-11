@@ -315,7 +315,7 @@
           "input": {
             "questions": [
               {
-                "question": "Record video of this QA run? The recording is uploaded to internal static hosting and linked under the verdict in the PR comment.",
+                "question": "Record video of this QA run? The recording is uploaded to internal static hosting and linked under the verdict in the PR description.",
                 "header": "QA recording",
                 "multiSelect": false,
                 "options": [
