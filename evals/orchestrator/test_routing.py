@@ -38,7 +38,7 @@ def test_stray_model_token_does_not_preanswer_stage0(run_decision):
 @pytest.mark.llm
 def test_removed_spec_flag_asks_instead_of_dispatching(run_window):
     w = run_window("invoke_spec_flag")
-    assert not w.named("Agent"), "must not dispatch while the removed flag is unresolved"
+    assert not w.named("Agent"), "must not dispatch while the removed flag is unresolved " + w.diagnostics()
     mentioned = "--spec" in w.text or any(
         "--spec" in str(a.input_parameters) for a in w.named("AskUserQuestion")
     )
