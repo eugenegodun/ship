@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -43,6 +44,8 @@ class Decision:
 class Window:
     """Several turns, up to the orchestrator's own stopping point — use for PROSE.
 
+    Stop before answering AskUserQuestion; no user answer is available in this window.
+
     A single turn is the wrong window for text. SKILL.md mandates TodoWrite stage-table
     bookkeeping, so a compliant orchestrator may spend its next turn entirely on tool
     calls and emit the prose a turn later. Asserting on one turn made three cases fail
@@ -66,7 +69,8 @@ class Window:
         return (f"[turns_with_text={len(self.result.texts)} "
                 f"stop={self.result.stop_reason} "
                 f"tools={[c.name for c in self.calls]} "
-                f"text={self.text[:400]!r}]")
+                f"text={self.text!r}]\n"
+                + json.dumps(self.result.messages, indent=2, ensure_ascii=False))
 
 
 @pytest.fixture
@@ -82,6 +86,5 @@ def run_window():
     def _run(transcript_name: str, max_calls: int = 5) -> Window:
         messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
         return Window(continue_transcript(messages, respond=bookkeeping_responder,
-                                          max_calls=max_calls,
-                                          stop_after_tools={"AskUserQuestion"}))
+                                          max_calls=max_calls, stop_on_tools={"AskUserQuestion"}))
     return _run
