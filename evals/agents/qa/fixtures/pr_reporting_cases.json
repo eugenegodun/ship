@@ -1,0 +1,478 @@
+[
+  {
+    "id": "existing_evidence",
+    "body": "## Summary\nHuman summary.\n\n## Evidence\n![Screenshot](https://example.com/human.png)\n\n## Risks\n- [ ] Human checklist.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "restore_template_evidence",
+    "body": "## Summary\nHuman summary.\n\n## QA\nManual QA notes.\n",
+    "applied_template": "## Summary\nDescribe change.\n\n## Evidence\nAttach evidence.\n",
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "added_heading": "Evidence",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "reuse_qa",
+    "body": "## Summary\nHuman summary.\n\n## QA\nManual QA notes.\n",
+    "applied_template": "## Summary\nDescribe change.\n",
+    "expected_section": "QA",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "append_qa",
+    "body": "## Summary\nHuman summary.\n",
+    "applied_template": "## Summary\nDescribe change.\n",
+    "expected_section": "QA",
+    "publication_outcome": "success",
+    "added_heading": "QA",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "empty_body",
+    "body": "",
+    "applied_template": "## Summary\nDescribe change.\n",
+    "expected_section": "QA",
+    "publication_outcome": "success",
+    "added_heading": "QA",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "both_headings",
+    "body": "## Summary\nHuman summary.\n\n###   eViDeNcE   \nKeep human evidence.\n\n### QA\nKeep manual QA.\n",
+    "applied_template": "## QA\n",
+    "expected_section": "eViDeNcE",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "rerun",
+    "body": "## Evidence\nHuman before.\n\n<!-- qa-agent-results -->\n**Overall: 0/1 passed** ❌\nOld automated results.\n<!-- /qa-agent-results -->\n\nHuman after.\n\n## Risks\nKeep this risk.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "move_owned_block",
+    "body": "## Evidence\nKeep human evidence.\n\n## QA\nBefore old QA.\n\n<!-- qa-agent-results -->\n**Overall: 0/1 passed** ❌\nOld automated results.\n<!-- /qa-agent-results -->\n\nAfter old QA.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "nested_section",
+    "body": "## Summary\nSummary.\n\n## Evidence\nHuman evidence.\n\n### Screenshots\n![Human](https://example.com/shot.png)\n\n## Risks\nHuman risk.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "fake_headings",
+    "body": "## Summary\nThe Evidence section is described in prose.\n\n```markdown\n## Evidence\nExample only.\n```\n\n<!--\n## Evidence\nComment only.\n-->\n\n## QA\nKeep manual evidence.\n",
+    "applied_template": "## Summary\n",
+    "expected_section": "QA",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "unknown_template",
+    "body": "## Summary\nHuman summary.\n",
+    "applied_template": null,
+    "expected_section": "QA",
+    "publication_outcome": "success",
+    "added_heading": "QA",
+    "template_context": "Applied template cannot be established; multiple alternate templates exist, one with Evidence.",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "failed_publication",
+    "body": "## Evidence\nHuman evidence.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "gh pr edit failed: HTTP 403 Resource not accessible by integration",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "readback_mismatch",
+    "body": "## Evidence\nHuman evidence.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "gh pr edit returned success, but the verification read-back does not contain the submitted results block",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "malformed_marker",
+    "body": "## Evidence\nHuman evidence.\n\n<!-- qa-agent-results -->\nUnclosed older result.\n\n## Risks\nNever delete me.\n",
+    "applied_template": null,
+    "expected_section": null,
+    "publication_outcome": "success",
+    "ambiguous_markers": true,
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "duplicate_markers",
+    "body": "## Evidence\nHuman evidence.\n<!-- qa-agent-results -->\n**Overall: 0/1 passed** ❌\nOld automated results.\n<!-- /qa-agent-results -->\n\n## QA\nManual notes.\n<!-- qa-agent-results -->\n**Overall: 0/1 passed** ❌\nOld automated results.\n<!-- /qa-agent-results -->\n",
+    "applied_template": null,
+    "expected_section": null,
+    "publication_outcome": "success",
+    "ambiguous_markers": true,
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "concurrent_change",
+    "body": "## Evidence\nHuman evidence.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "latest_body": "## Evidence\nHuman evidence.\n\n## Deployment\nHuman added this while QA prepared its report.\n",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "recording_upload_failed",
+    "body": "## Summary\nHuman summary.\n\n## Evidence\n![Screenshot](https://example.com/human.png)\n\n## Risks\n- [ ] Human checklist.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording (upload failed): /tmp/LEX-2101-qa.webm",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  },
+  {
+    "id": "recording_capture_failed",
+    "body": "## Summary\nHuman summary.\n\n## Evidence\n![Screenshot](https://example.com/human.png)\n\n## Risks\n- [ ] Human checklist.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "Recording capture failed: video-start exited 1; QA continued unrecorded.",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    }
+  }
+]

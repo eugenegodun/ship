@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 5.0.0
+version: 6.0.0
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -130,7 +130,8 @@ An evidenced failure requiring user action is a halt; QA has not started before 
 At the first verified tree, spawn QA Phase A and reviewer without waiting for QA planning first.
 The QA brief includes feature description, approved plan, worktree, and this authorization scope:
 after human approval of its plan, it may provision disposable stage fixtures, drive the browser,
-and post test results to the PR. State explicitly: PR and stage are deferred; do not query `gh pr view`,
+and publish test results in the PR description using qa-agent’s `Evidence`/`QA` placement rules.
+State explicitly: PR and stage are deferred; do not query `gh pr view`,
 infer a branch, or assume a stage. Return the plan and wait; Phase B is not yet approved.
 Do not send recording instructions in the initial QA brief.
 
@@ -161,13 +162,18 @@ choice already answers it. Stop at the gate with no execution dispatched.
 Changes resume the same QA agent to revise its plan, then return to the gate. Approval resumes it
 with verdict, PR URL, exact user-provided target stage (or state none was provided; use its default
 localhost/stage40), and requested recording instructions. Omit recording instructions on a decline.
-QA provisions fixtures, runs browser tests, and posts PASS/FAIL results (not its plan) to the PR.
+QA provisions fixtures, runs browser tests, and publishes PASS/FAIL results in the PR description
+using its `Evidence`/`QA` placement rules. The plan stays in-session. Relay any explicit user override
+of the results destination in the Phase-B resume.
 Wait for the execution report; recording/upload failure is best-effort and does not fail the run.
 
 ### 6–7. Results and best-effort retrospectives
 
-Compile ticket, branch, PR URL, review rounds/verdict, QA PASS/FAIL, PR-comment links and video link
-when produced. Point to Codex `/status` for usage; never invent token counts.
+Compile ticket, branch, PR URL, review rounds/verdict, QA PASS/FAIL, the results link in the PR
+description, and video link when produced. If publication failed, include the results and failure
+reason in-session; do not claim publication or substitute a results-comment link. Honor an explicit
+user override of the results destination when reporting the link. Point to Codex `/status` for usage;
+never invent token counts.
 Before ending the parent turn, attempt the two non-gating retrospectives:
 
 - If `$SHIP_REPO_PATH` is set and exists, read `skills/engineering-insights/SKILL.md` from this plugin

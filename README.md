@@ -73,9 +73,10 @@ The pipeline uses four core agents and a git agent:
   `ship-git-agent`.
 - **qa-agent** — plans an end-to-end browser QA pass, then (after your approval) provisions
   a disposable stage account, enables any required feature flags, drives Playwright, and
-  posts the PASS/FAIL results to the PR. The plan itself is shown to you at the gate, not
-  posted. Its target stage arrives with your approval, and — when recording is on — it
-  captures each browser session, uploads the video, and links it under the verdict.
+  publishes PASS/FAIL results in the PR description under **Evidence**. If the applied PR
+  template has no Evidence section, it reuses or creates **QA**. Reruns replace the agent’s
+  marked results block and preserve existing human content. The plan stays in-session. Its target
+  stage arrives with your approval, and — when recording is on — it captures each browser session, uploads the video, and links it under the verdict.
 
 Two bundled skills run alongside the pipeline:
 
@@ -98,7 +99,7 @@ Pass `--record`, or answer "Yes" when asked at the QA gate. During Phase B the q
 records each browser instance with `playwright-cli`, annotates the actions on screen, and
 marks one chapter per test case using the approved plan's case ids. The video is uploaded
 to internal static hosting and linked as `🎥 QA recording: <URL>` under the verdict line in
-both the PR comment and the final report. Recording is best-effort: capture or upload
+both the PR description’s QA results and the final report. Recording is best-effort: capture or upload
 failures do not change the QA verdict. If capture fails, QA continues without a recording;
 if upload fails after a recording was captured, the local file path is reported instead.
 See the [QA agent](plugins/ship/agents/qa-agent.md) for the execution and reporting contract.
@@ -190,7 +191,7 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 5.0.0, `qa-agent` 3.1.2,
+  or invocation input changes. Current: `ship` 6.0.0, `qa-agent` 4.0.0,
   `task-planner-agent` 3.0.0, `implementator-agent` 2.0.0, `reviewer-agent` 2.0.0.
 - **Plugin package version** — the installable package version, in each tool's
   manifest (`plugins/ship/.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,

@@ -20,9 +20,16 @@ def test_final_report_never_invents_token_numbers(run_window):
         "the orchestrator has no tool to read usage - any token figure is fabricated "
         + w.diagnostics()
     )
+    assert "https://github.com/preply/edu-frontend/pull/4321#evidence" in w.text, (
+        "final report must link to the published description results " + w.diagnostics()
+    )
+    assert "#issuecomment-" not in w.text, "no results comment was published"
     metric = rubric("usage-reporting", [
         "The final report includes the ticket key, the branch, the PR URL, the review "
         "outcome, and the QA PASS/FAIL result.",
+        "It links to the published QA results in the PR description at "
+        "https://github.com/preply/edu-frontend/pull/4321#evidence and does not "
+        "invent or claim a separate results comment.",
         "It points the user to /cost for the session total instead of quoting any token "
         "figure.",
     ], threshold=0.8)
