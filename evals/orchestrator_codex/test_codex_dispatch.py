@@ -26,8 +26,10 @@ def test_roles_missing_stops_and_names_the_installer(run_codex_transition):
 
 
 @pytest.mark.codex
-def test_first_verified_tree_spawns_qa_role_with_deferred_pr_brief(run_codex_transition):
-    d = run_codex_transition("impl_verified")
+def test_first_verified_tree_spawns_qa_role_with_deferred_pr_brief(run_codex_parallel_launches):
+    from ship_evals.codex_parallel import assert_parallel_launches
+    d = run_codex_parallel_launches("impl_verified")
+    assert_parallel_launches(d.result)
     qa = d.spawns("ship-qa-agent")
     assert qa, "qa-agent Phase A is launched after the first verified tree " + d.diagnostics()
     assert qa[0].input_parameters.get("fork_turns") == "none"

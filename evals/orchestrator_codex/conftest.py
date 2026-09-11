@@ -115,3 +115,12 @@ def run_codex_transition():
         return CodexWindow(continue_codex_transcript(messages, respond, max_calls=4,
                                                     stop_after_tools=actions))
     return _run
+
+
+@pytest.fixture
+def run_codex_parallel_launches():
+    def _run(transcript_name: str) -> CodexWindow:
+        from ship_evals.codex_parallel import observe_parallel_launches
+        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        return CodexWindow(observe_parallel_launches(messages))
+    return _run
