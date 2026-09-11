@@ -197,8 +197,8 @@ def assert_description_link(case, report):
     assert links, "Link to the PR description; its section anchor is optional"
     for link in links:
         if "#" in link:
-            assert link.split("#", 1)[1] == case["expected_section"].lower(), \
-                "An included anchor must identify the selected results section"
+            assert link == case.get("verified_section_url"), \
+                "Use the plain PR URL unless the exact section anchor was verified"
 
 
 def assert_publication_result(case, structured):
@@ -402,15 +402,29 @@ def test_reporting_rejects_incorrect_or_missing_facts(mutation):
         assert_report_content(case, report.replace(before, after))
 
 
-@pytest.mark.parametrize("suffix", ["", "#evidence"])
-def test_description_link_accepts_base_or_correct_section(suffix):
-    assert_description_link(REPORTING_CASES[0], "[QA results](" + PR_URL + suffix + ")")
+@pytest.mark.parametrize("section", ["Evidence", "QA"])
+def test_description_link_accepts_base_without_verified_anchor(section):
+    assert_description_link({"expected_section": section}, "[QA results](" + PR_URL + ")")
+
+
+@pytest.mark.parametrize("anchor", ["evidence", "issue-evidence", "qa"])
+def test_description_link_accepts_exact_verified_anchor(anchor):
+    url = PR_URL + "#" + anchor
+    assert_description_link({"verified_section_url": url}, "[QA results](" + url + ")")
+
+
+@pytest.mark.parametrize("suffix", ["#evidence", "#issue-evidence", "#qa", "#issuecomment-123"])
+def test_description_link_rejects_unverified_anchor(suffix):
+    case = next(case for case in REPORTING_CASES if case["id"] == "nested_section")
+    with pytest.raises(AssertionError):
+        assert_description_link(case, "[QA results](" + PR_URL + suffix + ")")
 
 
 @pytest.mark.parametrize("url", [PR_URL + "#qa", PR_URL + "#issuecomment-123", PR_URL + "0", "https://example.com/#evidence"])
 def test_description_link_rejects_wrong_destination(url):
+    case = {"verified_section_url": PR_URL + "#evidence"}
     with pytest.raises(AssertionError):
-        assert_description_link(REPORTING_CASES[0], "[QA results](" + url + ")")
+        assert_description_link(case, "[QA results](" + url + ")")
 
 
 def _publication_response(outcome):

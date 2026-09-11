@@ -1,6 +1,6 @@
 ---
 name: qa-agent
-version: 4.0.1
+version: 4.0.2
 description: >
   Use this agent to QA a feature end-to-end in a real browser. Given a feature description (and
   ideally a PR reference), it authors a test plan, returns it for human approval, and — once
@@ -279,8 +279,10 @@ given, fall back to the default when none was, and never invent one.
    it cannot guarantee protection against concurrent edits.
 6. **Report** — return the **same verdict-line + four-column table**, recording lines/fallbacks, and
    flag/environment notes as your final message. Include an accurate publication status and, on
-   verified success, link to the PR description (use the Evidence or QA section anchor when
-   unambiguous). If the user explicitly selected a different destination, link to that verified
+   verified success, link to the plain PR URL by default. Include a section anchor only when its exact URL
+   was verified against the rendered Evidence or QA heading on GitHub. A Markdown heading or
+   a successful body read-back does not verify its rendered anchor. If rendered-page access
+   is unavailable, use the plain PR URL; never infer an anchor or add an assumed prefix. If the user explicitly selected a different destination, link to that verified
    publication instead. On publication failure keep the full test results and
    explain the failure without implying that they were published or changing the test verdict.
    Close **every** browser instance (`playwright-cli close` per instance) at the end, including when

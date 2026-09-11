@@ -9,6 +9,11 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.13.2 (2026-09-11)
+- `qa-agent` 4.0.2 defaults to the plain PR URL. Section links require verification against
+  the rendered GitHub heading; body read-back alone does not establish a valid anchor.
+- Reporting evals reject inferred anchors and accept only the exact verified section URL.
+
 ## ship package — 1.13.1 (2026-09-11)
 - `qa-agent` 4.0.1 makes the report example retain the resolved environment and each changed flag's
   original/tested states. The complete proposed report and in-session report retain these facts

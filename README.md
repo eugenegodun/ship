@@ -191,7 +191,7 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 6.0.1, `qa-agent` 4.0.1,
+  or invocation input changes. Current: `ship` 6.0.1, `qa-agent` 4.0.2,
   `task-planner-agent` 3.0.0, `implementator-agent` 2.0.0, `reviewer-agent` 2.0.0.
 - **Plugin package version** — the installable package version, in each tool's
   manifest (`plugins/ship/.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
