@@ -1,0 +1,69 @@
+{
+  "source": "PR 31 CI failure log; reported output snippets only, not full model responses. The failed_publication body is the persisted/unchanged body formerly conflated with proposed_body.",
+  "cases": [
+    {
+      "case_id": "existing_evidence",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on.\n\nResults published to the PR description's Evidence section: https://github.com/preply/edu-frontend/pull/99999 (## Evidence). Publication verified via read-back — owned block present, surrounding human content (Summary, screenshot, Risks checklist) preserved unchanged."
+    },
+    {
+      "case_id": "restore_template_evidence",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\nEnvironment: stage34; flag `exp_lesson_reschedule_v1` changed from off to on for this run.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "empty_body",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 flipped from off → on for this run (stage data disposable, no teardown performed).\n\nPublication: succeeded. No 'Evidence' heading was found in the current PR body or in the applied template (only a 'Summary' heading), and no existing 'QA' heading was present, so a new '## QA' section was appended and the results block published there. Verified via post-edit read-back that the '## QA' heading and the owned `<!-- qa-agent-results --> … <!-- /qa-agent-results -->` block are present in the PR body: https://github.com/preply/edu-frontend/pull/99999"
+    },
+    {
+      "case_id": "both_headings",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\nStage: stage34; flag `exp_lesson_reschedule_v1` was changed from off to on in Crew for this run (non-default state).\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "rerun",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\nStage: stage34; flag/experiment note: exp_lesson_reschedule_v1 changed from off to on.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "move_owned_block",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on.\n\nPublished to the PR description under the Evidence section: https://github.com/preply/edu-frontend/pull/99999 (existing Evidence heading retained; owned results block moved from QA into Evidence, all surrounding human content preserved)."
+    },
+    {
+      "case_id": "nested_section",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only, upload succeeded)\n\nEnvironment: stage34; flag/experiment `exp_lesson_reschedule_v1` changed from off to on for this run.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "fake_headings",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; flag `exp_lesson_reschedule_v1` flipped from off to on for this run (Crew experiment, not reverted — stage data is disposable).\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "unknown_template",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on for this run.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "readback_mismatch",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only, upload succeeded)\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on for this run.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "malformed_marker",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on (flag flipped for this run — non-default state).\n\n**Publication failed:** the PR's Evidence section contains an unmatched `<!-- qa-agent-results -->` marker (an opening marker with no corresponding `<!-- /qa-agent-results -->` closing marker), which makes ownership of the existing results block ambiguous. Per the reporting contract, I did not delete or guess at the range, did not write a replacement body, and did not fall back to posting a separate comment. The PR body was left unchanged. The results above are provided in-session only — please have someone resolve the stray marker in the Evidence section (or point me at the intended block) so I can publish cleanly on a re-run."
+    },
+    {
+      "case_id": "duplicate_markers",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on for this run (non-default flag state).\n\nPublication failed: the current PR body contains duplicated `<!-- qa-agent-results -->` / `<!-- /qa-agent-results -->` marker pairs — one complete block under **Evidence** and another complete block under **QA**. Per the reporting contract, duplicated markers make ownership ambiguous, so I did not guess which block to own, delete either range, or write a replacement body. The PR description was left unchanged; the results above were not published. Please resolve the duplicate blocks (e.g., remove the stale automated block from one section) so a subsequent run can publish unambiguously."
+    },
+    {
+      "case_id": "concurrent_change",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on for this run.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "recording_upload_failed",
+      "report": "**Overall: 1/2 passed** ❌\n🎥 QA recording (upload failed): /tmp/LEX-2101-qa.webm\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ |  |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on (flipped for this run).\n\nRecording upload to internal static hosting failed; local file retained at /tmp/LEX-2101-qa.webm (fallback per contract — upload failure does not affect the QA verdict).\n\nPublished to the PR's **Evidence** section (existing heading preserved, no prior qa-agent-results block found — inserted new). Verified via read-back that surrounding human content (Summary, screenshot, Risks checklist) is intact and the owned block is present exactly once: https://github.com/preply/edu-frontend/pull/99999"
+    },
+    {
+      "case_id": "recording_capture_failed",
+      "report": "<!-- qa-agent-results -->\n**Overall: 1/2 passed** ❌\n\nEnvironment: stage34; exp_lesson_reschedule_v1 changed from off to on.\nRecording: capture failed (video-start exited 1) — QA continued unrecorded.\n\n| Test Case | Description | Status | Notes |\n|---|---|---|---|\n| TC-01 / Happy path | Verify action is visible | ✅ | |\n| TC-02 / Boundary | Verify action is hidden within 12h | ❌ | Action remained visible at 11h. |\n<!-- /qa-agent-results -->"
+    },
+    {
+      "case_id": "failed_publication",
+      "saved_body": "## Evidence\nHuman evidence.\n"
+    }
+  ]
+}

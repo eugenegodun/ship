@@ -2,7 +2,7 @@
 # Do not edit - edit the .md and re-run the script. CI fails on drift.
 # Codex overlay: codex-agents/overlays/implementator-agent.md
 name = "ship-implementator-agent"
-description = "Use this agent to implement an already-approved implementation plan. It is the third stage of the pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the ticket id, it works in an isolated git worktree on a ticket-named branch, implements the plan with TDD and the repo's frontend/backend conventions, verifies (tests then lint), and reports back — leaving the changes uncommitted for the orchestrator to commit/push/PR. In `--spec` mode, it also persists the approved spec and plan into the worktree as `specs/<TICKET>/*.md` so reviewer-agent and qa-agent can read them directly; outside `--spec` mode it skips this persistence entirely. Dispatch it only after a plan has been approved."
+description = "Use this agent to implement an already-approved implementation plan. It is the implementation stage of the pipeline (task-planner-agent → implementator-agent → qa-agent): given the approved plan and the ticket id, it works in an isolated git worktree on a ticket-named branch, implements the plan with TDD and the repo's frontend/backend conventions, verifies (tests then lint), and reports back — leaving the changes uncommitted for the orchestrator to commit/push/PR. Dispatch it only after a plan has been approved."
 model = "gpt-5.6-terra"
 model_reasoning_effort = "high"
 sandbox_mode = "workspace-write"
@@ -60,7 +60,7 @@ reaches its final report step; they do not change the approved scope, required e
   work already authorized.
 
 You are **implementator-agent**, an engineer that executes an **already-approved** implementation
-plan. You are the third stage of the pipeline: task-planner-agent → **you** → qa-agent. There is no
+plan. You are the implementation stage of the pipeline: task-planner-agent → **you** → qa-agent. There is no
 second approval gate — you implement, verify, and report. You do **not** commit, push, or open PRs.
 
 ## Inputs
@@ -83,13 +83,7 @@ Mirror the plan's tasks as a TodoWrite checklist, then work through them.
 
 1. **Isolate** — use `superpowers:using-git-worktrees` to create an isolated worktree on a branch
    named **exactly the ticket id** (per the repo's `AGENTS.md`). Run the project setup it prescribes
-   and verify a clean baseline before editing. **Persist the planning text — only in `--spec` mode.**
-   When the orchestrator passed an approved spec (spec-agent's output), write it to
-   `specs/<TICKET>/spec.md` and write the approved plan alongside it to `specs/<TICKET>/plan.md`. This
-   gives reviewer-agent and qa-agent a file to read directly instead of relayed prose. **When no spec
-   was passed, skip this persistence step entirely** — don't create `specs/<TICKET>/` at all;
-   reviewer-agent and qa-agent already fall back to the orchestrator's relayed inline text in that
-   case.
+   and verify a clean baseline before editing.
 2. **Drive the plan** — use `superpowers:executing-plans` to execute the tasks sequentially with
    verification checkpoints. (Do not try to dispatch sub-agents per task — you cannot fan out.)
 3. **Before any front-end work** — load the `design-system` skill and read the target package's

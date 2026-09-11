@@ -1,36 +1,35 @@
 ---
 name: ship
-version: 4.2.1
+version: 6.0.1
 description: >
-  Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
+  Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
-  gate. Use when the user runs `/ship <TICKET> [--spec] [--record]` or asks to "ship a ticket",
+  gate. Use when the user runs `/ship <TICKET> [--record]` or asks to "ship a ticket",
   "run the pipeline", "orchestrate the agents", or "take <TICKET> from plan to QA". Drives
-  (spec →) plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
-  for human approval only at the spec (when run with `--spec`), plan, and QA-plan gates. The qa-agent's
-  test plan is authored **in parallel** with review and PR creation, launched after the first
-  verified working tree, so it can be ready when the PR lands. Do NOT use for one-off single-agent
-  tasks (dispatch the relevant agent directly instead).
+  plan → implement → autonomous review-fix loop → commit/push/draft-PR (Haiku) → QA, stopping
+  for human approval only at the plan and QA-plan gates. The qa-agent's test plan is authored
+  **in parallel** with review and PR creation, after the first verified working tree, so
+  it's ready when the PR lands. Do NOT use for one-off single-agent tasks (dispatch the relevant
+  agent directly instead).
 ---
 
 # ship — feature pipeline orchestrator
 
-You orchestrate up to five subagents through a complete feature pipeline — spec-agent is optional,
-dispatched only when `/ship` runs with `--spec` — **running in the main session** (you are the only
-"agent" that can both dispatch these subagents and pause to relay the human's approvals — subagents
+You orchestrate four subagents through a complete feature pipeline, **running in the main session**
+(you are the only "agent" that can both dispatch these subagents and pause to relay the human's approvals — subagents
 can do neither).
 
 ```
-/ship <TICKET> [--spec] [--record]
-  (Spec ──🛑GATE1──)? Plan ──🛑GATE2── Implement ──┬── Review⇄Fix loop ── Commit/Push/draft-PR ──┐
-                                                   │                                              ├── QA-plan ──🛑GATE3── QA-run ── Results
-                                                   └── QA-plan authoring (qa-agent Phase A, bg) ──┘
+/ship <TICKET> [--record]
+  Plan ──🛑GATE1── Implement ──┬── Review⇄Fix ── Commit/Push/draft-PR ──┐
+                             └── QA-plan authoring (background) ───────┤
+                                                                       └── 🛑GATE2── QA-run ── Results
 ```
 
-Once the implementator reports its **first verified working tree** (end of Stage 3), two branches run
+Once the implementator reports its **first verified working tree** (end of Stage 2), two branches run
 **concurrently**: the review→PR branch in the main session (foreground), and qa-agent's Phase-A plan
-authoring in the background. They **join** at GATE 3 — the queued QA plan is surfaced only once the PR
-exists. Launching qa after the first verified tree (rather than at GATE 2) means a fast Stage-3 failure
+authoring in the background. They **join** at GATE 2 — the queued QA plan is surfaced only once the PR
+exists. Launching qa after the first verified tree (rather than at GATE 1) means a fast Stage-2 failure
 never wastes qa planning tokens.
 
 ## Inputs
@@ -38,28 +37,24 @@ never wastes qa planning tokens.
 Parse from the invocation:
 
 - **`TICKET`** (required) — a Jira key like `LEX-1398`. If missing, ask the user; do not guess.
-- The invocation accepts **no other tokens** — there is no model shortcut (Stage 0 always asks both
-  model questions) and **no stage param**: a PR's ephemeral stage exists only after the draft PR and
-  its `/dynamic` comment, so the QA target stage is named — if at all — in the user's **GATE 3
-  approval** (see Stage 6). Any extra token (a stray `stage34`, `sonnet`, …) ⇒ ask the user rather
+- Apart from `--record`, the invocation accepts **no other tokens** — there is no model shortcut
+  (Stage 0 always asks both model questions) and **no stage param**: a PR's ephemeral stage exists only after the draft PR and
+  its `/dynamic` comment, so the QA target stage is named — if at all — in the user's **GATE 2
+  approval** (see Stage 5). Any extra token (a stray `stage34`, `sonnet`, …) ⇒ ask the user rather
   than guessing.
-- **`--spec`** (optional flag) — when present, dispatch **spec-agent** first (new Stage 1, its own
-  gate) before task-planner-agent; task-planner-agent then grounds its plan in the approved spec
-  instead of re-reading the ticket. Absent ⇒ skip straight to task-planner-agent, unchanged from
-  today's behavior.
-- **`--record`** (optional flag) — when present, **pre-answers the GATE 3 recording question**
-  (Stage 6): the QA run is recorded without asking. Absent ⇒ the user is asked at GATE 3, alongside
+- **`--record`** (optional flag) — when present, **pre-answers the GATE 2 recording question**
+  (Stage 5): the QA run is recorded without asking. Absent ⇒ the user is asked at GATE 2, alongside
   the QA plan. Either way the decision travels in qa-agent's **Phase-B resume**, never its initial
   brief — the same late-arrival slot as the PR URL and the target stage.
 
 ## Stage 0 — Choose models (startup prompt)
 
-Before Stage 2 (Stage 1 when `--spec` is set), **ask the user which model to run the planner and
+Before Stage 1, **ask the user which model to run the planner and
 reviewer on** using the `AskUserQuestion` tool — one call with **two questions**, each offering
 **`claude-fable-5`**, **`claude-opus-5[1m]`**, and **`claude-sonnet-5`**:
 
-- **Planner model** (Stage 2).
-- **Reviewer model** (Stage 4).
+- **Planner model** (Stage 1).
+- **Reviewer model** (Stage 3).
 
 Both questions are **always asked** — nothing in the invocation pre-answers either of them.
 
@@ -74,71 +69,46 @@ available to them (e.g. a different plan/access tier), they can paste whatever m
 have access to. Pass whatever they type through verbatim as the Agent `model` override — do not
 validate or second-guess it.
 
-Retain both answers. The planner answer is passed as the Agent `model` override in Stage 2; the
-reviewer answer is the reviewer's base model in Stage 4. When `--spec` is set, **spec-agent reuses the
-planner-model answer** — no separate question for it. These affect **only** the planner, spec-agent,
+Retain both answers. The planner answer is passed as the Agent `model` override in Stage 1; the
+reviewer answer is the reviewer's base model in Stage 3. These affect **only** the planner
 and reviewer — implementator, qa, and the git agent are unchanged.
 
 Track the stages below as a TodoWrite checklist so progress is visible. Include a dedicated
 **"QA-plan authoring (background)"** item so the parallel branch — launched after the implementator's
-first verified tree (end of Stage 3) — stays visible alongside the review→PR branch. When `--spec` is
-set, include a **"Spec (GATE 1)"** item ahead of the plan item. Include an **"Insights retro"** item
-for Stage 8.
+first verified tree (end of Stage 2) — stays visible alongside the review→PR branch.
+Include an **"Insights retro"** item for Stage 7.
 
 ## Progress display — full stage table in every update
 
 The TodoWrite checklist is internal bookkeeping only — its widget collapses completed rows, so it is
 **not** the user-facing progress view. Every progress message you post to the user — each gate stop
-(GATE 1/2/3), each stage-completion note, each halt, and the Stage 7 final report — **ends with the
+(GATE 1/2), each stage-completion note, each halt, and the Stage 6 final report — **ends with the
 full pipeline table**: one row per stage of this run, every row always present, none collapsed,
 elided, or summarized as "+N completed".
 
 | # | Stage                          | Status |
 |---|--------------------------------|--------|
-| 1 | Plan (GATE 2)                  | ✅ completed — approved plan from the fable planner |
+| 1 | Plan (GATE 1)                  | ✅ completed — approved plan from the fable planner |
 | 2 | Implement                      | ✅ completed — 7 files changed, 1,492 tests pass |
 | 3 | QA-plan authoring (background) | 🔄 in progress — qa-agent still writing its Phase-A plan |
 | 4 | Review ⇄ Fix loop              | ✅ completed — clean in 1 round (opus), verdict "Yes" |
 | 5 | Commit / Push / Draft PR       | ✅ completed — PR #137501 (<url>), commit <sha> |
-| 6 | QA (GATE 3)                    | ⏳ pending — waiting on the QA plan to surface for your approval |
+| 6 | QA (GATE 2)                    | ⏳ pending — waiting on the QA plan to surface for your approval |
 | 7 | Final report                   | ⏳ pending |
 | 8 | Insights retro                 | ⏳ pending |
 
 Each Status cell is `<state> — <one-line detail>`, where state is one of **✅ completed**,
 **🔄 in progress**, **⏳ pending**, **⏭️ skipped**, or **⛔ blocked**. Completed rows carry their
 concrete outcome (files changed + test evidence, PR number/URL, review rounds + verdict); a bare
-`⏳ pending` is fine when there is nothing to say yet. The row set mirrors the actual run: prepend a
-**Spec (GATE 1)** row when `--spec` is set (renumbering the rest), and keep the
-**QA-plan authoring (background)** row so the parallel branch stays visible.
+`⏳ pending` is fine when there is nothing to say yet. Keep the **QA-plan authoring (background)**
+row so the parallel branch stays visible.
 
-## Stage 1 — Spec (conditional on `--spec`, 🛑 GATE 1)
-
-Skip this stage entirely when `--spec` was not passed — proceed straight to Stage 2 with
-task-planner-agent behaving exactly as it does today (it reads the ticket itself).
-
-When `--spec` **was** passed:
-
-1. Dispatch **`spec-agent`** (Agent tool, `subagent_type: spec-agent`) with the ticket key and any
-   context the user gave. Pass the **planner model** chosen in Stage 0 as the Agent `model` override
-   (spec-agent has no model question of its own).
-2. Surface the returned spec to the user **verbatim** and **STOP**. This is GATE 1.
-3. Handle the verdict:
-   - **Changes requested** → forward them to the **same spec-agent instance** with `SendMessage`; it
-     revises and returns to the gate. Re-surface, stay stopped.
-   - **Approved** → **keep the approved spec text** (you pass it to task-planner-agent next) and
-     proceed to Stage 2. spec-agent is **single-phase** — it posts nothing and needs no resume on
-     approval, so you may let it go.
-
-Do not proceed past this gate without explicit approval.
-
-## Stage 2 — Plan (🛑 GATE 2)
+## Stage 1 — Plan (🛑 GATE 1)
 
 1. Dispatch **`task-planner-agent`** (Agent tool, `subagent_type: task-planner-agent`) with a brief:
-   the ticket key, any context the user gave, and — **when Stage 1 ran** — the **approved spec text**
-   inline (task-planner-agent grounds the plan in it instead of re-reading the ticket). **Pass the
-   planner model chosen in Stage 0** as the Agent tool's `model` override for this dispatch. It returns
+   the ticket key and any context the user gave. **Pass the planner model chosen in Stage 0** as the Agent tool's `model` override for this dispatch. It returns
    a plan and stops at its own review gate.
-2. Surface the returned plan to the user **verbatim** and **STOP**. This is GATE 2.
+2. Surface the returned plan to the user **verbatim** and **STOP**. This is GATE 1.
 3. Handle the verdict:
    - **Changes requested** → forward them to the **same planner instance** with `SendMessage` (keeps
      its context); the planner revises and returns to the gate. Re-surface, stay stopped.
@@ -148,14 +118,11 @@ Do not proceed past this gate without explicit approval.
 
 Do not proceed past this gate without explicit approval.
 
-## Stage 3 — Implement
+## Stage 2 — Implement
 
 Dispatch **`implementator-agent`** (`subagent_type: implementator-agent`) with: the **approved plan
-text** (inline), the **approved spec text** (inline, when Stage 1 ran), and the **ticket id**. It
-creates an isolated worktree on a branch named exactly the ticket id and, **only when Stage 1 ran**,
-persists the plan and spec into the worktree as `specs/<TICKET>/*.md` (skipped entirely otherwise —
-no `specs/<TICKET>/` directory on non-`--spec` runs). It implements with TDD, verifies (tests then
-lint), and reports. **Keep this implementator instance's id** — fix rounds (Stage 4) resume it rather
+text** (inline) and the **ticket id**. It creates an isolated worktree on a branch named exactly
+the ticket id, implements with TDD, verifies (tests then lint), and reports. **Keep this implementator instance's id** — fix rounds (Stage 3) resume it rather
 than spawning a new one.
 
 From its report, **capture and retain**:
@@ -177,10 +144,10 @@ authored while the review→PR branch proceeds. Brief it with:
 
 - a **feature description** drawn from the approved plan + ticket,
 - the **worktree path** (so it can ground the plan on the real implemented code / selectors),
-- the **authorization scope**: state that upon the human's plan approval at GATE 3, Phase B is
+- the **authorization scope**: state that upon the human's plan approval at GATE 2, Phase B is
   authorized to provision disposable fixture data (client/tutor/tutoring/payments/lessons via
-  `@prep/fixtures`) and drive a browser against the resolved target host, and to post results to
-  the PR,
+  `@prep/fixtures`) and drive a browser against the resolved target host, and to publish results in
+  the PR description using qa-agent’s `Evidence`/`QA` placement rules,
 - an explicit **deferred-PR / deferred-stage** instruction: *"The PR does not exist yet — you were
   launched in parallel with the review/PR stage, and the target stage (if any) will only exist once
   the PR's `/dynamic` environment is created. Author the plan from the feature description / plan /
@@ -188,10 +155,10 @@ authored while the review→PR branch proceeds. Brief it with:
   I'll hand you the PR ref and the target stage when I resume you for Phase B."*
 
 It returns the plan as its Phase-A final message and waits. **Do not surface its plan yet** — it is
-queued until GATE 3 (Stage 6). Retain this qa-agent instance's id for later `SendMessage` resume. Then
-proceed to Stage 4.
+queued until GATE 2 (Stage 5). Retain this qa-agent instance's id for later `SendMessage` resume. Then
+proceed to Stage 3.
 
-## Stage 4 — Review ⇄ Fix loop (autonomous, max 3 rounds)
+## Stage 3 — Review ⇄ Fix loop (autonomous, max 3 rounds)
 
 Loop, counting rounds (cap = **3**):
 
@@ -207,7 +174,7 @@ Loop, counting rounds (cap = **3**):
 2. Decide:
    - Verdict **`Yes`**, or only **Minor**/already-acknowledged findings remain → **exit the loop**.
    - Any **Critical** or **Important** finding → **fix round**: plan the fixes from the findings,
-     then **resume the same `implementator-agent` instance** (the one from Stage 3) with `SendMessage`,
+     then **resume the same `implementator-agent` instance** (the one from Stage 2) with `SendMessage`,
      handing it the findings to address. It keeps its worktree + exploration context and applies the
      fixes **in place** (never a new worktree), so it skips cold re-reads. When it reports back,
      **re-dispatch `reviewer-agent`** (next round; apply the model rule above).
@@ -220,7 +187,7 @@ Loop, counting rounds (cap = **3**):
 This loop is autonomous (no human gate per the chosen design), but post a **one-line summary** after
 it resolves: rounds taken and what was fixed.
 
-## Stage 5 — Commit / push / draft PR (Haiku)
+## Stage 4 — Commit / push / draft PR (Haiku)
 
 Dispatch a **Haiku-powered Agent** (`subagent_type: claude`, `model: haiku`) to handle git ops in the
 implementator's worktree. Its brief:
@@ -236,51 +203,53 @@ implementator's worktree. Its brief:
 
 Capture the PR URL — qa-agent needs it for Phase B (this is the **join point** of the two branches).
 
-## Stage 6 — QA (🛑 GATE 3)
+## Stage 5 — QA (🛑 GATE 2)
 
-The qa-agent's Phase-A plan was authored in the background since Stage 3's first verified tree —
+The qa-agent's Phase-A plan was authored in the background since Stage 2's first verified tree —
 **do not dispatch a new qa-agent here**. Join the two branches:
 
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
-2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 3. When surfacing the
+2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. When surfacing the
    plan, also settle the **recording decision**: if `--record` was passed on invocation, recording is
    on — skip the question. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
    (options Yes / No) as part of this same gate stop — never a separate later interruption.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
    - **Approved** → the resume message carries the **user's verdict**, the **PR reference (URL from
-     Stage 5)** (it was launched in deferred-PR mode without one), the **target stage** when the
+     Stage 4)** (it was launched in deferred-PR mode without one), the **target stage** when the
      user's approval names one (e.g. "approved, run it on stage34" — typical once the PR's `/dynamic`
      environment exists; the stage was unknowable at invocation time), and the **recording decision**
-     (that the user asked for a recording — via `--record` or the GATE 3 answer — or that they
+     (that the user asked for a recording — via `--record` or the GATE 2 answer — or that they
      declined; omit recording instructions entirely on a decline). Pass the stage exactly as the
      user named it; if the approval names none, say so and qa-agent uses its default
      localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
      it provisions a stage account, executes with Playwright (recording the session when requested
-     and uploading the video via `devex:internal-static-hosting`), and posts PASS/FAIL results to
-     the PR (the plan itself was already shown to the human above at GATE 3 — it is not separately
-     posted).
+     and uploading the video via `devex:internal-static-hosting`), and publishes PASS/FAIL results in
+     the PR description using its `Evidence`/`QA` placement rules. The plan stays in-session.
+     Relay any explicit user override of the results destination in the Phase-B resume.
 
-## Stage 7 — Final report
+## Stage 6 — Final report
 
 Return a concise summary: ticket key, branch, PR URL, review outcome (rounds + verdict), and the QA
-PASS/FAIL result with links to the PR comments (including the 🎥 recording URL when the run was
-recorded).
+PASS/FAIL result with a link to the results in the PR description (including the 🎥 recording URL
+when the run was recorded). If publication failed, include the results and failure reason in-session;
+do not claim they were published or substitute a results-comment link. Honor an explicit user
+override of the results destination when reporting the link.
 
 End the report with a **token-usage pointer** (see § Usage reporting): tell the user to run `/cost`
 for the whole-flow session total, and that per-agent counts are on each completed task's line in the
 Claude Code UI. **Do not state token numbers yourself** — you cannot read them; quoting any figure
 would be fabrication.
 
-## Stage 8 — Insights retro (automatic, no gate)
+## Stage 7 — Insights retro (automatic, no gate)
 
-Runs immediately after Stage 7, regardless of outcome, **best-effort** — a failure or skip here must
+Runs immediately after Stage 6, regardless of outcome, **best-effort** — a failure or skip here must
 never block, invalidate, or roll back an already-shipped PR.
 
 1. **Pipeline-insights call** — check whether `$SHIP_REPO_PATH` is set and the directory exists
    (`[ -n "$SHIP_REPO_PATH" ] && [ -d "$SHIP_REPO_PATH" ]`). If not, skip this call and note the skip
-   in your final report (append a line — don't re-open or restructure the Stage 7 report). If it
+   in your final report (append a line — don't re-open or restructure the Stage 6 report). If it
    exists:
    - Dispatch the **`engineering-insights`** skill (Skill tool) with `args` set to
      `$SHIP_REPO_PATH/INSIGHTS.md`. Ground it in **this run's own orchestration friction**: review
@@ -294,10 +263,10 @@ never block, invalidate, or roll back an already-shipped PR.
      permanent local clone — they review and push in their own batches. If the commit fails (not a
      git repo, nothing staged, etc.), note the failure in the report; do not treat it as a pipeline
      failure.
-2. **Project-insights call** — check whether Stage 3's changed-files list touched `edu-frontend/`. If
+2. **Project-insights call** — check whether Stage 2's changed-files list touched `edu-frontend/`. If
    not, skip (no other project target exists yet — this is scoped narrowly on purpose). If it did:
    - Dispatch the **`engineering-insights`** skill with `args` set to
-     `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 3). Ground it
+     `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 2). Ground it
      in what implementator/reviewer/qa actually discovered while working the ticket — new patterns,
      dead ends, gotchas, tool quirks. Same "write nothing if nothing substantial" rule applies.
    - If the skill wrote anything, commit it locally: `cd <worktree_path> && git add
@@ -310,54 +279,50 @@ never block, invalidate, or roll back an already-shipped PR.
 
 ## Guardrails
 
-- **Two or three human gates**: the plan (Stage 2) and the QA plan (Stage 6) always; plus the spec
-  (Stage 1) when `/ship` runs with `--spec`. The review→fix loop runs autonomously up to the 3-round
-  cap regardless.
+- **Two human gates**: the plan (Stage 1) and the QA plan (Stage 5). The review→fix loop runs
+  autonomously up to the 3-round cap.
 - **QA plan authored in parallel, surfaced serially**: qa-agent Phase A is launched in the background
-  after the implementator's **first verified tree** (end of Stage 3) and runs concurrently with
+  after the implementator's **first verified tree** (end of Stage 2) and runs concurrently with
   review→PR, but its plan stays **queued** — the QA gate is surfaced only after the PR exists
-  (Stage 6), so you never juggle two pending gates at once. Launching post-verify (not at the plan
-  gate) avoids wasting qa tokens when Stage 3 fails fast.
-- **Deferred-PR handoff**: the parallel qa-agent has no PR at launch. Pass the PR URL (from Stage 5)
+  (Stage 5), so you never juggle two pending gates at once. Launching post-verify (not at the plan
+  gate) avoids wasting qa tokens when Stage 2 fails fast.
+- **Deferred-PR handoff**: the parallel qa-agent has no PR at launch. Pass the PR URL (from Stage 4)
   in the **Phase-B resume** `SendMessage`, not at initial dispatch. The PR is the join point of the
   two branches.
-- **The QA target stage is a GATE 3 input, not an invocation param.** A PR's ephemeral stage exists
-  only after Stage 5 creates the draft PR and its `/dynamic` environment comes up, so it cannot be
-  named at `/ship` time. The user names it, if at all, in their GATE 3 approval; relay it in the
+- **The QA target stage is a GATE 2 input, not an invocation param.** A PR's ephemeral stage exists
+  only after Stage 4 creates the draft PR and its `/dynamic` environment comes up, so it cannot be
+  named at `/ship` time. The user names it, if at all, in their GATE 2 approval; relay it in the
   Phase-B resume exactly as they named it, and **never invent one** — no stage in the approval means
   qa-agent's default localhost/stage40 target.
 - **Resume, don't re-spawn, across phases**: only **qa-agent** has an internal Phase A/B gate —
   relay its approval to the *same* instance via `SendMessage` so its context persists. The parallel
   qa-agent is launched once (after the first verified tree) and resumed for Phase B; never dispatch a
-  second qa-agent at Stage 6. The **planner and spec-agent are both single-phase**: resume either
-  (`SendMessage`) only to forward *change requests*; on approval neither needs a resume. The
-  **implementator is resumed** (same instance from Stage 3) for every fix round — it applies fixes in
+  second qa-agent at Stage 5. The **planner is single-phase**: resume it
+  (`SendMessage`) only to forward *change requests*; on approval it needs no resume. The
+  **implementator is resumed** (same instance from Stage 2) for every fix round — it applies fixes in
   place in its existing worktree, so never spawn a fresh implementator per round. Only the **reviewer**
   is dispatched fresh each round, always with the **worktree path + branch** (on the Stage-0 reviewer
   model; a non-`claude-opus-5[1m]` base escalates to `claude-opus-5[1m]` for a round after a Critical
   finding).
 - **Model selection (Stage 0)**: ask the user — via `AskUserQuestion` — for the **planner** and
   **reviewer** models (options `claude-fable-5`/`claude-opus-5[1m]`/`claude-sonnet-5`) before
-  Stage 1/2, recommending — but not requiring — different models for the two roles. If none of the
+  Stage 1, recommending — but not requiring — different models for the two roles. If none of the
   three fits (not available on the user's plan/access tier), they can pick "Other" and type any model
   name/ID they do have — pass it through verbatim as the Agent `model` override, unvalidated. Both
-  questions are always asked — the invocation has no model shortcut. Spec-agent (when run) reuses
-  the planner-model answer — no separate question.
-  Applies to planner + spec-agent + reviewer only.
+  questions are always asked — the invocation has no model shortcut.
+  Applies to planner + reviewer only.
 - **On a halt** (review cap reached or implementation failed): keep the parallel qa-agent instance
   alive, do not run its Phase B, and report whether its plan is ready or still authoring.
 - **Never skip a gate**, and never commit when the review is unresolved after the cap.
 - **Git ops go through the Haiku agent** with: no co-author line, ff-only pulls on the same branch
   only, and the repo PR template.
-- **Recording is decided at GATE 3 and relayed in the Phase-B resume.** `--record` only pre-answers
-  the GATE 3 question; without it, ask when surfacing the QA plan. Never mention recording in
+- **Recording is decided at GATE 2 and relayed in the Phase-B resume.** `--record` only pre-answers
+  the GATE 2 question; without it, ask when surfacing the QA plan. Never mention recording in
   qa-agent's initial brief, and never turn recording on un-asked. Recording (and its upload) is
   best-effort inside qa-agent — its failure never fails the run or the pipeline.
-- **`--spec` changes only Stage 1's presence** — every other stage's mechanics (models, gates, loop
-  cap, git ops, usage reporting) are unchanged whether or not it ran.
-- **Stage 8 never gates and never fails the run** — it always attempts to run after Stage 7, but any
+- **Stage 7 never gates and never fails the run** — it always attempts to run after Stage 6, but any
   skip (env var unset, ticket didn't touch edu-frontend) or failure (commit/push error) is noted in
-  the report and otherwise ignored. The shipped PR's success is independent of Stage 8's outcome.
+  the report and otherwise ignored. The shipped PR's success is independent of Stage 7's outcome.
 - **Never quote token numbers** — you have no tool to read them. Usage is surfaced per § Usage
   reporting, not by inventing figures.
 
@@ -367,36 +332,34 @@ You cannot read token counts (no tool exposes per-agent or session usage to the 
 `TaskGet`/`TaskList`/`TaskOutput` and the Agent result carry no usage data). So **point, don't
 quote**:
 
-- **After each agent finishes** a stage (spec-agent when run, planner, implementator per round,
+- **After each agent finishes** a stage (planner, implementator per round,
   reviewer per round, the Haiku git agent, qa-agent), add a one-line note that its token usage is shown
   on that task's line in the Claude Code UI.
-- **At the end of the flow** (Stage 7), tell the user to run **`/cost`** for the full-session total
+- **At the end of the flow** (Stage 6), tell the user to run **`/cost`** for the full-session total
   across all agents.
 - Never print a number you didn't get from a tool — there is no such tool, so never print one at all.
 
 ## Versioning
 
-This skill and its subagents (four always, five when `--spec` is used) are versioned with **SemVer**
+This skill and its four subagents are versioned with **SemVer**
 (`version:` in each frontmatter). The orchestrator is the **contract owner** — bump its MAJOR whenever
 an inter-stage handoff changes.
 
 - **MAJOR** — breaking contract change: a stage's inputs/outputs, the gate structure, or the data
-  passed between stages (approved-spec text, approved-plan text, worktree path + branch, PR URL, the
+  passed between stages (approved-plan text, worktree path + branch, PR URL, the
   reviewer's `Ready to commit?` verdict line).
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 4.2.1 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
-codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
-optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
-≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.1.0 (prefers reading `specs/<TICKET>/*.md` from the
-worktree when it exists, falling back to relayed text otherwise; accepts the target stage with the
-Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
+**Compatibility (current):** `ship` 6.0.1 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
+`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.0.1
+(accepts the target stage with the Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
 records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
-the results; posts only results to the PR, formatted as a verdict line
-+ Test Case/Description/Status/Notes table), and
-`engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no
+the results; publishes results in the PR description’s `Evidence` section, or `QA` when the applied
+template has no `Evidence`, preserving human content and replacing its owned block on reruns;
+returns a description link with the verdict line + Test Case/Description/Status/Notes table), and
+`engineering-insights` ≥1.0.0 (bundled skill, used by Stage 7 — takes a target path via `args`, no
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
 consumes it before bumping this list. Record every bump in
 `plugins/ship/agents/CHANGELOG.md`.

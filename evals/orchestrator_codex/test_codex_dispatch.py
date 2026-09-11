@@ -26,8 +26,10 @@ def test_roles_missing_stops_and_names_the_installer(run_codex_transition):
 
 
 @pytest.mark.codex
-def test_first_verified_tree_spawns_qa_role_with_deferred_pr_brief(run_codex_transition):
-    d = run_codex_transition("impl_verified")
+def test_first_verified_tree_spawns_qa_role_with_deferred_pr_brief(run_codex_parallel_launches):
+    from ship_evals.codex_parallel import assert_parallel_launches
+    d = run_codex_parallel_launches("impl_verified")
+    assert_parallel_launches(d.result)
     qa = d.spawns("ship-qa-agent")
     assert qa, "qa-agent Phase A is launched after the first verified tree " + d.diagnostics()
     assert qa[0].input_parameters.get("fork_turns") == "none"
@@ -51,7 +53,7 @@ def test_critical_finding_resumes_implementator_via_followup_task(run_codex_tran
 def test_clean_review_spawns_git_role_with_worktree_draft_and_no_coauthor(run_codex_transition):
     d = run_codex_transition("review_clean")
     git = d.spawns("ship-git-agent")
-    assert git, "clean verdict exits the loop into Stage 5's git role " + d.diagnostics()
+    assert git, "clean verdict exits the loop into Stage 4's git role " + d.diagnostics()
     brief = git[0].input_parameters["message"].lower()
     assert "/tmp/worktrees/lex-1398" in brief and "draft" in brief and "co-author" in brief
     assert git[0].input_parameters.get("fork_turns") == "none"

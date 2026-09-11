@@ -17,7 +17,11 @@ BRIEF = (
     "/tmp/worktrees/LEX-2103, branch LEX-2103). There is no shell access in this "
     "environment: the full uncommitted diff is inlined below, and the static checks "
     "already ran clean (lint: 0 errors, tsc: n/a, tests: 214 passed). Review the diff "
-    "and return your findings and verdict.\n\n--- DIFF ---\n{diff}\n--- END DIFF ---"
+    "and return your findings and verdict in this response. This is a self-contained "
+    "review exercise: no tools, repository access, or follow-up turns are available. "
+    "Base findings on the supplied diff; state any context limitations without "
+    "inventing evidence. Do not defer the review or promise to inspect files later. "
+    "Include the required Ready to commit? verdict.\n\n--- DIFF ---\n{diff}\n--- END DIFF ---"
 )
 
 VERDICT_RE = re.compile(r"Ready to commit\?\s*\**\s*\[?\s*(Yes|No|With fixes)\s*\]?", re.I)

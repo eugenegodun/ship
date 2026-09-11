@@ -17,7 +17,7 @@ CODEX_BOOKKEEPING = {
     "update_plan": "Plan updated",
     "shell": ("unchanged  ship-git-agent.toml\nunchanged  ship-implementator-agent.toml\n"
               "unchanged  ship-qa-agent.toml\nunchanged  ship-reviewer-agent.toml\n"
-              "unchanged  ship-spec-agent.toml\nunchanged  ship-task-planner-agent.toml\n(exit 0)"),
+              "unchanged  ship-task-planner-agent.toml\n(exit 0)"),
 }
 
 
@@ -114,4 +114,13 @@ def run_codex_transition():
         actions = {'spawn_agent', 'followup_task', 'send_message', 'wait_agent', 'shell'}
         return CodexWindow(continue_codex_transcript(messages, respond, max_calls=4,
                                                     stop_after_tools=actions))
+    return _run
+
+
+@pytest.fixture
+def run_codex_parallel_launches():
+    def _run(transcript_name: str) -> CodexWindow:
+        from ship_evals.codex_parallel import observe_parallel_launches
+        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        return CodexWindow(observe_parallel_launches(messages))
     return _run

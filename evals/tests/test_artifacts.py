@@ -6,11 +6,11 @@ def test_load_skill_strips_frontmatter_and_keeps_body():
     assert not body.startswith("---")
     assert "name: ship" not in body.split("\n\n")[0]
     assert "# ship — feature pipeline orchestrator" in body
-    assert "GATE 2" in body
+    assert "GATE 1" in body
 
 
 def test_load_agent_reads_each_pipeline_agent():
-    for name in ("spec-agent", "task-planner-agent", "reviewer-agent", "qa-agent"):
+    for name in ("task-planner-agent", "reviewer-agent", "qa-agent"):
         body = load_agent(name)
         assert not body.startswith("---")
         assert len(body) > 500

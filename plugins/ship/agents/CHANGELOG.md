@@ -1,14 +1,51 @@
 # Pipeline Changelog
 
-SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and its subagents (four
-always, five when `spec-agent` runs via `--spec`). Bump rules live in
+SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and its four subagents. Bump rules live in
 `plugins/ship/skills/ship/SKILL.md` § Versioning.
 
 - **MAJOR** — breaking contract change (a stage's inputs/outputs, gate structure, or inter-stage
-  handoff: approved-spec text, approved-plan text, worktree path + branch, PR URL, reviewer verdict
+  handoff: approved-plan text, worktree path + branch, PR URL, reviewer verdict
   line).
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
+
+## ship package — 1.13.2 (2026-09-11)
+- `qa-agent` 4.0.2 defaults to the plain PR URL. Section links require verification against
+  the rendered GitHub heading; body read-back alone does not establish a valid anchor.
+- Reporting evals reject inferred anchors and accept only the exact verified section URL.
+
+## ship package — 1.13.1 (2026-09-11)
+- `qa-agent` 4.0.1 makes the report example retain the resolved environment and each changed flag's
+  original/tested states. The complete proposed report and in-session report retain these facts
+  even when publication fails or read-back differs; observed persisted content stays separate.
+- `ship` 6.0.1 retains successful Codex preflight evidence across approvals, resumes and review
+  rounds. Successful checks through resolved paths count without rediscovering the installer.
+- Remove the continuation fixture's stale version-specific installer path and add focused
+  regressions/diagnostics for incomplete reporting payloads and repeated preflight.
+
+## ship package — 1.13.0 (2026-09-11)
+- **Breaking QA reporting contract:** `qa-agent` 4.0.0 publishes results in the PR description’s
+  `Evidence` section by default. If the applied PR template has no `Evidence`, it reuses or creates
+  `QA`. A bounded results block makes reruns replaceable while preserving human-authored content.
+- Uses a fresh PR body, a temporary body file, and read-back verification. Ambiguous markers or
+  publication failures are reported in-session, separately from the QA verdict, without silently
+  falling back to a comment. Explicit user destination instructions still take precedence.
+- `ship` 6.0.0 updates both orchestrators to return the description link instead of a results-comment
+  URL. The verdict/table, optional recording links, QA gate, and execution workflow remain intact.
+- Adds reporting regressions and updates completion transcripts, generated Codex artifacts, and
+  documentation. All six package/marketplace manifests advance together.
+
+## ship package — 1.12.0 (2026-09-10)
+- Removes the unused optional spec stage and its agent, generated Codex role, and spec-generation
+  evals. Invocation is now `/ship <TICKET> [--record]`; the planner reads Jira and linked specs.
+- **Breaking pipeline contract:** `ship` 5.0.0 renumbers Plan through Insights to Stages 1–7, with
+  plan approval at GATE 1 and QA approval at GATE 2. No spec approval or spec-text handoff remains.
+- `task-planner-agent` 3.0.0 drops the approved-spec input; `implementator-agent` 2.0.0 drops
+  spec/plan persistence; `reviewer-agent` 2.0.0 receives the approved plan inline.
+  `qa-agent` 3.1.2 uses relayed requirements and the updated QA gate number;
+  `engineering-insights` 1.0.1 updates its stage reference.
+- Updates documentation, role generation, installer expectations, and remaining eval fixtures.
+  The former `--spec` routing eval now checks unsupported-token handling.
 
 ## ship package — 1.11.0 (2026-09-10)
 - Follow-up after live CI: make the Codex reference a self-contained workflow, preserve strict
