@@ -61,7 +61,9 @@ def test_unknown_token_asks_instead_of_guessing(run_window):
     # the orchestrator must ask rather than guess what it means. Prose-bearing assertion,
     # so observe the window rather than one turn (see conftest.Window).
     w = run_window("invoke_unknown_token")
-    assert not w.named("Agent"), "must not dispatch while the token is unresolved"
+    assert not w.named("Agent"), (
+        "must not dispatch while the token is unresolved " + w.diagnostics()
+    )
     mentioned = "gpt6" in w.text.lower() or any(
         "gpt6" in str(a.input_parameters).lower() for a in w.named("AskUserQuestion")
     )

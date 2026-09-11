@@ -39,16 +39,19 @@ def test_gate2_surfaces_queued_plan_without_new_qa_agent(run_window):
 
 
 @pytest.mark.llm
-def test_gate2_asks_recording_question_when_no_record_flag(run_decision):
+def test_gate2_asks_recording_question_when_no_record_flag(run_window):
     # ship 4.1.0: without --record, the "Record video of this QA run?" question is
     # asked via AskUserQuestion as part of the same GATE 2 stop.
-    d = run_decision("pr_created_qa_ready")
+    d = run_window("pr_created_qa_ready")
     asked = " ".join(
         q["header"].lower() + " " + q["question"].lower()
         for a in d.named("AskUserQuestion") for q in a.input_parameters["questions"]
     )
     assert "record" in asked or "video" in asked, (
-        "GATE 2 must settle the recording decision alongside the plan surface"
+        "GATE 2 must settle the recording decision alongside the plan surface " + d.diagnostics()
+    )
+    assert not d.named("SendMessage") and not d.named("Agent"), (
+        "no execution or new QA agent before approval " + d.diagnostics()
     )
 
 

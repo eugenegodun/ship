@@ -34,12 +34,16 @@ def run_pipeline(invocation: str, respond: Callable[[str, dict], str],
 
 def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str],
                         user_replies: list[str] | None = None,
-                        max_calls: int = 40) -> SimResult:
+                        max_calls: int = 40,
+                        stop_after_tools: set[str] | None = None) -> SimResult:
     """Same loop, resumed from an existing transcript instead of an invocation.
 
     Use this when a decision spans more than one turn — e.g. Stage 6's report, which the
     orchestrator may emit only after spending a turn on Stage 7 bookkeeping. A single-shot
     decision eval would judge that bookkeeping turn instead of the report.
+
+    Observation windows can stop after specified tools without answering them.
+    Record the entire turn first so premature actions alongside a question remain visible.
     """
     system = load_skill("ship")
     messages = list(messages)
@@ -65,9 +69,13 @@ def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str
                 return result
             messages.append({"role": "user", "content": replies.pop(0)})
             continue
-        tool_results = []
         for tu in tool_uses:
             result.events.append(ToolEvent(tu.name, dict(tu.input)))
+        if any(tu.name in (stop_after_tools or set()) for tu in tool_uses):
+            result.stop_reason = "observed_action"
+            return result
+        tool_results = []
+        for tu in tool_uses:
             tool_results.append({"type": "tool_result", "tool_use_id": tu.id,
                                  "content": respond(tu.name, dict(tu.input))})
         messages.append({"role": "user", "content": tool_results})

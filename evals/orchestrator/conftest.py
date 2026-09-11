@@ -82,5 +82,6 @@ def run_window():
     def _run(transcript_name: str, max_calls: int = 5) -> Window:
         messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
         return Window(continue_transcript(messages, respond=bookkeeping_responder,
-                                          max_calls=max_calls))
+                                          max_calls=max_calls,
+                                          stop_after_tools={"AskUserQuestion"}))
     return _run

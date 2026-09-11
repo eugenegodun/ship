@@ -23,6 +23,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -50,6 +57,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -76,6 +90,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -103,6 +124,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -130,6 +158,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -156,6 +191,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -182,6 +224,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -208,6 +257,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -234,6 +290,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -260,6 +323,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -288,6 +358,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -314,6 +391,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "write_denied",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -340,7 +424,15 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
-    }
+    },
+    "expected_publication": "readback_mismatch",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
+    },
+    "readback_body": "## Evidence\nHuman evidence.\n"
   },
   {
     "id": "malformed_marker",
@@ -367,6 +459,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "refused",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -394,6 +493,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "refused",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -421,6 +527,13 @@
       ],
       "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   },
   {
@@ -447,6 +560,13 @@
       ],
       "recording": "🎥 QA recording (upload failed): /tmp/LEX-2101-qa.webm",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "upload_failed",
+      "recording_path": "/tmp/LEX-2101-qa.webm"
     }
   },
   {
@@ -473,6 +593,47 @@
       ],
       "recording": "Recording capture failed: video-start exited 1; QA continued unrecorded.",
       "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "capture_failed",
+      "recording_command": "video-start",
+      "recording_exit_code": 1
+    }
+  },
+  {
+    "id": "readback_unavailable",
+    "body": "## Evidence\nHuman evidence.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "gh pr edit returned success, but verification gh pr view failed: HTTP 502. No read-back body is available.",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        [
+          "TC-01 / Happy path",
+          "Verify action is visible",
+          "✅",
+          ""
+        ],
+        [
+          "TC-02 / Boundary",
+          "Verify action is hidden within 12h",
+          "❌",
+          "Action remained visible at 11h."
+        ]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on."
+    },
+    "expected_publication": "readback_unknown",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
   }
 ]
