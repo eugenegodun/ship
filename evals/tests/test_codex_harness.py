@@ -132,3 +132,87 @@ def test_continue_codex_transcript_skips_empty_text_with_tool_calls():
     # Whitespace-only text alongside tool calls should be skipped
     # Only the text from the final no-tool-calls turn should be captured
     assert result.texts == ["Final."]
+
+
+def test_mailbox_delivery_follows_all_tool_replies():
+    from ship_evals.codex_harness import CodexToolReply
+    seen = []
+    responses = iter([
+        fake_openai_response('Waiting', [
+            {'id': 'a', 'name': 'wait_agent', 'arguments': {}},
+            {'id': 'b', 'name': 'list_agents', 'arguments': {}}]),
+        fake_openai_response('Gate'),
+    ])
+    def call(system, messages, tools):
+        seen.append(list(messages))
+        return next(responses)
+    with patch('ship_evals.codex_harness.call_codex_model', side_effect=call):
+        result = continue_codex_transcript([], lambda name, args: CodexToolReply('activity', ['child result'])
+                                           if name == 'wait_agent' else 'states')
+    assert [m['role'] for m in seen[1]] == ['assistant', 'tool', 'tool', 'user']
+    assert 'child result' in seen[1][-1]['content']
+    assert result.turns[0].tools[0].name == 'wait_agent'
+    assert result.turns[1].text == 'Gate'
+    assert result.turns[1].tools == []
+
+
+def test_runtime_prompt_is_the_codex_reference_without_claude_translation():
+    from ship_evals.codex_harness import REFERENCE, load_codex_system
+    assert load_codex_system() == REFERENCE.read_text()
+
+
+def test_failure_trace_includes_full_output_and_pending_state(tmp_path, monkeypatch):
+    import json
+    from ship_evals.codex_scenarios import AsyncScenario
+    monkeypatch.setenv('EVAL_CODEX_TRACE_DIR', str(tmp_path))
+    scenario = AsyncScenario()
+    with patch('ship_evals.codex_harness.call_codex_model', return_value=fake_openai_response('Still working')):
+        result = continue_codex_transcript([], scenario.respond)
+    trace = json.loads(next(tmp_path.glob('*.json')).read_text())
+    assert trace['result']['turns'][-1]['text'] == 'Still working'
+    assert trace['state']['pr_ready'] is False
+    assert result.stop_reason == 'no_tool_calls'
+
+
+def test_token_exhaustion_is_not_reported_as_a_final_answer():
+    response = fake_openai_response('partial output')
+    response.choices[0].finish_reason = 'length'
+    with patch('ship_evals.codex_harness.call_codex_model', return_value=response):
+        result = continue_codex_transcript([], lambda name, args: 'ok')
+    assert result.stop_reason == 'length'
+    assert result.turns[-1].finish_reason == 'length'
+
+
+def test_direct_api_call_logs_full_response_without_forcing_tools(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    from ship_evals.codex_harness import call_codex_model
+    monkeypatch.setenv('EVAL_CODEX_TRACE_DIR', str(tmp_path))
+    monkeypatch.setattr("ship_evals.codex_harness.CODEX_API", "chat")
+    client = MagicMock()
+    client.chat.completions.create.return_value.model_dump.return_value = {
+        'choices': [{'finish_reason': 'stop', 'message': {'content': 'Full response'}}]}
+    with patch('ship_evals.codex_harness._get_client', return_value=client):
+        call_codex_model('system', [{'role': 'user', 'content': 'brief'}], [])
+    trace = json.loads(next(tmp_path.glob('*.json')).read_text())
+    assert trace['response']['choices'][0]['message']['content'] == 'Full response'
+    assert trace['response']['choices'][0]['finish_reason'] == 'stop'
+    assert 'tool_choice' not in trace['request']
+
+
+@pytest.mark.parametrize('ending,expected', [('final', 'no_tool_calls'), ('action', 'observed_action'), ('bookkeeping', 'max_calls')])
+def test_bounded_action_observation_never_nudges_a_final(ending, expected):
+    bookkeeping = fake_openai_response('', [{'id': 'p', 'name': 'update_plan', 'arguments': {}}])
+    final = fake_openai_response('I will dispatch later')
+    action = fake_openai_response('', [
+        {'id': 's', 'name': 'spawn_agent', 'arguments': {'agent_type': 'ship-git-agent'}},
+        {'id': 'f', 'name': 'followup_task', 'arguments': {'target': 'unexpected'}}])
+    responses = [bookkeeping, {'final': final, 'action': action, 'bookkeeping': bookkeeping}[ending]]
+    replies = []
+    with patch('ship_evals.codex_harness.call_codex_model', side_effect=responses) as call:
+        result = continue_codex_transcript([], lambda name, args: replies.append(name) or 'ok',
+                                          max_calls=2, stop_after_tools={'spawn_agent'})
+    assert call.call_count == 2
+    assert result.stop_reason == expected
+    if ending == 'action':
+        assert [e.name for e in result.events] == ['update_plan', 'spawn_agent', 'followup_task']
+        assert replies == ['update_plan']

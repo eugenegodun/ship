@@ -1,6 +1,6 @@
 """Multi-turn orchestrator simulator: the harness plays tool executor with canned replies."""
 from dataclasses import dataclass, field
-from typing import Callable
+from typing import Callable, Collection
 
 from .artifacts import load_skill
 from .harness import call_model, output_text
@@ -18,6 +18,7 @@ class SimResult:
     events: list[ToolEvent] = field(default_factory=list)
     texts: list[str] = field(default_factory=list)
     stop_reason: str = "max_calls"
+    messages: list[dict] = field(default_factory=list)
 
 
 def run_pipeline(invocation: str, respond: Callable[[str, dict], str],
@@ -34,16 +35,20 @@ def run_pipeline(invocation: str, respond: Callable[[str, dict], str],
 
 def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str],
                         user_replies: list[str] | None = None,
-                        max_calls: int = 40) -> SimResult:
+                        max_calls: int = 40, *,
+                        stop_on_tools: Collection[str] = ()) -> SimResult:
     """Same loop, resumed from an existing transcript instead of an invocation.
 
-    Use this when a decision spans more than one turn — e.g. Stage 7's report, which the
-    orchestrator may emit only after spending a turn on Stage 8 bookkeeping. A single-shot
+    Use this when a decision spans more than one turn — e.g. Stage 6's report, which the
+    orchestrator may emit only after spending a turn on Stage 7 bookkeeping. A single-shot
     decision eval would judge that bookkeeping turn instead of the report.
+
+    stop_on_tools ends observation before answering a selected tool. All calls in
+    that assistant response remain recorded, including any concurrent dispatch.
     """
     system = load_skill("ship")
     messages = list(messages)
-    result = SimResult()
+    result = SimResult(messages=messages)
     user_replies = user_replies or []
     replies = list(user_replies)
 
@@ -65,9 +70,12 @@ def continue_transcript(messages: list[dict], respond: Callable[[str, dict], str
                 return result
             messages.append({"role": "user", "content": replies.pop(0)})
             continue
+        result.events.extend(ToolEvent(tu.name, dict(tu.input)) for tu in tool_uses)
+        if any(tu.name in stop_on_tools for tu in tool_uses):
+            result.stop_reason = "awaiting_tool_response"
+            return result
         tool_results = []
         for tu in tool_uses:
-            result.events.append(ToolEvent(tu.name, dict(tu.input)))
             tool_results.append({"type": "tool_result", "tool_use_id": tu.id,
                                  "content": respond(tu.name, dict(tu.input))})
         messages.append({"role": "user", "content": tool_results})

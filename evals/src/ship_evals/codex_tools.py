@@ -11,7 +11,7 @@ def _fn(name, description, properties, required):
 SPAWN_AGENT = _fn(
     "spawn_agent",
     "Spawns an agent to work on the specified task. Returns its canonical task name. The agent's "
-    "final answer arrives later in your mailbox or via wait_agent.",
+    "final answer arrives later as a separate mailbox event. Keep the parent active to process it.",
     {
         "task_name": {"type": "string", "description": "Short unique name for the child task"},
         "message": {"type": "string", "description": "The task brief"},
@@ -40,7 +40,7 @@ SEND_MESSAGE = _fn(
 
 WAIT_AGENT = _fn(
     "wait_agent",
-    "Wait for mailbox activity from child agents, up to timeout_ms.",
+    "Wait for mailbox activity from child agents, up to timeout_ms. Returns an activity or timeout summary; child reports are delivered separately. A timeout does not mean completion.",
     {"timeout_ms": {"type": "integer"}},
     ["timeout_ms"],
 )

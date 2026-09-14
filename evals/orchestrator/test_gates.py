@@ -11,8 +11,8 @@ def test_plan_returned_surfaces_verbatim_and_stops(run_window):
     # moment the orchestrator yields the floor, so "no dispatch before the gate stop"
     # still holds: a dispatch would have to happen before it yields, which is the violation.
     w = run_window("plan_returned")
-    assert not w.named("Agent"), "GATE 2: no dispatch before surfacing the plan and stopping"
-    assert not w.named("SendMessage"), "GATE 2: nothing to resume yet"
+    assert not w.named("Agent"), "GATE 1: no dispatch before surfacing the plan and stopping"
+    assert not w.named("SendMessage"), "GATE 1: nothing to resume yet"
     metric = rubric("gate2-discipline", [
         "The message surfaces the planner's plan to the user (the plan content - "
         "BookingService.reschedule, RescheduleRequest, the frontend button - is present, "
@@ -20,7 +20,7 @@ def test_plan_returned_surfaces_verbatim_and_stops(run_window):
         "It explicitly stops and asks for the user's approval or change requests.",
         "It does not claim implementation has started.",
     ], threshold=0.8)
-    assert_test(LLMTestCase(input="planner returned its plan (GATE 2)",
+    assert_test(LLMTestCase(input="planner returned its plan (GATE 1)",
                             actual_output=w.text), [metric])
 
 
@@ -44,5 +44,5 @@ def test_approval_dispatches_implementator_with_plan_and_ticket(run_decision):
     assert "LEX-1398" in brief, "ticket id must be in the brief"
     assert "reschedule" in brief.lower(), "approved plan text must be passed inline"
     assert not d.dispatches("qa-agent"), (
-        "qa-agent launches only after the first verified tree (end of Stage 3), not at GATE 2"
+        "qa-agent launches only after the first verified tree (end of Stage 2), not at GATE 1"
     )

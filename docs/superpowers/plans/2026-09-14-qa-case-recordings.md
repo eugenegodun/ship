@@ -27,7 +27,7 @@
 4. For two cases separated by reset/navigation, produce two clips with the preparation interval excluded. A blocked case whose test steps never start does not need a clip.
 5. Use one run identifier and collision-resistant names within `~/.ship/qa-recordings/<TICKET>/`: `<TICKET>-qa-<run-id>-<case-slug>-<role>.webm`. Allocate unique case slugs even when sanitized titles collide; retain the exact original title in the report. Include an attempt suffix only for an independently justified retry.
 6. For multi-user cases, prepare all participants first; start recording each participating session before the tested cross-user action and stop each after the outcome. Keep case/role mapping for each clip.
-7. Upload completed clips using the existing static-hosting skill. Under the verdict, use one labeled line per clip: `🎥 QA recording: <case id/title> (<role>) — <hosted URL>`. If upload fails, retain the case/role label and local file path. Keep identical recording lines in the PR comment and final response.
+7. Upload completed clips using the existing static-hosting skill. Under the verdict, use one labeled line per clip: `🎥 QA recording: <case id/title> (<role>) — <hosted URL>`. If upload fails, retain the case/role label and local file path. Keep identical recording lines in the PR description and final response.
 8. If start fails, continue the case unrecorded and report the failure. If stop fails, attempt cleanup of capture without rerunning the case; do not claim the file is finalized or uploaded unless verified. If capture cannot be stopped safely, discontinue further recording in that session and report the limitation. Continue QA where browser state permits.
 
 No video concatenation, trimming dependency, or new CLI option is needed. Pausing/resuming the same output file is not assumed. This change removes setup and transitions; it does not promise to remove agent thinking time within a case. Scripted execution to reduce that time is a separate improvement.
@@ -84,9 +84,9 @@ No video concatenation, trimming dependency, or new CLI option is needed. Pausin
 **Interfaces:** Preserve `--record` and the Phase-B recording-decision handoff. Document that results contain multiple labeled clips.
 
 - [x] Describe per-case recording, excluded preconditions, retained test navigation, role labels, and local-file fallback in the README and orchestrator summaries.
-- [x] Apply repository version conventions: QA agent 3.1.1 → 3.2.0 for the added workflow; package 1.10.2 → 1.11.0, subject to rechecking versions at implementation time. Wording-only orchestrator edits receive its patch bump. Record changes in the changelog and regenerate the role after final agent edits.
+- [x] Apply repository version conventions: QA agent 4.0.2 → 4.1.0 for the added workflow; package 1.13.2 → 1.14.0, subject to rechecking versions at implementation time. Wording-only orchestrator edits receive its patch bump. Record changes in the changelog and regenerate the role after final agent edits.
 - [x] Run `uv run pytest tests -v` from `evals/` and the generation drift check from the repository root. Run affected recording decision-point evals if orchestrator text changes. Reuse successful focused QA eval results unless subsequent changes affect them.
-- [x] Perform a local browser smoke check on a disposable page with a dedicated session: navigate before capture, record one interaction and outcome, stop, perform a visibly different reset while unrecorded, then start a second file in the same session and record another interaction. Close only the owned session. Inspect both saved clips to verify start/stop boundaries and sequential recordings preserve browser state. Do not provision a stage account or publish a PR comment for this smoke check.
+- [x] Perform a local browser smoke check on a disposable page with a dedicated session: navigate before capture, record one interaction and outcome, stop, perform a visibly different reset while unrecorded, then start a second file in the same session and record another interaction. Close only the owned session. Inspect both saved clips to verify start/stop boundaries and sequential recordings preserve browser state. Do not provision a stage account or publish a PR description for this smoke check.
 - [x] Review the diff for contradictory session-wide recording instructions, correct generated output, complete labels, and unchanged opt-in semantics. Report eval outcomes and smoke-check evidence without claiming model-backed evals prove browser execution.
 
 ## Review checklist
@@ -114,3 +114,13 @@ No video concatenation, trimming dependency, or new CLI option is needed. Pausin
   event-loop deprecation warning; no test failures. Existing virtualenv Python/pytest was used
   directly because the sandbox blocked the uv cache; test processes ran with approved network/local
   socket access. Keys were loaded only into subprocesses and were never printed.
+
+## Main integration
+
+Integrated `origin/main` at `c1683c9`. Preserve the current four-agent pipeline and the
+PR-description publication contract, including bounded-block ownership, flag/environment facts,
+read-back checks, and verified-link requirements. Apply per-case recording on top of those changes.
+The resulting versions are package 1.14.0, QA agent 4.1.0, and ship 6.0.2. Regenerate both Codex
+roles and skill entrypoints. The expanded main unit suite passes all 95 checks; recording,
+publication, and handoff regressions passed together: 107 checks, including model-backed cases.
+Both Codex generator drift checks and the staged diff whitespace check passed.

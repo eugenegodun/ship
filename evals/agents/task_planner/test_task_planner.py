@@ -12,10 +12,10 @@ FIXTURES = Path(__file__).parent / "fixtures"
 SYSTEM = load_agent("task-planner-agent")
 
 BRIEF = (
-    "Ticket: LEX-2101. An approved spec is provided below — ground the plan in it instead "
+    "Ticket: LEX-2101. The ticket content is provided below — ground the plan in it instead "
     "of re-reading the ticket. A relevant excerpt of the existing code is also inlined; "
     "there is no repository or Jira access in this environment, so plan from what is "
-    "given.\n\n--- APPROVED SPEC ---\n{spec}\n--- CODE: lessons/services/booking.py ---\n"
+    "given.\n\n--- TICKET ---\n{ticket}\n--- CODE: lessons/services/booking.py ---\n"
     "```python\n{code}\n```"
 )
 
@@ -23,7 +23,7 @@ BRIEF = (
 @pytest.mark.llm
 def test_plan_is_grounded_and_writes_no_code():
     prompt = BRIEF.format(
-        spec=(FIXTURES / "approved_spec.md").read_text(),
+        ticket=(FIXTURES / "ticket.md").read_text(),
         code=(FIXTURES / "code_excerpt.py").read_text(),
     )
     resp = call_model(system=SYSTEM, messages=[{"role": "user", "content": prompt}])

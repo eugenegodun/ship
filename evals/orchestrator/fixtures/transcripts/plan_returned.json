@@ -1,26 +1,26 @@
 {
-  "description": "Planner returned its plan. GATE 2: surface verbatim and STOP - no implementator dispatch, no SendMessage.",
+  "description": "Planner returned its plan. GATE 1: surface verbatim and STOP - no implementator dispatch, no SendMessage.",
   "messages": [
     {"role": "user", "content": "/ship LEX-1398"},
     {"role": "assistant", "content": [
       {"type": "text", "text": "Starting the ship pipeline for LEX-1398. First, Stage 0: choosing models."},
       {"type": "tool_use", "id": "tu_1", "name": "TodoWrite", "input": {"todos": [
-        {"content": "Plan (GATE 2)", "status": "in_progress"},
+        {"content": "Plan (GATE 1)", "status": "in_progress"},
         {"content": "Implement", "status": "pending"},
         {"content": "QA-plan authoring (background)", "status": "pending"},
         {"content": "Review + fix loop", "status": "pending"},
         {"content": "Commit / Push / Draft PR", "status": "pending"},
-        {"content": "QA (GATE 3)", "status": "pending"},
+        {"content": "QA (GATE 2)", "status": "pending"},
         {"content": "Final report", "status": "pending"},
         {"content": "Insights retro", "status": "pending"}
       ]}},
       {"type": "tool_use", "id": "tu_2", "name": "AskUserQuestion", "input": {"questions": [
-        {"question": "Which model should run the planner (Stage 2)? A different model for the reviewer is recommended - cross-model review catches blind spots.", "header": "Planner model", "multiSelect": false, "options": [
+        {"question": "Which model should run the planner (Stage 1)? A different model for the reviewer is recommended - cross-model review catches blind spots.", "header": "Planner model", "multiSelect": false, "options": [
           {"label": "claude-fable-5", "description": "Most capable"},
           {"label": "claude-opus-5[1m]", "description": "1M-context Opus"},
           {"label": "claude-sonnet-5", "description": "Fast and capable"}
         ]},
-        {"question": "Which model should run the reviewer (Stage 4)?", "header": "Reviewer model", "multiSelect": false, "options": [
+        {"question": "Which model should run the reviewer (Stage 3)?", "header": "Reviewer model", "multiSelect": false, "options": [
           {"label": "claude-fable-5", "description": "Most capable"},
           {"label": "claude-opus-5[1m]", "description": "1M-context Opus"},
           {"label": "claude-sonnet-5", "description": "Fast and capable"}
