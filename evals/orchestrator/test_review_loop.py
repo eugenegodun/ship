@@ -47,7 +47,7 @@ def test_cap_reached_halts_without_commit_and_keeps_qa_alive(run_window):
 def test_clean_review_dispatches_haiku_git_agent(run_decision):
     d = run_decision("review_clean")
     git = d.dispatches("claude")
-    assert git, "clean verdict exits the loop into Stage 5's git agent"
+    assert git, "clean verdict exits the loop into Stage 4's git agent"
     assert "haiku" in git[0].input_parameters.get("model", "").lower()
     brief = git[0].input_parameters["prompt"]
     assert "/tmp/worktrees/LEX-1398" in brief and "LEX-1398" in brief

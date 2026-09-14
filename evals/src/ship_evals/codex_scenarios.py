@@ -165,7 +165,9 @@ class AsyncScenario:
                 self.pr_ready = True
             agent['state'] = {'completed': report}
             return CodexToolReply('Mailbox activity: ' + key + ' completed', [key + '\n' + report])
-        raise AssertionError('Unexpected tool: ' + name)
+        if name == 'shell' and 'install-codex-agents.sh' in args.get('command', ''):
+            raise AssertionError('Repeated preflight after recorded exit-0 success: ' + repr(args))
+        raise AssertionError('Unexpected tool: ' + name + ' ' + repr(args))
 
     def snapshot(self):
         return dict(vars(self))

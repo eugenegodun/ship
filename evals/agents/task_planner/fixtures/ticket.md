@@ -1,4 +1,4 @@
-# Spec (approved) — LEX-2101: Reschedule a booked lesson
+# Jira ticket — LEX-2101: Reschedule a booked lesson
 
 ## User stories
 - As a student, I want to reschedule a booked lesson from the lesson card, so that I do

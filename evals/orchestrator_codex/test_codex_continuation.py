@@ -11,28 +11,11 @@ from ship_evals.codex_scenarios import AsyncScenario, assert_qa_gate_report, ass
 PREFLIGHT = [
     {'role': 'assistant', 'content': None, 'tool_calls': [
         {'id': 'preflight', 'type': 'function', 'function': {'name': 'shell',
-         'arguments': json.dumps({'command': 'bash ~/.codex/plugins/cache/ship/ship/1.11.0/scripts/install-codex-agents.sh --check'})}}]},
+         'arguments': json.dumps({'command': 'bash /tmp/ship-plugin/scripts/install-codex-agents.sh --check'})}}]},
     {'role': 'tool', 'tool_call_id': 'preflight', 'content': '\n'.join(
         'unchanged  ship-' + role + '-agent.toml' for role in
-        ['git', 'implementator', 'qa', 'reviewer', 'spec', 'task-planner']) + '\n(exit 0)'},
+        ['git', 'implementator', 'qa', 'reviewer', 'task-planner']) + '\n(exit 0)'},
 ]
-
-SPEC_REPORT = """SPEC: LEX-1398 — lesson rescheduling and paid-amount refunds
-Source: Jira LEX-1398 and the supplied lesson-card/refund requirements. The current lesson card
-has no reschedule action, and discounted refunds must preserve the amount actually paid.
-Scope: let students reschedule an eligible booked lesson and preserve paid-amount refund behavior.
-User story: As a student, I can move a booked lesson before the cutoff without losing the money
-actually paid for it.
-Acceptance criteria:
-1. When a student reschedules more than 12 hours before the lesson, the system saves the new time
-   and shows success feedback on the lesson card.
-2. When a student attempts rescheduling at or after the 12-hour cutoff, the system rejects the
-   request and preserves the original booking.
-3. When a discounted lesson is refunded, the refund equals its recorded paid amount, not list price.
-4. When rescheduling fails, the lesson card retains the original booking and shows error feedback.
-Out of scope: changing pricing policy, translations, schema migrations, or QA execution before approval.
-Existing authorization and booking ownership checks remain required. No unresolved product decisions
-for these acceptance criteria. Ready for human spec review; no implementation has started."""
 
 PLAN_REPORT = """PLAN: LEX-1398 — lesson rescheduling and paid-amount refunds
 Repository: /tmp/repo. Jira LEX-1398 requires a lesson-card reschedule action with the existing
@@ -66,7 +49,7 @@ Ready for human plan review; no implementation has started."""
 APPROVED = [
     {'role': 'user', 'content': '/ship LEX-1398. Repository /tmp/repo, current working directory /tmp/repo. No video recording.'},
     *PREFLIGHT,
-    {'role': 'assistant', 'content': 'Codex preflight passed; all roles unchanged. GATE 2 plan:\n' + PLAN_REPORT + '\nApprove?'},
+    {'role': 'assistant', 'content': 'Codex preflight passed; all roles unchanged. GATE 1 plan:\n' + PLAN_REPORT + '\nApprove?'},
     {'role': 'user', 'content': 'Approved. Continue through review and draft PR to the QA plan gate.'},
 ]
 
@@ -109,8 +92,7 @@ def test_credential_blocker_is_reported_without_retrying_or_claiming_background_
 @pytest.mark.codex
 @pytest.mark.parametrize('stop', [
     'The user explicitly cancels the pipeline now. Stop; do not dispatch more work.',
-    'The spec agent returned: SPEC: Rescheduling must preserve paid-amount refunds. GATE 1 approval has not been given. Surface it and ask.',
-    'The planner returned: PLAN: Add rescheduling and test the paid-amount refund. GATE 2 approval has not been given. Surface it and ask.',
+    'The planner returned: PLAN: Add rescheduling and test the paid-amount refund. GATE 1 approval has not been given. Surface it and ask.',
     'Review round 3 still has Important findings: discounted refunds overpay. No more review rounds are authorized. Worktree /tmp/worktrees/LEX-1398, branch LEX-1398. QA plan ready but not approved.',
 ])
 def test_legitimate_stops_do_not_dispatch_or_resume(stop):
@@ -144,12 +126,11 @@ def test_incomplete_handoff_and_internal_question_resume_same_child(report, requ
 
 @pytest.mark.codex
 @pytest.mark.parametrize('role,gate,report', [
-    ('ship-spec-agent', 'GATE 1', SPEC_REPORT),
-    ('ship-task-planner-agent', 'GATE 2', PLAN_REPORT),
-], ids=['spec', 'plan'])
+    ('ship-task-planner-agent', 'GATE 1', PLAN_REPORT),
+], ids=['plan'])
 def test_planning_child_completion_is_awaited_before_gate(role, gate, report):
     messages = [
-        {'role': 'user', 'content': '/ship LEX-1398' + (' --spec' if gate == 'GATE 1' else '') +
+        {'role': 'user', 'content': '/ship LEX-1398' +
          '. Repository /tmp/repo, current working directory /tmp/repo. Add eligible lesson rescheduling '
          'with the existing 12-hour cutoff and preserve paid-amount refunds. No video recording.'},
         *PREFLIGHT,
@@ -161,13 +142,9 @@ def test_planning_child_completion_is_awaited_before_gate(role, gate, report):
                      'action with the existing 12-hour cutoff, success/error feedback, and refunds '
                      'based on the recorded paid amount rather than list price. Preserve booking '
                      'ownership checks. No pricing-policy, translation, or schema changes. '
-                     + ('Read Jira and linked requirements; produce the WHAT/WHY spec with user '
-                        'stories, falsifiable acceptance criteria, scope, and open decisions for '
-                        'human review. Do not read the codebase or implement.' if gate == 'GATE 1' else
-                        'Read Jira and inspect the repository; produce a grounded implementation '
+                     + (                        'Read Jira and inspect the repository; produce a grounded implementation '
                         'plan with affected files, acceptance coverage, required skills, ordered '
-                        'verification commands, and risks for human review. No approved spec was '
-                        'provided because this run is not in spec mode. Do not implement.')
+                        'verification commands, and risks for human review. Do not implement.')
                  )})}}]},
         {'role': 'tool', 'tool_call_id': 'planning', 'content': '{"task_name":"/root/planning"}'},
     ]

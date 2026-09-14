@@ -1,13 +1,13 @@
 ---
 name: engineering-insights
-version: 1.0.0
+version: 1.0.1
 description: >-
   Use when a session involved a non-obvious problem, gotcha, decision, surprising
   behavior, or hard-won discovery worth remembering — and at the end of any such
   session before wrapping up. Triggers on finishing a task, "wrap up", "we're done",
   capturing a lesson/insight/gotcha, or noticing something a future session would
   repeat a mistake on. Takes the target `INSIGHTS.md` path as `args` — the caller
-  decides which file (there is no routing table here); `ship`'s Stage 8 invokes this
+  decides which file (there is no routing table here); `ship`'s Stage 7 invokes this
   skill twice per run with two different target paths.
 metadata:
   tags: insights, learnings, capture, wrap-up, gotcha, lesson, memory, retrospective
