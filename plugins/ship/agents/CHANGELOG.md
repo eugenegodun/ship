@@ -10,6 +10,15 @@ always, five when `spec-agent` runs via `--spec`). Bump rules live in
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.11.0 (2026-09-14)
+- **QA videos cover individual test cases.** `qa-agent` 3.1.1 → 3.2.0 starts recording after
+  preconditions and stops after each outcome, before reset/navigation for the next case. Navigation
+  or login under test remains recorded. Clips retain failures and are labeled by approved case and
+  participant role in the PR comment and final report. Capture/upload failures preserve test verdicts.
+- Regenerated the Codex QA role from the shared source. `ship` 4.2.0 → 4.2.1 updates recording
+  summaries; the recording decision, approval gates, and Phase-B handoff are unchanged.
+- Added behavioral evals for case boundaries, tested navigation, multiple users, failures, and opt-out.
+
 ## ship package — 1.10.2 (2026-09-08)
 - **Merge resolution: `ship-codex-port` (package 1.10.0) merged past `implementator-no-comments`
   (package 1.10.1) on `main`.** No real content conflict — the two branches touch disjoint files

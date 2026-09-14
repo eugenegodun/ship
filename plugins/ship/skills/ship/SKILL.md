@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 4.2.0
+version: 4.2.1
 description: >
   Orchestrates the feature pipeline (optionally spec-agent →) task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -257,8 +257,8 @@ The qa-agent's Phase-A plan was authored in the background since Stage 3's first
      declined; omit recording instructions entirely on a decline). Pass the stage exactly as the
      user named it; if the approval names none, say so and qa-agent uses its default
      localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
-     it provisions a stage account, executes with Playwright (recording the session when requested
-     and uploading the video via `devex:internal-static-hosting`), and posts PASS/FAIL results to
+     it provisions a stage account, executes with Playwright (recording individual test cases when requested
+     and uploading the clips via `devex:internal-static-hosting`), and posts PASS/FAIL results to
      the PR (the plan itself was already shown to the human above at GATE 3 — it is not separately
      posted).
 
@@ -386,14 +386,14 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 4.2.0 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
+**Compatibility (current):** `ship` 4.2.1 expects `spec-agent` ≥1.0.0 (single-phase, WHAT/WHY only, no
 codebase read — dispatched only when `--spec` is used), `task-planner-agent` ≥2.1.0 (accepts an
 optional approved-spec input and skips its own ticket read when one is present), `implementator-agent`
 ≥1.3.0 (persists plan/spec into the worktree as `specs/<TICKET>/*.md` only in `--spec` mode),
-`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.1.0 (prefers reading `specs/<TICKET>/*.md` from the
+`reviewer-agent` ≥1.2.1 and `qa-agent` ≥3.2.0 (prefers reading `specs/<TICKET>/*.md` from the
 worktree when it exists, falling back to relayed text otherwise; accepts the target stage with the
 Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
-records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
+records cases with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends labeled 🎥 lines to
 the results; posts only results to the PR, formatted as a verdict line
 + Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 8 — takes a target path via `args`, no

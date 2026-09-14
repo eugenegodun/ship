@@ -71,3 +71,78 @@ def test_stage_at_resume_is_adopted_without_challenge():
     ], threshold=0.8)
     assert_test(LLMTestCase(input=PLAN_TURN + "\n\n[resume] " + resume, actual_output=out),
                 [metric])
+
+
+SETTINGS_PLAN = (
+    "TC1: Update setting. Preconditions: log in as student, navigate to settings. "
+    "Steps: enter a valid display name and save. Expected: saved name is visible.\n"
+    "TC2: Reject invalid name. Preconditions: reset the name, navigate away and back "
+    "to settings. Steps: clear the name and save. Expected: validation error is visible."
+)
+
+
+@pytest.mark.llm
+@pytest.mark.parametrize("plan,decision,observation,criteria", [
+    pytest.param(SETTINGS_PLAN, "Record the QA run.", "", [
+        "Login and navigation to settings happen before video-start for TC1.",
+        "There are two distinct recording files, one per case. TC1 video-stop happens "
+        "before resetting the name or navigating for TC2; TC2 video-start follows its setup.",
+        "Each clip includes the tested actions and visible outcome, with the approved "
+        "case ID/title as its chapter and in the proposed results recording label.",
+    ], id="case-boundaries"),
+    pytest.param(
+        "TC1: Open billing. Preconditions: logged in on settings. Steps: click Billing. "
+        "Expected: billing page opens and shows the current plan.",
+        "Record the QA run.", "", [
+            "Login and setup precede video-start, but clicking Billing and verifying "
+            "the destination occur while recording; video-stop follows the outcome.",
+        ], id="tested-navigation"),
+    pytest.param(
+        "TC1: Receive message. Preconditions: tutor and student logged in to separate "
+        "sessions on the same lesson page. Steps: tutor sends hello; student reads it. "
+        "Expected: hello appears for both users.",
+        "Record the QA run.", "", [
+            "Both participants are prepared before capture. Recording commands target "
+            "explicit separate sessions and distinct case/role filenames.",
+            "Both sessions start capture before the tutor sends hello and stop after "
+            "the tested outcome; proposed recording links identify case and role.",
+        ], id="multi-user"),
+    pytest.param(SETTINGS_PLAN, "Record the QA run.",
+        "TC1 has just failed: the saved name is not visible. Recording was started, "
+        "but video-stop returned an error and no finalized file is confirmed. "
+        "The browser is still usable. Describe your remaining actions.", [
+            "The agent preserves the actual assertion failure and attempts recording "
+            "cleanup without rerunning TC1 just to obtain a video.",
+            "It does not claim an unverified file is finalized or uploaded. If capture "
+            "cannot be stopped, it discontinues recording in that session, reports the "
+            "limitation, and continues remaining QA where browser state permits.",
+        ], id="stop-failure"),
+    pytest.param(SETTINGS_PLAN, "Record the QA run.",
+        "Both cases passed and both case videos finalized successfully. Upload of TC1 "
+        "succeeded and its URL was verified. Upload of TC2 failed. Describe the report "
+        "and remaining actions, using placeholders for unavailable paths and URLs.", [
+            "The report preserves both passing verdicts and labels each recording by "
+            "case and role, using the verified URL for TC1 and a local fallback for TC2.",
+            "The upload failure does not trigger rerunning test cases, deleting local "
+            "files, or claiming a successful TC2 upload.",
+        ], id="upload-failure"),
+    pytest.param(SETTINGS_PLAN, "The user declined recording.", "", [
+        "The execution does not start or stop video capture or upload videos. "
+        "Mentioning that recording is disabled is allowed.",
+    ], id="recording-declined"),
+])
+def test_recording_execution(plan, decision, observation, criteria):
+    resume = (
+        "Resuming Phase B for LEX-2101. The user approved the plan below and authorized "
+        "fixtures, browser execution, and posting results on "
+        "https://github.com/preply/edu-frontend/pull/99999. Target stage34. "
+        f"{decision}\nApproved plan:\n{plan}\n{observation}\n"
+        "There is no tool access here. Do not claim to execute anything. Give the "
+        "ordered execution steps and concrete CLI commands you would use, including "
+        "recording, cleanup, and result reporting when applicable."
+    )
+    out = ask([{"role": "user", "content": resume}])
+    assert_test(
+        LLMTestCase(input=resume, actual_output=out),
+        [rubric("qa-recording-execution", criteria, threshold=0.9)],
+    )

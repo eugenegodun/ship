@@ -8,7 +8,7 @@ reviewed, QA'd pull request.
 ```
 
 - `--spec` — write a reviewed spec (WHAT/WHY) before planning the HOW.
-- `--record` — record the QA browser session as video, uploaded and linked on the PR.
+- `--record` — record QA test cases as separate videos, uploaded and linked on the PR.
   Without the flag you're asked at the QA gate.
 
 The ticket key is the only required input. There is no stage or model parameter: models
@@ -80,7 +80,7 @@ Five agents (four without `--spec`), three human gates:
   a disposable stage account, enables any required feature flags, drives Playwright, and
   posts the PASS/FAIL results to the PR. The plan itself is shown to you at the gate, not
   posted. Its target stage arrives with your approval, and — when recording is on — it
-  captures each browser session, uploads the video, and links it under the verdict.
+  captures each test case, uploads the clips, and links them by case and role under the verdict.
 
 Two bundled skills run alongside the pipeline:
 
@@ -95,22 +95,29 @@ Two bundled skills run alongside the pipeline:
 ## QA video recording
 
 Pass `--record`, or answer "Yes" when asked at the QA gate. During Phase B the qa-agent
-records each browser instance with `playwright-cli`, annotates the actions on screen, and
-marks one chapter per test case using the approved plan's case ids. The video is uploaded
-to internal static hosting and linked as `🎥 QA recording: <URL>` under the verdict line in
-both the PR comment and the final report. Recording is best-effort end to end — if capture
-or upload fails, the run still passes and the local file path is reported instead.
+records one clip per test case and participating user role with `playwright-cli`. Setup,
+login, and navigation to the starting state happen before recording; navigation or login
+that is itself being tested stays in the clip. Capture includes the observable outcome,
+including failures, and stops before preparation for the next case. Actions are annotated
+and each clip has a chapter card with the approved case id/title.
+
+Finalized clips are uploaded to internal static hosting and linked as
+`🎥 QA recording: <case id/title> (<role>) — <URL>` under the verdict in both the PR comment
+and final report. If an upload fails, the labeled local file path is reported instead.
+Capture failures are reported without claiming an unverified file exists. Recording and
+upload failures do not change test verdicts or cause tests to be rerun. Local clips are kept.
+This excludes setup and transitions; agent thinking time within a case can still appear.
 
 ## Evals
 
 The pipeline's contracts are tested by a [deepeval](https://deepeval.com) suite in
-[`evals/`](evals/) — 67 cases in five tiers, run on GitHub Actions for every PR that
+[`evals/`](evals/) — 73 cases in five tiers, run on GitHub Actions for every PR that
 touches `plugins/ship/**` or `evals/**`:
 
 | Tier | Cases | What it checks |
 |------|-------|----------------|
 | Unit | 31 | The harness itself — artifact loading, tool schemas, the turn simulator, the Codex role generator/installer, and version invariants. No model calls. |
-| Agent-level | 6 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality. |
+| Agent-level | 12 | Each agent's own `.md` against fixture inputs, LLM-judged: EARS specs, plan grounding, seeded-bug detection, QA plan quality, and per-case recording boundaries/failures. |
 | Decision points | 20 | `ship/SKILL.md` given a mid-pipeline transcript → assert its next move: gate discipline, resume-vs-respawn, the 3-round cap, model escalation, the parallel QA branch, no fabricated token counts. |
 | Codex decision points | 5 | The same kind of assertion, driven through the OpenAI API against `SKILL.md` + `references/codex-dispatch.md` with Codex's V2 tool schemas. |
 | End-to-end | 5 | The orchestrator played multi-turn with stubbed subagents — dispatch order, gate stops, halt behavior. Nightly, non-blocking. |
@@ -163,7 +170,7 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 4.2.0, `qa-agent` 3.1.1,
+  or invocation input changes. Current: `ship` 4.2.1, `qa-agent` 3.2.0,
   `task-planner-agent` 2.1.1, `implementator-agent` 1.3.2, `reviewer-agent` 1.2.2,
   `spec-agent` 1.2.0.
 - **Plugin package version** — the installable package version, in each tool's
