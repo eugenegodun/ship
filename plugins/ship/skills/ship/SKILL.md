@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 6.0.1
+version: 6.0.2
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -224,8 +224,8 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
      declined; omit recording instructions entirely on a decline). Pass the stage exactly as the
      user named it; if the approval names none, say so and qa-agent uses its default
      localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
-     it provisions a stage account, executes with Playwright (recording the session when requested
-     and uploading the video via `devex:internal-static-hosting`), and publishes PASS/FAIL results in
+     it provisions a stage account, executes with Playwright (recording individual test cases when requested
+     and uploading the clips via `devex:internal-static-hosting`), and publishes PASS/FAIL results in
      the PR description using its `Evidence`/`QA` placement rules. The plan stays in-session.
      Relay any explicit user override of the results destination in the Phase-B resume.
 
@@ -351,11 +351,11 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 6.0.1 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 6.0.2 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
-`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.0.1
+`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.1.0
 (accepts the target stage with the Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
-records with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends a 🎥 line to
+records cases with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends labeled 🎥 lines to
 the results; publishes results in the PR description’s `Evidence` section, or `QA` when the applied
 template has no `Evidence`, preserving human content and replacing its owned block on reruns;
 returns a description link with the verdict line + Test Case/Description/Status/Notes table), and

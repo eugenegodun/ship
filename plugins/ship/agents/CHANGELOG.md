@@ -9,6 +9,16 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.14.0 (2026-09-14)
+- **QA videos cover individual test cases.** `qa-agent` 4.0.2 → 4.1.0 starts recording after
+  preconditions and stops after each outcome, before reset/navigation for the next case. Navigation
+  or login under test remains recorded. Clips retain failures and are labeled by approved case and
+  participant role in the PR description's owned results block and final report. Capture/upload
+  failures preserve test verdicts and do not trigger test retries.
+- Regenerated Codex artifacts from the shared sources. `ship` 6.0.1 → 6.0.2 updates recording
+  summaries; the recording decision, approval gates, and description-publication contract remain intact.
+- Added behavioral evals for case boundaries, tested navigation, multiple users, failures, and opt-out.
+
 ## ship package — 1.13.2 (2026-09-11)
 - `qa-agent` 4.0.2 defaults to the plain PR URL. Section links require verification against
   the rendered GitHub heading; body read-back alone does not establish a valid anchor.

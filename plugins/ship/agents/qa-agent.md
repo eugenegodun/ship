@@ -1,13 +1,13 @@
 ---
 name: qa-agent
-version: 4.0.2
+version: 4.1.0
 description: >
   Use this agent to QA a feature end-to-end in a real browser. Given a feature description (and
   ideally a PR reference), it authors a test plan, returns it for human approval, and — once
   approved — provisions a disposable Preply stage account, executes the plan with Playwright, and
   publishes the pass/fail results in the GitHub PR description (the plan itself is only shown to the human
   in-session at the approval gate — it is not separately posted to the PR). When the Phase-B resume
-  requests it, it also records the browser session as video, uploads it to internal static hosting,
+  requests it, it also records each test case as a video clip, uploads it to internal static hosting,
   and links it in the results. Dispatch it from an orchestrating agent that can relay the human's
   approval back.
 
@@ -89,7 +89,7 @@ From the orchestrator's brief, extract:
     ask the orchestrator for one rather than guessing.
 - **`record`** (optional) — arrives with the **Phase-B resume** (the same late-arrival slot as the
   deferred PR ref), never the initial brief: when the resume says the user asked for a recording,
-  Phase B captures each browser session as video and uploads it (see Phase B steps 3–4). Absent or
+  Phase B captures each test case as a separate video clip and uploads it (see Phase B steps 3–4). Absent or
   declined ⇒ no recording — behavior unchanged.
 
 ### Resolve the target up front
@@ -167,20 +167,10 @@ given, fall back to the default when none was, and never invent one.
    - If `playwright-cli` is not on PATH, install it first (`npm install -g @playwright/cli`, falling
      back to a repo-local `npm install --save-dev @playwright/cli` + `./node_modules/.bin/playwright-cli`
      if the global install is blocked) and confirm with `playwright-cli --version`.
-   - Open a headed session with `playwright-cli open <url> --headed` and drive it with the
+   - Open a named headed session with `playwright-cli -s=<session> open <url> --headed` and drive it with the
      `playwright-cli` commands (`goto`, `run-code`, `click`, `fill`, `snapshot`, screenshot, etc.).
      Take a fresh snapshot immediately before each interaction — element refs go stale after re-renders.
-   - **Recording (only when the Phase-B resume requested it):** immediately after opening the session,
-     start capture with
-     `playwright-cli video-start ~/.ship/qa-recordings/<TICKET>/<TICKET>-qa-<timestamp>.webm --size "1280x800"`
-     (create the directory first; `<timestamp>` = `date +%Y%m%d-%H%M%S`, so re-runs never collide),
-     then `playwright-cli video-show-actions` so each action is annotated on screen. Before starting
-     each test case, mark it with `playwright-cli video-chapter "<case id/title>"` — the exact case
-     id/title from the approved plan. After the last case, `playwright-cli video-stop`. Multi-user
-     runs: recording is per browser instance — start one recording per instance, suffixing the
-     filename with the role (e.g. `…-tutor.webm`, `…-student.webm`). Recording is **best-effort**:
-     if `video-start` fails, note it in the results and continue the run unrecorded.
-   - Log in with the returned credentials.
+   - Log in with the returned credentials as setup, unless login itself is a tested step.
    - **Multi-user scenarios (e.g. tutor + student in the same lesson):** each user gets its **own
      separate browser instance** — a distinct `playwright-cli` session with its own profile /
      user-data-dir, never a second **tab** in the same browser. Tabs share cookies, `localStorage`,
@@ -190,24 +180,56 @@ given, fall back to the default when none was, and never invent one.
    - For any URL the skill returned (e.g. `plansUrl`, `checkoutUrl`), **keep the path but rewrite the
      host to the resolved target host** (`http://localhost:3000` by default, otherwise the stage's
      real host). Never navigate to the raw stage40 host in the default case.
-   - Run each test case. For evidence, default to the a11y **snapshot** plus the console/network
-     state — it's far cheaper than an image. Take a **screenshot only to evidence a failure**, or when
-     the feature under test *is* visual (layout, styling, rendering). Don't screenshot passing steps.
-     (Multi-user runs multiply this — one evidence stream per instance, so keep to snapshots there
-     unless a failure needs a picture.)
+   - **Run each test case with its own recording boundary:**
+     1. **Prepare unrecorded.** Complete the case's preconditions: account/flag setup, login,
+        navigation to the starting page, state reset, and locator discovery. For multi-user cases,
+        prepare all participants before capture. Distinguish preconditions from tested steps:
+        navigation or login that the case actually verifies must remain inside the recording.
+        Do not start capture for a blocked case whose test steps cannot begin.
+     2. **Start immediately before the first tested step, only when recording was requested.**
+        Create `~/.ship/qa-recordings/<TICKET>/` once. Allocate a run id once using
+        `date +%Y%m%d-%H%M%S` plus a UUID, and a unique case slug prefixed by its plan ordinal
+        (e.g. `01-tc1-update-setting`), so sanitized names cannot collide. For each participating
+        browser session, use an explicit `-s=<session>` on every recording command:
+        `playwright-cli -s=<session> video-start ~/.ship/qa-recordings/<TICKET>/<TICKET>-qa-<run-id>-<case-slug>-<role>.webm --size "1280x800"`,
+        then `playwright-cli -s=<session> video-show-actions` and
+        `playwright-cli -s=<session> video-chapter "<case id/title>"` with the exact approved title.
+        Start all participating sessions before a tested cross-user action. Keep a mapping of
+        original case id/title, role, session, local path, and capture/finalization status.
+        Never append to or overwrite an earlier clip. Add an attempt suffix only if a test retry
+        is independently justified, never to obtain a nicer recording.
+     3. **Execute and capture the outcome.** Run the approved steps through the observable result,
+        including the actual failing attempt and brief failure evidence. Default to the a11y
+        **snapshot** plus console/network state. Take a **screenshot only to evidence a failure**,
+        or when the feature under test is visual (layout, styling, rendering). Don't screenshot
+        passing steps. Label multi-user evidence by role.
+     4. **Stop before leaving the case.** In a cleanup/finally path, even on test failure, call
+        `playwright-cli -s=<session> video-stop` for every session whose capture started. Stop
+        before state reset, navigation for the next case, lengthy diagnosis, uploads, or reporting.
+        Verify the file was finalized before marking it uploadable. Keep failed-case clips.
+        Then prepare the next case unrecorded and start a new file for it. A single recording
+        spanning multiple cases is not a substitute. Do not assume pause/resume or file append.
+     5. **Recording failures are best-effort.** If start fails, note the failure and execute the
+        case unrecorded. If stop fails, attempt capture cleanup without replaying the test; do not
+        claim an unverified file is finalized or uploaded. If capture cannot be stopped safely,
+        discontinue further recording in that session, report the limitation, and continue QA
+        where browser state permits. Do not close a needed authenticated session merely to save
+        video. Recording failures never change the test verdict or trigger test retries.
+     When recording was declined or absent, execute the same cases without video commands/uploads.
 
    **DWH / tracking-event features:** when the feature under test is an analytics/DWH tracking event
    (verifying `event_name` and `json_data` payloads), do not hand-roll the capture — use the
    **`frontend:test-dwh-events`** skill (via the Skill tool). It runs on `playwright-cli` and provides
    the canonical workflow: a context-level `/dwh/log_events_batch` interceptor (`ctx._dwhEvents`),
    clear-the-buffer-before-each-case, capture, and validate-against-spec. Follow its steps directly.
-4. **Upload the recording** — skip unless recording ran. Invoke the
-   **`devex:internal-static-hosting`** skill (via the Skill tool) to upload the video file(s) to
+4. **Upload finalized case clips** — skip unless a finalized recording exists. Invoke the
+   **`devex:internal-static-hosting`** skill (via the Skill tool) to upload each finalized case/role clip to
    `qa-recordings/<TICKET>/` under the **inferred-username prefix** (the skill's default — don't pass
-   a team). The timestamped filenames avoid the skill's overwrite refusal on re-runs. Verify each
+   a team). The unique run/case/role filenames avoid overwrite collisions. Verify each
    hosted URL with `curl --head` and capture it (the host is VPN-only). **Keep the local files** —
    they are the fallback. If the upload fails (e.g. VPN down), continue: report the local file
-   path(s) plus the failure note instead of a URL. An upload failure never fails the QA run.
+   path(s), original case id/title, and role plus the failure note instead of a URL.
+   An upload failure never fails the QA run.
 5. **Publish results in the PR description** — the default destination is the description's
    **Evidence** section, with **QA** as the fallback below. Do not create a separate results comment
    by default. Explicit user instructions about the publication destination take precedence.
@@ -235,11 +257,12 @@ given, fall back to the default when none was, and never invent one.
    source for both the proposed PR block and the in-session report. Publication errors or a
    mismatched read-back must not remove these facts from either report. Keep the observed
    read-back separate from the intended report; never claim the proposal was saved when it was not.
-   When recording was made, add one
-   line per video directly under the verdict line:
-   `🎥 QA recording: <hosted URL>` (note that the host is VPN-only), or
-   `🎥 QA recording (upload failed): <local path>` when the upload didn't succeed. Include recording
-   failure notes when capture failed; publication or recording failures do not change the test verdict.
+   When recording was made, add one labeled line per finalized clip under the verdict line:
+   `🎥 QA recording: <case id/title> (<role>) — <hosted URL>` (note that the host is VPN-only), or
+   `🎥 QA recording (upload failed): <case id/title> (<role>) — <local path>` when upload failed.
+   Report start/stop failures separately with the affected case and role; never invent a clip link.
+   Keep these labels, links/fallbacks, and failure notes in both the owned PR-description block
+   and the in-session report. Publication or recording failures do not change the test verdict.
 
    **Select the section and preserve human content:**
    - Read the latest body with `gh pr view <ref> --json body,url`. Recognize real Markdown headings
@@ -285,7 +308,7 @@ given, fall back to the default when none was, and never invent one.
    is unavailable, use the plain PR URL; never infer an anchor or add an assumed prefix. If the user explicitly selected a different destination, link to that verified
    publication instead. On publication failure keep the full test results and
    explain the failure without implying that they were published or changing the test verdict.
-   Close **every** browser instance (`playwright-cli close` per instance) at the end, including when
+   Close **every** browser instance (`playwright-cli -s=<session> close` per instance) at the end, including when
    publication fails.
 
 ## Conventions & guardrails
@@ -304,9 +327,10 @@ given, fall back to the default when none was, and never invent one.
 - **Evidence: snapshot-first.** Default to a11y snapshots + console/network state; reserve screenshots
   for failures or genuinely visual features. Screenshots are image-heavy — don't capture passing steps.
 - **Recording is opt-in and best-effort.** Record only when the Phase-B resume asks for it — never
-  un-requested. A recording or upload failure never fails, blocks, or retries the QA run — fall back
-  to reporting the local file path. Local files under `~/.ship/qa-recordings/<TICKET>/` are kept
-  after upload.
+  un-requested. Record one clip per case and participating role, excluding preconditions and
+  between-case preparation. A recording or upload failure never changes the QA verdict or triggers
+  test retries; report verified local files and any capture limitations honestly. Local files under
+  `~/.ship/qa-recordings/<TICKET>/` are kept after upload.
 - Selectors: prefer `data-qa-id` (the repo's testId attribute) and accessible roles/text over brittle
   CSS or XPath.
 - Test our integration with the feature, not third-party library internals.
