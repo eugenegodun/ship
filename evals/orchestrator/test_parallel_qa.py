@@ -1,4 +1,26 @@
+import json
+from pathlib import Path
+
 import pytest
+
+from ship_evals.plan_display import assert_plan_displayed_verbatim
+
+
+def assert_queued_plan_displayed(window, fixture_name):
+    fixture = Path(__file__).parent / "fixtures" / "transcripts" / f"{fixture_name}.json"
+    messages = json.loads(fixture.read_text())["messages"]
+    plans = [
+        block["content"].split("] ", 1)[1].split(": ", 1)[1].split(" Awaiting approval", 1)[0]
+        for message in messages if isinstance(message.get("content"), list)
+        for block in message["content"]
+        if block.get("type") == "tool_result"
+        and block.get("content", "").startswith("[agent_id: qa-01] Phase-A test plan")
+    ]
+    assert len(plans) == 1, "fixture must contain exactly one queued QA plan"
+    try:
+        assert_plan_displayed_verbatim(plans[0], window.text, window.calls)
+    except AssertionError as error:
+        raise AssertionError(str(error) + " " + window.diagnostics()) from error
 
 
 @pytest.mark.llm
@@ -28,13 +50,10 @@ def test_missing_worktree_is_chased_before_review(run_decision):
 
 @pytest.mark.llm
 def test_gate2_surfaces_queued_plan_without_new_qa_agent(run_window):
-    # Prose assertion -> multi-turn window (see conftest.Window): the plan text may follow
-    # a mandated TodoWrite/TaskOutput turn rather than landing in the very next turn.
+    # Allow bookkeeping before the plan, then inspect prose and approval questions.
     w = run_window("pr_created_qa_ready")
     assert not w.dispatches("qa-agent"), "never dispatch a second qa-agent at Stage 5"
-    assert "TC1" in w.text, (
-        "the queued Phase-A plan is surfaced verbatim " + w.diagnostics()
-    )
+    assert_queued_plan_displayed(w, "pr_created_qa_ready")
     assert not w.named("SendMessage"), "Phase B starts only after GATE 2 approval"
 
 
@@ -58,7 +77,7 @@ def test_gate2_asks_recording_question_when_no_record_flag(run_window):
 @pytest.mark.llm
 def test_record_flag_preanswers_gate2_recording_question(run_window):
     # /ship LEX-1398 --record: recording is already decided - the question must NOT
-    # be re-asked at GATE 2. Prose assertion -> multi-turn window (see conftest.Window).
+    # be re-asked at GATE 2. The complete plan must still be visible before approval.
     w = run_window("pr_created_qa_ready_record_flag")
     for a in w.named("AskUserQuestion"):
         for q in a.input_parameters["questions"]:
@@ -66,9 +85,7 @@ def test_record_flag_preanswers_gate2_recording_question(run_window):
             assert "record" not in text and "video" not in text, (
                 "--record pre-answers the recording question - it must not be re-asked"
             )
-    assert "TC1" in w.text, (
-        "the queued Phase-A plan is still surfaced verbatim " + w.diagnostics()
-    )
+    assert_queued_plan_displayed(w, "pr_created_qa_ready_record_flag")
     assert not w.dispatches("qa-agent") and not w.named("SendMessage")
 
 

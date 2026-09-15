@@ -211,8 +211,12 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
 2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. When surfacing the
-   plan, also settle the **recording decision**: if `--record` was passed on invocation, recording is
-   on — skip the question. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
+   plan, copy its complete content unchanged into assistant prose or the approval question.
+   Keep approval and recording questions outside the copied plan; preserve the original wording and punctuation, including commas and periods.
+   Do not convert a paragraph into bullets or insert Markdown inside the copied text; do not paraphrase cases or
+   omit prerequisites and flags. Also settle the **recording decision**: if `--record` was passed on invocation, recording is
+   on — skip the question. Confirm preset recording in prose only; keep the approval question
+   focused on plan approval and target stage, without recording or video wording. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
    (options Yes / No) as part of this same gate stop — never a separate later interruption.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
@@ -263,19 +267,7 @@ never block, invalidate, or roll back an already-shipped PR.
      permanent local clone — they review and push in their own batches. If the commit fails (not a
      git repo, nothing staged, etc.), note the failure in the report; do not treat it as a pipeline
      failure.
-2. **Project-insights call** — check whether Stage 2's changed-files list touched `edu-frontend/`. If
-   not, skip (no other project target exists yet — this is scoped narrowly on purpose). If it did:
-   - Dispatch the **`engineering-insights`** skill with `args` set to
-     `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 2). Ground it
-     in what implementator/reviewer/qa actually discovered while working the ticket — new patterns,
-     dead ends, gotchas, tool quirks. Same "write nothing if nothing substantial" rule applies.
-   - If the skill wrote anything, commit it locally: `cd <worktree_path> && git add
-     edu-frontend/INSIGHTS.md && git commit -m "<one-line summary>"`. **Do not push.** Same as the
-     pipeline-insights call — accepted tradeoff: this worktree is **ephemeral**, so a local-only
-     commit here can be lost once the worktree is cleaned up after merge; push was dropped anyway per
-     an explicit decision to keep both calls symmetric (commit-only, no push). If the commit fails,
-     note it in the report and move on — do not treat it as a pipeline failure.
-3. Append one line per call to the final report: written / skipped (with why) / failed (with why).
+2. Append the capture status to the final report: written / skipped (with why) / failed (with why).
 
 ## Guardrails
 
