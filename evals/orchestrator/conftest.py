@@ -25,6 +25,26 @@ def bookkeeping_responder(tool: str, inp: dict) -> str:
     return BOOKKEEPING.get(tool, "ok")
 
 
+def load_scenario(transcript_name: str) -> list[dict]:
+    path = TRANSCRIPTS / f"{transcript_name}.json"
+    raw = json.loads(path.read_text())
+    if "messages" in raw:
+        return raw["messages"]
+    messages = load_transcript(TRANSCRIPTS / f"{raw['base']}.json")
+    if "replace_last_user_text" in raw:
+        assert messages[-1]["role"] == "user"
+        content = list(messages[-1]["content"])
+        text_index = next(i for i, block in enumerate(content) if block["type"] == "text")
+        content[text_index] = {**content[text_index], "text": raw["replace_last_user_text"]}
+        messages[-1] = {**messages[-1], "content": content}
+    if "replace_last_tool_result" in raw:
+        content = list(messages[-1]["content"])
+        result_index = next(i for i, block in enumerate(content) if block["type"] == "tool_result")
+        content[result_index] = {**content[result_index], "content": raw["replace_last_tool_result"]}
+        messages[-1] = {**messages[-1], "content": content}
+    return messages
+
+
 class Decision:
     """One assistant turn — use for assertions about the NEXT TOOL CALL."""
 
@@ -76,7 +96,7 @@ class Window:
 @pytest.fixture
 def run_decision():
     def _run(transcript_name: str) -> Decision:
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         return Decision(call_model(system=SKILL, messages=messages, tools=ORCHESTRATOR_TOOLS))
     return _run
 
@@ -84,7 +104,7 @@ def run_decision():
 @pytest.fixture
 def run_window():
     def _run(transcript_name: str, max_calls: int = 5) -> Window:
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         return Window(continue_transcript(messages, respond=bookkeeping_responder,
                                           max_calls=max_calls, stop_on_tools={"AskUserQuestion"}))
     return _run

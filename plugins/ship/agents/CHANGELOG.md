@@ -9,6 +9,19 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.15.0 (2026-09-15)
+- `ship` 7.0.0 keeps the video decision and adds independent screenshot and `/dynamic` startup
+  choices at QA approval in both Claude and Codex. Explicit targets are retained; the implicit
+  localhost/stage40 fallback is removed.
+- `qa-agent` 5.0.0 posts the startup comment only with explicit permission, retains request state,
+  and waits for revision-matched deployment evidence before provisioning. Failed or unresolved
+  startup leaves QA pending, with no automatic retrigger.
+- Optional feature screenshots capture passing states as well as relevant failures, upload verified
+  images, and publish captions, image embeds, and direct links alongside videos in the existing
+  owned PR-description block. Media failures preserve test verdicts and available local evidence.
+- Added gate, startup, media-combination, and screenshot-publication regression evals; regenerated
+  Codex artifacts from canonical sources.
+
 ## ship package — 1.14.0 (2026-09-14)
 - **QA videos cover individual test cases.** `qa-agent` 4.0.2 → 4.1.0 starts recording after
   preconditions and stops after each outcome, before reset/navigation for the next case. Navigation

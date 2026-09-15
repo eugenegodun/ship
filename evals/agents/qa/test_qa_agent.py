@@ -24,7 +24,17 @@ PLAN_TURN = (
 
 
 def ask(messages: list[dict]) -> str:
-    return output_text(call_model(system=SYSTEM, messages=messages))
+    response = call_model(system=SYSTEM, messages=messages)
+    out = output_text(response)
+    detail = (
+        f"model={getattr(response, 'model', 'unknown')} "
+        f"stop_reason={getattr(response, 'stop_reason', 'unknown')} "
+        f"text_chars={len(out)}"
+    )
+    assert getattr(response, "stop_reason", None) != "max_tokens", \
+        "Model response was truncated: " + detail
+    assert out.strip(), "Model returned no text: " + detail
+    return out
 
 
 @pytest.mark.llm
@@ -73,6 +83,117 @@ def test_stage_at_resume_is_adopted_without_challenge():
     ], threshold=0.8)
     assert_test(LLMTestCase(input=PLAN_TURN + "\n\n[resume] " + resume, actual_output=out),
                 [metric])
+
+
+DYNAMIC_CASES = [
+    pytest.param(
+        "start_dynamic=yes. No prior request state. Observations in order: headRefOid is "
+        "abc1234def567890abc1234def567890abc1234d; posting /dynamic returns comment id 501 "
+        "at 10:00; an older bot "
+        "comment at 09:10 says stage12 is ready for abc1234; after polling, Jenkins context "
+        "Dynamic status for the full current SHA changes pending to success with target_url "
+        "https://jenkins.example/build/88; bot comment id 520 at 10:08 says the dynamic is "
+        "ready at https://stage88.preply.org and its table names abc1234; deployment metadata "
+        "maps fixtures and Crew to stage88.",
+        [
+            "It first reads and retains the full PR head SHA, then posts exactly one PR comment "
+            "whose body is /dynamic and retains comment id 501 and its timestamp as request state.",
+            "It rejects the pre-request stage12 comment and waits at bounded intervals until both "
+            "the post-request bot comment and current-full-SHA Jenkins Dynamic status success/build agree.",
+            "Only after readiness does it use stage88 consistently for browser, fixtures, and Crew.",
+        ], id="pending-to-ready-and-stale-comment"),
+    pytest.param(
+        "start_dynamic=yes. Retained request comment id 501 at 10:00 for head "
+        "abc1234def567890abc1234def567890abc1234d. Observation: current-full-SHA Jenkins "
+        "context Dynamic status is error, "
+        "target_url https://jenkins.example/build/89.",
+        [
+            "It does not repost /dynamic. It stops before fixtures or browser execution and reports "
+            "the terminal error, current revision, build link, and QA as pending.",
+        ], id="terminal-failure"),
+    pytest.param(
+        "start_dynamic=yes. Retained request comment id 501 at 10:00 for head "
+        "abc1234def567890abc1234def567890abc1234d. Twenty minutes of bounded polling found "
+        "only pending status for "
+        "that full SHA at https://jenkins.example/build/90 and no attributable ready comment.",
+        [
+            "It treats the bounded wait as timed out, reports pending status and the supplied build "
+            "link, and does not provision, browse, fall back to another target, or post /dynamic again.",
+        ], id="timeout"),
+    pytest.param(
+        "start_dynamic=yes. Retained request comment id 501 at 10:00 was for head "
+        "abc1234def567890abc1234def567890abc1234d. While waiting, gh pr view now returns "
+        "headRefOid fed9876543210000fed9876543210000fed98765. The only success and bot-ready "
+        "comment are for abc1234def567890abc1234def567890abc1234d.",
+        [
+            "It rechecks the PR head, detects the revision change, refuses to run the new revision "
+            "against the old deployment, and reports actionable pending state without reposting.",
+        ], id="changed-head"),
+    pytest.param(
+        "start_dynamic=yes. No prior request state. headRefOid is "
+        "abc1234def567890abc1234def567890abc1234d. The write "
+        "response for /dynamic is ambiguous after 10:00. Reading comments finds a /dynamic comment "
+        "by the current actor, id 501 at 10:00:02, followed by the matching bot activity.",
+        [
+            "It resolves the ambiguous response by reading comments and retains the matching comment "
+            "id/timestamp as the request identity; it does not issue a second /dynamic write.",
+        ], id="ambiguous-write-readback"),
+    pytest.param(
+        "start_dynamic=yes. This is a resumed execution with retained request comment id 501, "
+        "URL https://github.com/preply/apollo/pull/99999#issuecomment-501, timestamp 10:00, "
+        "and requested head abc1234def567890abc1234def567890abc1234d. Current observations "
+        "remain pending.",
+        [
+            "It resumes polling with retained request identity and SHA, with no new /dynamic comment, "
+            "fixture provisioning, browser execution, or claim of readiness.",
+        ], id="idempotent-resume"),
+    pytest.param(
+        "start_dynamic=no; explicit existing target stage34. screenshots=no; recording=no. "
+        "The approved plan and normal target mapping for stage34 are available.",
+        [
+            "It uses the explicitly provided legacy target stage34 for browser, fixtures, and Crew "
+            "without posting /dynamic or asking for a new startup option.",
+        ], id="declined-with-explicit-target"),
+    pytest.param(
+        "The plan is approved, but the handoff contains no start_dynamic decision and no explicit "
+        "target. screenshots=no; recording=no.",
+        [
+            "Plan approval alone is not permission to post /dynamic. It leaves execution pending and "
+            "asks for the startup decision or an existing target; it does not default to localhost/stage40.",
+        ], id="approval-is-not-startup-authorization"),
+    pytest.param(
+        "start_dynamic=yes. Retained request id 501 for head "
+        "abc1234def567890abc1234def567890abc1234d. The attributable "
+        "post-request bot comment and current-full-SHA Jenkins status establish success and browser "
+        "URL https://preview.example.net, but metadata has no fixture or Crew environment mapping.",
+        [
+            "It does not infer a stage from the PR number or preview hostname. It reports the known "
+            "browser URL and missing fixture/admin mapping, requests that mapping, and does not provision "
+            "accounts or change flags on a guessed environment.",
+        ], id="missing-fixture-mapping"),
+]
+
+
+@pytest.mark.llm
+@pytest.mark.parametrize("observation,criteria", DYNAMIC_CASES)
+def test_dynamic_startup_resolution(observation, criteria):
+    dynamic_pr_url = "https://github.com/preply/apollo/pull/99999"
+    prompt = (
+        "Resuming Phase B for LEX-2101. The QA plan itself is approved. PR: "
+        + dynamic_pr_url + ". "
+        "All deployment observations below are synthetic literal tool results; perform no live writes. "
+        "No tools are available, so return the ordered actions/commands and the resulting execution "
+        "state without claiming they ran. " + observation
+    )
+    out = ask([{"role": "user", "content": prompt}])
+    execution_scope = (
+        "Judge the intended ordered actions, commands, and resulting state against the synthetic "
+        "observations. The prompt explicitly withholds tools, so actual writes, polling, provisioning, "
+        "and browser execution are neither required nor expected."
+    )
+    assert_test(LLMTestCase(input=prompt, actual_output=out), [
+        rubric("qa-dynamic-startup", [execution_scope, *criteria], threshold=0.9),
+    ])
 
 
 # These cases exercise generated publication behavior; they never mutate a live PR.
@@ -182,13 +303,40 @@ def assert_report_facts(case, report):
     elif status == "upload_failed":
         assert facts["recording_path"] in re.findall(r"/[^\s<>\[\]()`]+", report)
         assert re.search(r"upload.{0,100}(?:fail|error)|(?:fail|error).{0,100}upload", plain, re.I | re.S)
-    else:
-        assert status == "capture_failed"
+    elif status == "capture_failed":
         assert facts["recording_command"] in plain
         assert re.search(r"exit(?:ed)?(?:\s+(?:code|status))?\s*[:=]?\s*"
                          + str(facts["recording_exit_code"]) + r"\b", plain, re.I)
         assert re.search(r"fail|error", plain, re.I)
         assert re.search(r"unrecorded|without (?:a )?recording", plain, re.I)
+    else:
+        assert status == "absent"
+        assert not re.search(r"https?://[^\s]+\.webm", report), "Do not invent a recording link"
+
+    screenshots = facts.get("screenshots", [])
+    if not screenshots:
+        assert not re.search(r"(?im)^\*\*Screenshots\*\*", report), \
+            "Screenshots absent means no feature gallery"
+        return
+    assert re.search(r"(?im)^\*\*Screenshots\*\*", report), "Include one screenshot gallery"
+    assert re.search(r"\bVPN\b", report, re.I), "Label private screenshot hosting VPN-only"
+    for screenshot in screenshots:
+        assert screenshot["caption"] in report, "Retain the exact case/role/state caption"
+        if screenshot["status"] == "hosted":
+            url = screenshot["url"]
+            destination = r"(?:<" + re.escape(url) + r">|" + re.escape(url) + r")"
+            assert re.search(r"!\[[^\]]+\]\(" + destination + r"\)", report), \
+                "Embed only the verified hosted screenshot URL"
+            assert re.search(r"(?<!!)\[[^\]]+\]\(" + destination + r"\)", report), \
+                "Include a labeled non-image direct link to the verified screenshot URL"
+        else:
+            assert screenshot["status"] == "upload_failed"
+            path = screenshot["path"]
+            assert path in report, "Retain the exact local fallback path"
+            assert re.search(r"upload.{0,100}(?:fail|error)|(?:fail|error).{0,100}upload",
+                             report, re.I | re.S)
+            assert not re.search(r"!\[[^\]]*\]\([^)]*" + re.escape(path) + r"[^)]*\)", report), \
+                "A failed upload gets text fallback, not a broken image embed"
 
 
 def assert_description_link(case, report):
@@ -270,7 +418,10 @@ def test_pr_description_reporting(case):
         "body/url and verify the results block and surrounding content before success. "
         "A simulated edit failure may stop before read-back. No atomicity is promised.",
         "The final report repeats the same verdict, complete four-column results table, "
-        "recording and flag/environment facts, allowing equivalent wording. Both the proposed "
+        "supplied recording, screenshot, and flag/environment facts, allowing equivalent wording. "
+        "Hosted screenshots retain exact captions and verified URLs as VPN-labeled image embeds "
+        "plus direct links; failed uploads retain labeled local paths without broken embeds. "
+        "When no screenshots were supplied, no feature gallery is invented. Both the proposed "
         "body (when a payload exists) and final report must accurately attribute the off-to-on transition to "
         "exp_lesson_reschedule_v1 on stage34, retain the recording URL/path or capture "
         "error and its exit code, and explain VPN access or recording/upload failure "
@@ -287,14 +438,31 @@ def test_pr_description_reporting(case):
 
 # Validate the evaluator against concrete valid/invalid reports without a model.
 # These mutation cases catch false positives in preservation/section assertions.
-def _sample_reporting_body():
-    case = REPORTING_CASES[0]
+def _report_for_case(case):
     result = case["executed_results"]
-    report = "\n".join([
+    lines = [
         START, result["verdict"], result["recording"], result["environment"], "",
         "| Test Case | Description | Status | Notes |", "|---|---|---|---|",
-        *["| " + " | ".join(row) + " |" for row in result["rows"]], END,
-    ])
+        *["| " + " | ".join(row) + " |" for row in result["rows"]],
+    ]
+    screenshots = result.get("screenshots", [])
+    if screenshots:
+        lines.extend(["", "**Screenshots** (VPN-only)"])
+        for screenshot in screenshots:
+            lines.append(screenshot["caption"])
+            if screenshot["status"] == "hosted":
+                lines.extend([
+                    "![" + screenshot["caption"] + "](<" + screenshot["url"] + ">)",
+                    "[Open screenshot (VPN-only)](" + screenshot["url"] + ")",
+                ])
+            else:
+                lines.append("Upload failed; local fallback: " + screenshot["path"])
+    return "\n".join([*lines, END])
+
+
+def _sample_reporting_body():
+    case = REPORTING_CASES[0]
+    report = _report_for_case(case)
     return case, case["body"].replace("## Risks", report + "\n\n## Risks"), report
 
 
@@ -332,6 +500,83 @@ def test_reporting_evaluator_rejects_invalid_merge(mutation):
         body = body.replace(END, "| TC-03 | Invented | ✅ | |\n" + END)
     with pytest.raises(AssertionError):
         assert_reporting_body(case, body)
+
+
+@pytest.mark.parametrize("case_id", [
+    "screenshots_and_video_preserve_human", "screenshots_only",
+    "screenshot_partial_upload_failure",
+])
+def test_reporting_evaluator_accepts_screenshot_fixtures(case_id):
+    case = next(item for item in REPORTING_CASES if item["id"] == case_id)
+    report = _report_for_case(case)
+    original = case.get("latest_body", case["body"])
+    existing = BLOCK.search(original)
+    if existing:
+        body = BLOCK.sub(report, original)
+    else:
+        heading = re.search(r"(?im)^#{1,6}\s+" + re.escape(case["expected_section"]) + r"\s*$", original)
+        assert heading
+        body = original[:heading.end()] + "\n" + report + original[heading.end():]
+    assert_reporting_body(case, body)
+
+
+def test_reporting_evaluator_accepts_image_url_without_angle_brackets():
+    case = next(item for item in REPORTING_CASES
+                if item["id"] == "screenshots_and_video_preserve_human")
+    screenshot = case["report_facts"]["screenshots"][0]
+    report = _report_for_case(case).replace(
+        "](<" + screenshot["url"] + ">)", "](" + screenshot["url"] + ")",
+    )
+    assert_report_content(case, report)
+
+
+@pytest.mark.parametrize("mutation", [
+    "lost_gallery", "lost_caption", "wrong_url", "missing_direct_link", "missing_vpn",
+    "duplicate_image_without_direct_link", "wrong_local_path", "false_upload_success",
+    "broken_local_embed",
+])
+def test_reporting_evaluator_rejects_screenshot_mutations(mutation):
+    case_id = "screenshot_partial_upload_failure" if mutation in {
+        "wrong_local_path", "false_upload_success", "broken_local_embed",
+    } else "screenshots_and_video_preserve_human"
+    case = next(item for item in REPORTING_CASES if item["id"] == case_id)
+    report = _report_for_case(case)
+    hosted = case["report_facts"]["screenshots"][0]
+    if mutation == "lost_gallery":
+        report = report.replace("**Screenshots** (VPN-only)", "")
+    elif mutation == "lost_caption":
+        report = report.replace(hosted["caption"], "Invented caption")
+    elif mutation == "wrong_url":
+        report = report.replace(hosted["url"], "https://static.preply.com/wrong.png")
+    elif mutation == "missing_direct_link":
+        report = report.replace("[Open screenshot (VPN-only)](" + hosted["url"] + ")", "")
+    elif mutation == "duplicate_image_without_direct_link":
+        report = report.replace(
+            "[Open screenshot (VPN-only)](" + hosted["url"] + ")",
+            "![Duplicate screenshot](" + hosted["url"] + ")",
+        )
+    elif mutation == "missing_vpn":
+        report = report.replace(" (VPN-only)", "").replace("VPN-only", "private")
+    else:
+        fallback = case["report_facts"]["screenshots"][1]
+        if mutation == "wrong_local_path":
+            report = report.replace(fallback["path"], "/tmp/wrong.png")
+        elif mutation == "false_upload_success":
+            report = report.replace("Upload failed; local fallback:", "Upload succeeded:")
+        else:
+            report = report.replace(
+                "Upload failed; local fallback: " + fallback["path"],
+                "Upload failed; ![fallback](" + fallback["path"] + ")",
+            )
+    with pytest.raises(AssertionError):
+        assert_report_content(case, report)
+
+
+def test_reporting_evaluator_rejects_gallery_when_screenshots_absent():
+    case, _, report = _sample_reporting_body()
+    report = report.replace(END, "**Screenshots** (VPN-only)\nNo screenshots.\n" + END)
+    with pytest.raises(AssertionError):
+        assert_report_content(case, report)
 
 
 def test_heading_parser_ignores_examples_and_preserves_section_levels():
@@ -509,6 +754,94 @@ SETTINGS_PLAN = (
     "TC2: Reject invalid name. Preconditions: reset the name, navigate away and back "
     "to settings. Steps: clear the name and save. Expected: validation error is visible."
 )
+
+
+@pytest.mark.llm
+def test_screenshot_only_captures_passing_feature_state_without_video():
+    resume = (
+        "Resuming Phase B for LEX-2101. The user approved the plan and authorized "
+        "fixtures, browser execution, and PR-description reporting. PR: " + PR_URL + ". "
+        "Use the explicit existing target stage34; start_dynamic=no; screenshots=yes; "
+        "recording=no. Approved plan:\n" + SETTINGS_PLAN + "\n"
+        "Synthetic observations: TC1 passed and the saved name is visibly rendered. "
+        "No tools are available. Give only concise ordered screenshot-evidence actions "
+        "and the exact proposed Screenshots subsection inside the owned PR results block; "
+        "do not repeat fixture setup or the full test plan, and do not claim live execution."
+    )
+    out = ask([{"role": "user", "content": resume}])
+    assert_test(LLMTestCase(input=resume, actual_output=out), [rubric(
+        "qa-screenshot-only", [
+            "Judge the intended ordered steps, commands, and proposed report. The prompt explicitly "
+            "withholds tools, so actual capture/upload execution is neither required nor expected.",
+            "After observing TC1's successful visible result in the authenticated student "
+            "session, the agent captures a PNG whose collision-resistant name identifies "
+            "LEX-2101, a unique run, TC1, student role, and saved-name state.",
+            "It verifies the local PNG before proposing an internal-static-hosting upload "
+            "under qa-screenshots/LEX-2101, retains the local file, and proposes a caption "
+            "and VPN-labeled direct link/image for the existing PR-description results block.",
+            "It does not run video start/stop or upload a video, does not post /dynamic, and "
+            "does not rerun the passing case merely to obtain evidence.",
+        ], threshold=0.9)
+    ])
+
+
+SCREENSHOT_CASES = [
+    pytest.param(
+        "screenshots=no; recording=yes. TC1 passed and its case video finalized and uploaded.", [
+            "Judge intended evidence actions/report; tools are withheld, so actual execution is not expected.",
+            "It records and reports video with the existing per-case boundaries, but does not capture or "
+            "upload passing-feature PNGs and adds no feature screenshot gallery. Existing diagnostic "
+            "screenshots for failures or visual checks remain allowed.",
+        ], id="video-only"),
+    pytest.param(
+        "screenshots=yes; recording=yes. A message case passed in authenticated tutor and student "
+        "sessions; both roles show the successful state, both videos finalized, and both PNG uploads "
+        "returned distinct verified URLs.", [
+            "Judge intended evidence actions/report; tools are withheld, so actual execution is not expected.",
+            "It keeps video independent and captures distinct post-assertion states from the actual tutor "
+            "and student sessions with a shared-run identity and case/role/state filenames and captions.",
+            "It places both verified VPN-labeled screenshot images/direct links in the same owned PR "
+            "Evidence/QA block as the video evidence.",
+        ], id="both-multi-user"),
+    pytest.param(
+        "screenshots=no; recording=no. TC1 passed and no diagnostic screenshot is needed.", [
+            "Judge intended evidence actions/report; tools are withheld, so actual execution is not expected.",
+            "It captures/uploads neither media type, adds no feature screenshot gallery, and still reports "
+            "the actual test result.",
+        ], id="neither"),
+    pytest.param(
+        "screenshots=yes; recording=no. TC1 passed, but screenshot capture exited 1 and no PNG exists. "
+        "TC2 remains runnable.", [
+            "Judge intended evidence actions/report; tools are withheld, so actual execution is not expected.",
+            "It preserves TC1's passing verdict, reports capture failure separately, embeds/uploads no "
+            "nonexistent PNG, continues TC2, and does not replay TC1 for evidence.",
+        ], id="capture-failure"),
+    pytest.param(
+        "screenshots=yes; recording=no. TC1 and TC2 passed and their PNGs exist. TC1 upload verified "
+        "https://static.preply.com/u/qa-screenshots/LEX-2101/tc1.png; TC2 upload failed and its local "
+        "path is /tmp/LEX-2101-run7-tc2-student-error.png.", [
+            "Judge intended evidence actions/report; tools are withheld, so actual execution is not expected.",
+            "It preserves both passing verdicts, embeds and directly links only the exact verified TC1 URL, "
+            "and gives the exact TC2 local path as an upload-failed text fallback without a broken image.",
+            "It retains both local files and does not rerun either case or turn upload failure into a test failure.",
+        ], id="partial-upload-failure"),
+]
+
+
+@pytest.mark.llm
+@pytest.mark.parametrize("observation,criteria", SCREENSHOT_CASES)
+def test_screenshot_and_video_combinations(observation, criteria):
+    prompt = (
+        "Resuming approved Phase B for LEX-2101 on explicit target stage34. start_dynamic=no. "
+        "PR: " + PR_URL + ". Synthetic observations: " + observation + " No tools are available. "
+        "Give only concise ordered media-evidence actions and the exact proposed evidence/reporting "
+        "content; do not describe fixture provisioning or repeat the full test plan, and do not claim "
+        "live execution."
+    )
+    out = ask([{"role": "user", "content": prompt}])
+    assert_test(LLMTestCase(input=prompt, actual_output=out), [
+        rubric("qa-screenshot-combinations", criteria, threshold=0.9),
+    ])
 
 
 @pytest.mark.llm

@@ -328,6 +328,24 @@
                     "description": "Run QA without recording"
                   }
                 ]
+              },
+              {
+                "question": "Take screenshots of the feature and add them to the PR description?",
+                "header": "Screenshots",
+                "multiSelect": false,
+                "options": [
+                  {"label": "Yes", "description": "Capture representative passing feature states"},
+                  {"label": "No", "description": "Do not add a feature screenshot gallery"}
+                ]
+              },
+              {
+                "question": "Start the testing server by posting `/dynamic` to this PR? Yes permits the comment and waiting for deployment before testing.",
+                "header": "Test server",
+                "multiSelect": false,
+                "options": [
+                  {"label": "Yes", "description": "Let QA post /dynamic and wait for deployment"},
+                  {"label": "No", "description": "Use an explicitly provided existing target"}
+                ]
               }
             ]
           }
@@ -340,11 +358,11 @@
         {
           "type": "tool_result",
           "tool_use_id": "tu_9",
-          "content": "{\"Record video of this QA run?\": \"Yes\"}"
+          "content": "{\"Record video of this QA run?\": \"Yes\", \"Take screenshots of the feature and add them to the PR description?\": \"Yes\", \"Start the testing server by posting `/dynamic` to this PR?\": \"Yes\"}"
         },
         {
           "type": "text",
-          "text": "approved, run it on stage34"
+          "text": "Approved. No existing target was provided."
         }
       ]
     }

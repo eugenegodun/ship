@@ -1,0 +1,4 @@
+{
+  "base": "qa_gate_ready",
+  "replace_first_user_content": "/ship APOLLO-1398 --record"
+}
