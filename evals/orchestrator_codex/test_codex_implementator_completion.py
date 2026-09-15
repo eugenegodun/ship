@@ -90,6 +90,6 @@ def test_missing_credentials_reports_evidenced_blocker(implementer_instructions)
     })
     assert executed in ([INTEGRATION], [INTEGRATION, LINT]), final
     assert "STAGE_API_TOKEN" in final and WORKTREE in final, final
-    assert re.search(r"block|missing|requires?|unavailable", final, re.I), final
+    assert re.search(r"block|missing|requires?|unavailable|\bnot set\b", final, re.I), final
     assert re.search(r"not (?:run|executed|complete|verified)|remaining|pending|could not", final, re.I), final
     assert not re.search(r"(?:integration|all tests)\s+(?:tests\s+)?(?:passed|succeeded)", final, re.I), final
