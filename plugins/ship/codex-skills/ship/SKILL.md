@@ -164,6 +164,9 @@ report the App's **Create branch** handoff and await the user's PR URL before QA
 ### 5. QA plan — GATE 2; then execution
 
 Only once both PR URL and queued QA plan exist: surface the plan content verbatim and ask approval.
+Copy the complete plan unchanged into assistant prose or the approval question. Keep approval and
+recording questions outside the copied plan; preserve the original wording and punctuation, including commas and periods.
+Do not convert a paragraph into bullets or insert Markdown inside the copied text; do not paraphrase cases or omit prerequisites and flags.
 Ask “Record video of this QA run?” at this same gate unless `--record` or an explicit prior user
 choice already answers it. Stop at the gate with no execution dispatched.
 Changes resume the same QA agent to revise its plan, then return to the gate. Approval resumes it

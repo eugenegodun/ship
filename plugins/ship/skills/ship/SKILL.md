@@ -211,8 +211,12 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
 2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. When surfacing the
-   plan, also settle the **recording decision**: if `--record` was passed on invocation, recording is
-   on — skip the question. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
+   plan, copy its complete content unchanged into assistant prose or the approval question.
+   Keep approval and recording questions outside the copied plan; preserve the original wording and punctuation, including commas and periods.
+   Do not convert a paragraph into bullets or insert Markdown inside the copied text; do not paraphrase cases or
+   omit prerequisites and flags. Also settle the **recording decision**: if `--record` was passed on invocation, recording is
+   on — skip the question. Confirm preset recording in prose only; keep the approval question
+   focused on plan approval and target stage, without recording or video wording. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
    (options Yes / No) as part of this same gate stop — never a separate later interruption.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
