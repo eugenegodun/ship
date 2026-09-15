@@ -263,19 +263,7 @@ never block, invalidate, or roll back an already-shipped PR.
      permanent local clone — they review and push in their own batches. If the commit fails (not a
      git repo, nothing staged, etc.), note the failure in the report; do not treat it as a pipeline
      failure.
-2. **Project-insights call** — check whether Stage 2's changed-files list touched `edu-frontend/`. If
-   not, skip (no other project target exists yet — this is scoped narrowly on purpose). If it did:
-   - Dispatch the **`engineering-insights`** skill with `args` set to
-     `<worktree_path>/edu-frontend/INSIGHTS.md` (the worktree path retained from Stage 2). Ground it
-     in what implementator/reviewer/qa actually discovered while working the ticket — new patterns,
-     dead ends, gotchas, tool quirks. Same "write nothing if nothing substantial" rule applies.
-   - If the skill wrote anything, commit it locally: `cd <worktree_path> && git add
-     edu-frontend/INSIGHTS.md && git commit -m "<one-line summary>"`. **Do not push.** Same as the
-     pipeline-insights call — accepted tradeoff: this worktree is **ephemeral**, so a local-only
-     commit here can be lost once the worktree is cleaned up after merge; push was dropped anyway per
-     an explicit decision to keep both calls symmetric (commit-only, no push). If the commit fails,
-     note it in the report and move on — do not treat it as a pipeline failure.
-3. Append one line per call to the final report: written / skipped (with why) / failed (with why).
+2. Append the capture status to the final report: written / skipped (with why) / failed (with why).
 
 ## Guardrails
 
