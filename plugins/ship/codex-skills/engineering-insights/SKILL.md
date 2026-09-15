@@ -28,7 +28,7 @@ moment to capture, not skip — wrap-up is part of finishing.
 ## Target file
 
 The caller passes the exact path to write to as this skill's `args` (e.g.
-`/Users/you/repos/ship/INSIGHTS.md` or `<worktree>/edu-frontend/INSIGHTS.md`). If no
+`/Users/you/repos/ship/INSIGHTS.md`). If no
 `args` were given, ask the caller for the target path rather than guessing one — this
 skill never invents a location.
 
