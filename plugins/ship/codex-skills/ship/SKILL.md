@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 7.0.0
+version: 7.0.1
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -119,9 +119,14 @@ because it has not returned yet. `send_message` does not activate an idle child;
 
 ### 1. Plan — GATE 1
 
-Dispatch planner with ticket and user context. Wait. Surface
-returned plan verbatim, request approval, and stop. Changes resume the same planner. Approval retains
-the plan and immediately dispatches implementation. Do not resume the planner for a nonexistent Phase B.
+Dispatch planner with ticket and user context. Wait. Copy the completed planner report exactly,
+preserving its wording, punctuation, filenames, command separators, list numbering, and existing
+Markdown without additions, omissions, paraphrasing, or reformatting. Strip only transport metadata
+that is not part of the report, such as the mailbox identity prefix. Put your own introduction,
+approval request, and required stage table outside the copied report. Before sending, compare the
+copy with the child report and correct any content difference. Request approval and stop. Changes
+resume the same planner. Approval retains the plan and immediately dispatches implementation. Do
+not begin implementation before approval. Do not resume the planner for a nonexistent Phase B.
 
 ### 2. Implementation
 

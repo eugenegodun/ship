@@ -17,10 +17,10 @@ def _get_client() -> Anthropic:
 
 
 def call_model(system: str, messages: list[dict], tools: list[dict] | None = None,
-               model: str = EVAL_MODEL):
+               model: str = EVAL_MODEL, *, max_tokens: int = MAX_TOKENS):
     return _get_client().messages.create(
         model=model,
-        max_tokens=MAX_TOKENS,
+        max_tokens=max_tokens,
         system=system,
         messages=messages,
         tools=tools or [],

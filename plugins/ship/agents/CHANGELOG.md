@@ -9,6 +9,14 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.15.1 (2026-09-15)
+- `ship` 7.0.1 clarifies that Codex must copy completed planner reports without Markdown rewrites,
+  keeping the parent's approval request and progress table outside the copied report.
+- Recording evals request concise timelines and use an explicit 16,384-token ceiling to allow
+  multi-user responses to finish. Other evaluation budgets and recording rubric thresholds stay
+  unchanged; truncated output still fails with concise diagnostics.
+- Added harness budget-forwarding and verbatim-preservation regression checks. QA agent remains 5.0.0.
+
 ## ship package — 1.15.0 (2026-09-15)
 - `ship` 7.0.0 keeps the video decision and adds independent screenshot and `/dynamic` startup
   choices at QA approval in both Claude and Codex. Explicit targets are retained; the implicit

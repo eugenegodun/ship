@@ -145,6 +145,28 @@ def test_report_blockquote_preserves_content_but_not_changes_or_omissions():
         assert_report_preserved('Cutoff: hours > 12.', '> Cutoff: hours 12.')
 
 
+def test_report_preservation_rejects_markdown_reformatting():
+    from ship_evals.codex_scenarios import assert_report_preserved
+    report = ('1. Change src/refunds.py\n'
+              '2. Verification: pytest tests/test_refunds.py; ruff check src/refunds.py')
+
+    assert_report_preserved(report, report)
+    assert_report_preserved(report, '> 1. Change src/refunds.py\n'
+                                     '> 2. Verification: pytest tests/test_refunds.py; ruff check src/refunds.py')
+
+    mutations = [
+        '1. Change `src/refunds.py`\n'
+        '2. Verification: pytest tests/test_refunds.py; ruff check src/refunds.py',
+        '1. Change src/refunds.py\n'
+        '2. **Verification:** pytest tests/test_refunds.py; ruff check src/refunds.py',
+        '1. Change src/refunds.py\n'
+        '2. Verification:\n```sh\npytest tests/test_refunds.py\nruff check src/refunds.py\n```',
+    ]
+    for mutation in mutations:
+        with pytest.raises(AssertionError):
+            assert_report_preserved(report, mutation)
+
+
 @pytest.mark.parametrize('command', [
     'bash /tmp/ship-plugin/scripts/install-codex-agents.sh --check',
     'bash "$(ls -d ~/.codex/plugins/cache/ship/ship/*/ | sort -V | tail -1)scripts/install-codex-agents.sh" --check',

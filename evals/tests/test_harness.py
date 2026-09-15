@@ -2,6 +2,10 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
+from ship_evals import harness
+from ship_evals.config import MAX_TOKENS
 from ship_evals.harness import load_transcript, output_text, tool_calls
 from ship_evals.tools import ORCHESTRATOR_TOOLS
 
@@ -34,3 +38,22 @@ def test_load_transcript(tmp_path: Path):
     p = tmp_path / "t.json"
     p.write_text(json.dumps({"description": "d", "messages": [{"role": "user", "content": "hi"}]}))
     assert load_transcript(p) == [{"role": "user", "content": "hi"}]
+
+
+@pytest.mark.parametrize("override,expected", [(None, MAX_TOKENS), (16_384, 16_384)])
+def test_call_model_forwards_token_budget_without_changing_request(monkeypatch, override, expected):
+    requests = []
+    response = fake_response()
+
+    def create(**kwargs):
+        requests.append(kwargs)
+        return response
+
+    monkeypatch.setattr(harness, "_get_client", lambda: SimpleNamespace(
+        messages=SimpleNamespace(create=create)))
+    messages = [{"role": "user", "content": "Describe the recording timeline."}]
+    tools = [{"name": "example_tool"}]
+    kwargs = {} if override is None else {"max_tokens": override}
+    assert harness.call_model("QA instructions", messages, tools, model="test-model", **kwargs) is response
+    assert requests == [{"model": "test-model", "max_tokens": expected,
+                         "system": "QA instructions", "messages": messages, "tools": tools}]

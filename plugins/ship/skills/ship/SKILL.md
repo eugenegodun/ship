@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 7.0.0
+version: 7.0.1
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -363,7 +363,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 7.0.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 7.0.1 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
 `reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥5.0.0
 (accepts explicit startup, screenshot, recording, and optional target state in the Phase-B resume;

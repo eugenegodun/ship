@@ -7,6 +7,7 @@ from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 
 from ship_evals.artifacts import load_agent
+from ship_evals.config import MAX_TOKENS
 from ship_evals.harness import call_model, output_text
 from ship_evals.judges import rubric
 
@@ -23,15 +24,16 @@ PLAN_TURN = (
 )
 
 
-def ask(messages: list[dict]) -> str:
-    response = call_model(system=SYSTEM, messages=messages)
+def ask(messages: list[dict], *, max_tokens: int = MAX_TOKENS) -> str:
+    response = call_model(system=SYSTEM, messages=messages, max_tokens=max_tokens)
     out = output_text(response)
+    stop_reason = getattr(response, "stop_reason", None)
     detail = (
         f"model={getattr(response, 'model', 'unknown')} "
-        f"stop_reason={getattr(response, 'stop_reason', 'unknown')} "
+        f"stop_reason={stop_reason} "
         f"text_chars={len(out)}"
     )
-    assert getattr(response, "stop_reason", None) != "max_tokens", \
+    assert stop_reason != "max_tokens", \
         "Model response was truncated: " + detail
     assert out.strip(), "Model returned no text: " + detail
     return out
@@ -844,6 +846,11 @@ def test_screenshot_and_video_combinations(observation, criteria):
     ])
 
 
+# These responses include several sessions' command timelines; the ceiling includes thinking.
+# Other QA calls retain the shared default budget.
+RECORDING_EVAL_MAX_TOKENS = 16_384
+
+
 @pytest.mark.llm
 @pytest.mark.parametrize("plan,decision,observation,criteria", [
     pytest.param(SETTINGS_PLAN, "Record the QA run.", "", [
@@ -900,12 +907,19 @@ def test_recording_execution(plan, decision, observation, criteria):
         "fixtures, browser execution, and posting results on "
         "https://github.com/preply/edu-frontend/pull/99999. Target stage34. "
         f"{decision}\nApproved plan:\n{plan}\n{observation}\n"
-        "There is no tool access here. Do not claim to execute anything. Give the "
-        "ordered execution steps and concrete CLI commands you would use, including "
-        "recording, cleanup, and result reporting when applicable."
+        "No tools are available; do not claim live execution. Return a concise ordered recording "
+        "timeline for every approved case and participating role, with the concrete CLI commands "
+        "needed to evaluate it. Include only setup-boundary summaries, tested actions/outcomes, "
+        "capture/cleanup commands, relevant failure handling, and the proposed recording evidence "
+        "lines. Do not reproduce fixture setup scripts, the complete QA plan, a full PR body, or "
+        "generic GitHub publication commands. Aim for at most 1,000 words across the entire response."
     )
-    out = ask([{"role": "user", "content": resume}])
+    out = ask([{"role": "user", "content": resume}], max_tokens=RECORDING_EVAL_MAX_TOKENS)
     assert_test(
         LLMTestCase(input=resume, actual_output=out),
-        [rubric("qa-recording-execution", criteria, threshold=0.9)],
+        [rubric("qa-recording-execution", [
+            "Judge the proposed commands and ordering. The prompt withholds tools, so actual "
+            "browser execution is neither available nor required.",
+            *criteria,
+        ], threshold=0.9)],
     )
