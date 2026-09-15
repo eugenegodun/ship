@@ -317,10 +317,9 @@ def assert_report_facts(case, report):
 
     screenshots = facts.get("screenshots", [])
     if not screenshots:
-        assert not re.search(r"(?im)^\*\*Screenshots\*\*", report), \
-            "Screenshots absent means no feature gallery"
+        assert not re.search(r"!\[[^\]]*\]\([^)]*\)", report), \
+            "Screenshots absent means no invented image evidence"
         return
-    assert re.search(r"(?im)^\*\*Screenshots\*\*", report), "Include one screenshot gallery"
     assert re.search(r"\bVPN\b", report, re.I), "Label private screenshot hosting VPN-only"
     for screenshot in screenshots:
         assert screenshot["caption"] in report, "Retain the exact case/role/state caption"
@@ -522,6 +521,13 @@ def test_reporting_evaluator_accepts_screenshot_fixtures(case_id):
     assert_reporting_body(case, body)
 
 
+@pytest.mark.parametrize("heading", ["Screenshots (VPN-only):", "### Feature evidence (VPN-only)", ""])
+def test_reporting_evaluator_accepts_screenshot_heading_variations(heading):
+    case = next(item for item in REPORTING_CASES if item["id"] == "screenshots_only")
+    report = _report_for_case(case).replace("**Screenshots** (VPN-only)", heading)
+    assert_report_content(case, report)
+
+
 def test_reporting_evaluator_accepts_image_url_without_angle_brackets():
     case = next(item for item in REPORTING_CASES
                 if item["id"] == "screenshots_and_video_preserve_human")
@@ -545,7 +551,7 @@ def test_reporting_evaluator_rejects_screenshot_mutations(mutation):
     report = _report_for_case(case)
     hosted = case["report_facts"]["screenshots"][0]
     if mutation == "lost_gallery":
-        report = report.replace("**Screenshots** (VPN-only)", "")
+        report = report.replace(hosted["url"], "")
     elif mutation == "lost_caption":
         report = report.replace(hosted["caption"], "Invented caption")
     elif mutation == "wrong_url":
@@ -576,7 +582,7 @@ def test_reporting_evaluator_rejects_screenshot_mutations(mutation):
 
 def test_reporting_evaluator_rejects_gallery_when_screenshots_absent():
     case, _, report = _sample_reporting_body()
-    report = report.replace(END, "**Screenshots** (VPN-only)\nNo screenshots.\n" + END)
+    report = report.replace(END, "![Invented screenshot](https://static.preply.com/invented.png)\n" + END)
     with pytest.raises(AssertionError):
         assert_report_content(case, report)
 
