@@ -2,9 +2,8 @@ import pytest
 
 
 @pytest.mark.llm
-def test_plain_invoke_runs_stage0_before_any_dispatch(run_window):
-    # Bookkeeping may precede the question; stop before answering the gate.
-    d = run_window("invoke_plain")
+def test_plain_invoke_runs_stage0_before_any_dispatch(run_decision):
+    d = run_decision("invoke_plain")
     ask = d.named("AskUserQuestion")
     assert ask, f"expected Stage-0 AskUserQuestion, got tools={[c.name for c in d.calls]}"
     questions = ask[0].input_parameters["questions"]
@@ -16,11 +15,11 @@ def test_plain_invoke_runs_stage0_before_any_dispatch(run_window):
 
 
 @pytest.mark.llm
-def test_stray_model_token_does_not_preanswer_stage0(run_window):
+def test_stray_model_token_does_not_preanswer_stage0(run_decision):
     # ship 4.0.0 removed the model shortcut: a trailing 'sonnet' token pre-answers
     # nothing. Stage 0 must still ask the planner question, and no agent may be
     # dispatched while the stray token is unresolved.
-    d = run_window("invoke_model_param")
+    d = run_decision("invoke_model_param")
     assert not d.named("Agent"), "must not dispatch while the stray token is unresolved"
     ask = d.named("AskUserQuestion")
     assert ask, "must ask - nothing pre-answers the model questions and the token is stray"

@@ -164,9 +164,6 @@ report the App's **Create branch** handoff and await the user's PR URL before QA
 ### 5. QA plan — GATE 2; then execution
 
 Only once both PR URL and queued QA plan exist: surface the plan content verbatim and ask approval.
-Copy the complete plan unchanged into assistant prose or the approval question. Keep approval and
-recording questions outside the copied plan; preserve the original wording and punctuation, including commas and periods.
-Do not convert a paragraph into bullets or insert Markdown inside the copied text; do not paraphrase cases or omit prerequisites and flags.
 Ask “Record video of this QA run?” at this same gate unless `--record` or an explicit prior user
 choice already answers it. Stop at the gate with no execution dispatched.
 Changes resume the same QA agent to revise its plan, then return to the gate. Approval resumes it
@@ -184,13 +181,16 @@ description, and video link when produced. If publication failed, include the re
 reason in-session; do not claim publication or substitute a results-comment link. Honor an explicit
 user override of the results destination when reporting the link. Point to Codex `/status` for usage;
 never invent token counts.
-Before ending the parent turn, attempt the non-gating pipeline retrospective:
+Before ending the parent turn, attempt the two non-gating retrospectives:
 
 - If `$SHIP_REPO_PATH` is set and exists, read `skills/engineering-insights/SKILL.md` from this plugin
   and follow it with `$SHIP_REPO_PATH/INSIGHTS.md`, grounded only in observed pipeline friction.
   If it writes, commit `INSIGHTS.md` locally in that repo; do not push.
+- If changed files touched `edu-frontend/`, run the same skill for
+  `<worktree>/edu-frontend/INSIGHTS.md`, grounded in actual implementation/review/QA discoveries.
+  If it writes, commit that file locally in the worktree; do not push.
 
-Record written/skipped/failed in the final report. No substantial insight may mean no write.
+Record written/skipped/failed per call in the final report. No substantial insight may mean no write.
 Neither retrospective failure nor skip invalidates the shipped PR. Do not finalize before attempting
 these applicable steps; do not turn them into another approval gate.
 

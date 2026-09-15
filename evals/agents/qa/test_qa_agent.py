@@ -140,7 +140,7 @@ def assert_reporting_body(case, body):
     before = BLOCK.sub("", original)
     assert [line for line in unowned.splitlines() if line.strip()] == [
         line for line in before.splitlines() if line.strip()
-    ], "Content outside the results block must remain unchanged except for the added heading"
+    ], "Human content must be preserved exactly and in order"
     assert_report_content(case, match.group())
 
 
