@@ -272,10 +272,7 @@ given, fall back to the default when none was, and never invent one.
    - An existing **Evidence** heading wins, including when **QA** also exists. If Evidence is absent,
      inspect the template applied to this PR in the target repository (the pipeline currently uses
      `.github/pull_request_template.md`). If that template has Evidence, restore its Evidence heading
-     in the body and publish there. Restore only the heading, without copying placeholder text,
-     instructions, or other template content into the PR body (for example, do not import
-     `Attach evidence.`). Preserve template guidance already present in the current PR body.
-     Otherwise reuse an existing QA heading or append `## QA`.
+     in the body and publish there. Otherwise reuse an existing QA heading or append `## QA`.
      Do not choose an arbitrary alternate template when several exist. If the applied template cannot
      be established, use the current body's structure and fall back to QA. Mention this limitation in
      the final report only when relevant. If multiple matching headings make placement ambiguous,
