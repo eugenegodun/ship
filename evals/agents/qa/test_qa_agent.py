@@ -185,9 +185,11 @@ def test_dynamic_startup_resolution(observation, criteria):
         + dynamic_pr_url + ". "
         "All deployment observations below are synthetic literal tool results; perform no live writes. "
         "No tools are available, so return the ordered actions/commands and the resulting execution "
-        "state without claiming they ran. " + observation
+        "state without claiming they ran. Keep the answer under 800 words, focused on deployment "
+        "resolution and the resulting handoff or blocker. Summarize subsequent fixture/browser "
+        "work; omit full provisioning scripts, test plans, and publication templates. " + observation
     )
-    out = ask([{"role": "user", "content": prompt}])
+    out = ask([{"role": "user", "content": prompt}], max_tokens=16_384)
     execution_scope = (
         "Judge the intended ordered actions, commands, and resulting state against the synthetic "
         "observations. The prompt explicitly withholds tools, so actual writes, polling, provisioning, "

@@ -9,6 +9,11 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.15.2 (2026-09-15)
+- `ship` 7.0.2 explicitly displays the QA plan before opening the blocking choice tool.
+- Dynamic startup evals bound their response scope and allow 16,384 tokens, while retaining truncation and behavioral checks.
+- The implementer simulation explicitly preloads debugging guidance instead of leaving skill discovery outside its simulated commands.
+
 ## ship package — 1.15.1 (2026-09-15)
 - `ship` 7.0.1 clarifies that Codex must copy completed planner reports without Markdown rewrites,
   keeping the parent's approval request and progress table outside the copied report.

@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 7.0.1
+version: 7.0.2
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each

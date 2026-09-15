@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 7.0.1
+version: 7.0.2
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -212,7 +212,10 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
 2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. Collect explicit plan
-   approval and every unanswered choice in this same interaction. Use one `AskUserQuestion` call
+   approval and every unanswered choice in this same interaction. Emit the complete plan as
+   user-visible text **before invoking** `AskUserQuestion`: that tool pauses for the user, so do not
+   defer the plan until after its response or put it only in tool arguments. This order also applies
+   with `--record`. Use one `AskUserQuestion` call
    with the applicable independent Yes / No questions:
    - **"Record video of this QA run?"** Skip only when `--record` or an earlier explicit choice
      already answers it.
@@ -363,7 +366,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 7.0.1 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 7.0.2 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
 `reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥5.0.0
 (accepts explicit startup, screenshot, recording, and optional target state in the Phase-B resume;
