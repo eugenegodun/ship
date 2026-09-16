@@ -635,5 +635,92 @@
       "recording_status": "hosted",
       "recording_url": "https://static.preply.com/qa/LEX-2101.webm"
     }
+  },
+  {
+    "id": "screenshots_and_video_preserve_human",
+    "body": "## Summary\nHuman summary.\n\n## Evidence\n![Human screenshot](https://example.com/human.png)\nHuman evidence must remain.\n\n## Risks\n- [ ] Human checklist.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        ["TC-01 / Happy path", "Verify action is visible", "✅", ""],
+        ["TC-02 / Boundary", "Verify action is hidden within 12h", "❌", "Action remained visible at 11h."]
+      ],
+      "recording": "🎥 QA recording: https://static.preply.com/qa/LEX-2101.webm (VPN-only)",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on.",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run7-tc01-student-visible.png"}
+      ]
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "hosted",
+      "recording_url": "https://static.preply.com/qa/LEX-2101.webm",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run7-tc01-student-visible.png"}
+      ]
+    }
+  },
+  {
+    "id": "screenshots_only",
+    "body": "## Summary\nHuman summary.\n\n## Evidence\nHuman evidence.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "success",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        ["TC-01 / Happy path", "Verify action is visible", "✅", ""],
+        ["TC-02 / Boundary", "Verify action is hidden within 12h", "❌", "Action remained visible at 11h."]
+      ],
+      "recording": "Recording: not requested.",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on.",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run8-tc01-student-visible.png"}
+      ]
+    },
+    "expected_publication": "success",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "absent",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run8-tc01-student-visible.png"}
+      ]
+    }
+  },
+  {
+    "id": "screenshot_partial_upload_failure",
+    "body": "## Evidence\nHuman before.\n\n<!-- qa-agent-results -->\n**Overall: 1/1 passed** ✅\n**Screenshots** (VPN-only)\nOld automated screenshot.\n<!-- /qa-agent-results -->\n\nHuman after.\n",
+    "applied_template": null,
+    "expected_section": "Evidence",
+    "publication_outcome": "gh pr edit returned success, but verification gh pr view failed: HTTP 502. No read-back body is available.",
+    "executed_results": {
+      "verdict": "**Overall: 1/2 passed** ❌",
+      "rows": [
+        ["TC-01 / Happy path", "Verify action is visible", "✅", ""],
+        ["TC-02 / Boundary", "Verify action is hidden within 12h", "❌", "Action remained visible at 11h."]
+      ],
+      "recording": "Recording: not requested.",
+      "environment": "stage34; exp_lesson_reschedule_v1 changed from off to on.",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run9-tc01-student-visible.png"},
+        {"caption": "TC-02 / Boundary — student — action unexpectedly visible", "status": "upload_failed", "path": "/tmp/LEX-2101-run9-tc02-student-unexpected.png"}
+      ]
+    },
+    "expected_publication": "readback_unknown",
+    "report_facts": {
+      "stage": "stage34",
+      "flag": "exp_lesson_reschedule_v1",
+      "recording_status": "absent",
+      "screenshots": [
+        {"caption": "TC-01 / Happy path — student — action visible", "status": "hosted", "url": "https://static.preply.com/eugene/qa-screenshots/LEX-2101/run9-tc01-student-visible.png"},
+        {"caption": "TC-02 / Boundary — student — action unexpectedly visible", "status": "upload_failed", "path": "/tmp/LEX-2101-run9-tc02-student-unexpected.png"}
+      ]
+    }
   }
 ]

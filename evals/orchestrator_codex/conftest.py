@@ -1,9 +1,10 @@
+import json
 from pathlib import Path
 
 import pytest
 from deepeval.test_case import ToolCall
 
-from ship_evals.codex_harness import (call_codex_model, codex_output_text, codex_tool_calls,
+from ship_evals.codex_harness import (REFERENCE, call_codex_model, codex_output_text, codex_tool_calls,
                                       continue_codex_transcript, load_codex_system)
 from ship_evals.codex_tools import CODEX_ORCHESTRATOR_TOOLS
 from ship_evals.harness import load_transcript
@@ -23,6 +24,19 @@ CODEX_BOOKKEEPING = {
 
 def codex_bookkeeping_responder(tool: str, inp: dict) -> str:
     return CODEX_BOOKKEEPING.get(tool, "ok")
+
+
+def load_scenario(transcript_name: str) -> list[dict]:
+    path = TRANSCRIPTS / f"{transcript_name}.json"
+    raw = json.loads(path.read_text())
+    if "messages" in raw:
+        return raw["messages"]
+    messages = load_transcript(TRANSCRIPTS / f"{raw['base']}.json")
+    if "replace_first_user_content" in raw:
+        first_user = next(i for i, message in enumerate(messages) if message["role"] == "user")
+        messages[first_user] = {**messages[first_user], "content": raw["replace_first_user_content"]}
+    messages.extend(raw.get("append_messages", []))
+    return messages
 
 
 class CodexDecision:
@@ -46,7 +60,7 @@ class CodexDecision:
 @pytest.fixture
 def run_codex_decision():
     def _run(transcript_name: str) -> CodexDecision:
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         return CodexDecision(call_codex_model(SYSTEM, messages, CODEX_ORCHESTRATOR_TOOLS))
     return _run
 
@@ -81,7 +95,7 @@ class CodexWindow:
 @pytest.fixture
 def run_codex_window():
     def _run(transcript_name: str, max_calls: int = 5) -> CodexWindow:
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         return CodexWindow(continue_codex_transcript(messages, respond=codex_bookkeeping_responder,
                                                       max_calls=max_calls))
     return _run
@@ -92,7 +106,7 @@ def run_codex_transition():
     """Allow bounded bookkeeping; observe the first substantive action or final."""
     def _run(transcript_name: str) -> CodexWindow:
         import json
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         # Reconstruct retained identities from fixture tool evidence, not guessed agents.
         agents = {}
         for message in messages:
@@ -121,6 +135,23 @@ def run_codex_transition():
 def run_codex_parallel_launches():
     def _run(transcript_name: str) -> CodexWindow:
         from ship_evals.codex_parallel import observe_parallel_launches
-        messages = load_transcript(TRANSCRIPTS / f"{transcript_name}.json")
+        messages = load_scenario(transcript_name)
         return CodexWindow(observe_parallel_launches(messages))
+    return _run
+
+
+@pytest.fixture
+def run_codex_qa_transition():
+    """Exercise the canonical Codex dispatch source before generated copies are refreshed."""
+    def _run(transcript_name: str, max_calls: int = 5) -> CodexWindow:
+        messages = load_scenario(transcript_name)
+        actions = {"spawn_agent", "followup_task", "send_message", "wait_agent", "shell"}
+        result = continue_codex_transcript(
+            messages,
+            respond=codex_bookkeeping_responder,
+            max_calls=max_calls,
+            stop_after_tools=actions,
+            system=REFERENCE.read_text(),
+        )
+        return CodexWindow(result)
     return _run

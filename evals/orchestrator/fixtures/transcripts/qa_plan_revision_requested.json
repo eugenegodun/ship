@@ -1,0 +1,4 @@
+{
+  "base": "qa_plan_approved",
+  "replace_last_user_text": "Please revise the QA plan to add keyboard-only coverage. Do not execute it yet."
+}

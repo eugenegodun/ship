@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 6.0.2
+version: 7.0.2
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -38,14 +38,14 @@ Parse from the invocation:
 
 - **`TICKET`** (required) — a Jira key like `LEX-1398`. If missing, ask the user; do not guess.
 - Apart from `--record`, the invocation accepts **no other tokens** — there is no model shortcut
-  (Stage 0 always asks both model questions) and **no stage param**: a PR's ephemeral stage exists only after the draft PR and
-  its `/dynamic` comment, so the QA target stage is named — if at all — in the user's **GATE 2
-  approval** (see Stage 5). Any extra token (a stray `stage34`, `sonnet`, …) ⇒ ask the user rather
-  than guessing.
+  (Stage 0 always asks both model questions) and no target parameter. Preserve an explicit target
+  URL/environment the user supplies in surrounding conversation, but treat an unexplained extra
+  invocation token (a stray `stage34`, `sonnet`, …) as ambiguous and ask rather than guessing.
 - **`--record`** (optional flag) — when present, **pre-answers the GATE 2 recording question**
   (Stage 5): the QA run is recorded without asking. Absent ⇒ the user is asked at GATE 2, alongside
   the QA plan. Either way the decision travels in qa-agent's **Phase-B resume**, never its initial
-  brief — the same late-arrival slot as the PR URL and the target stage.
+  brief — the same late-arrival slot as the PR URL, screenshot choice, startup choice, and optional
+  explicit target.
 
 ## Stage 0 — Choose models (startup prompt)
 
@@ -148,11 +148,12 @@ authored while the review→PR branch proceeds. Brief it with:
   authorized to provision disposable fixture data (client/tutor/tutoring/payments/lessons via
   `@prep/fixtures`) and drive a browser against the resolved target host, and to publish results in
   the PR description using qa-agent’s `Evidence`/`QA` placement rules,
-- an explicit **deferred-PR / deferred-stage** instruction: *"The PR does not exist yet — you were
-  launched in parallel with the review/PR stage, and the target stage (if any) will only exist once
-  the PR's `/dynamic` environment is created. Author the plan from the feature description / plan /
-  ticket and the code in the worktree; do not run `gh pr view`, infer a branch, or assume a stage.
-  I'll hand you the PR ref and the target stage when I resume you for Phase B."*
+- an explicit **deferred-PR / deferred-target** instruction: *"The PR does not exist yet — you were
+  launched in parallel with the review/PR stage, and the test target is unresolved. Author the plan
+  from the feature description / plan / ticket and the code in the worktree; do not run `gh pr
+  view`, infer a branch, assume a stage, or start an environment. I'll hand you the PR ref, startup
+  decision, screenshot decision, recording decision, and any explicit target when I resume you for
+  Phase B."*
 
 It returns the plan as its Phase-A final message and waits. **Do not surface its plan yet** — it is
 queued until GATE 2 (Stage 5). Retain this qa-agent instance's id for later `SendMessage` resume. Then
@@ -210,34 +211,47 @@ The qa-agent's Phase-A plan was authored in the background since Stage 2's first
 
 1. **Collect the background plan.** Retrieve the parallel qa-agent's Phase-A result. If it is still
    authoring, **wait for it** (normally it finished long before the PR landed).
-2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. When surfacing the
-   plan, copy its complete content unchanged into assistant prose or the approval question.
-   Keep approval and recording questions outside the copied plan; preserve the original wording and punctuation, including commas and periods.
-   Do not convert a paragraph into bullets or insert Markdown inside the copied text; do not paraphrase cases or
-   omit prerequisites and flags. Also settle the **recording decision**: if `--record` was passed on invocation, recording is
-   on — skip the question. Confirm preset recording in prose only; keep the approval question
-   focused on plan approval and target stage, without recording or video wording. Otherwise ask **"Record video of this QA run?"** via `AskUserQuestion`
-   (options Yes / No) as part of this same gate stop — never a separate later interruption.
+2. Surface the test plan to the user **verbatim** and **STOP**. This is GATE 2. Collect explicit plan
+   approval and every unanswered choice in this same interaction. Emit the complete plan as
+   user-visible text **before invoking** `AskUserQuestion`: that tool pauses for the user, so do not
+   defer the plan until after its response or put it only in tool arguments. This order also applies
+   with `--record`. Use one `AskUserQuestion` call
+   with the applicable independent Yes / No questions. Preserve the copied plan's wording and
+   punctuation; do not convert paragraphs to bullets, insert Markdown inside the plan, paraphrase
+   cases, or omit prerequisites and flags. Confirm preset recording in prose only, outside the
+   approval questions. Ask the following unanswered choices:
+   - **"Record video of this QA run?"** Skip only when `--record` or an earlier explicit choice
+     already answers it.
+   - **"Take screenshots of the feature and add them to the PR description?"** Reuse an earlier
+     explicit choice rather than asking twice.
+   - **"Start the testing server by posting `/dynamic` to this PR?"** Explain that Yes authorizes the
+     QA agent to post that comment and wait for deployment before testing. Ask this only when startup
+     is still needed; an explicit existing target remains the target unless the user explicitly asks
+     to replace it.
+
+   Plan approval does not imply Yes to screenshots or startup, and answering either choice does not
+   approve the plan. Keep the gate pending until approval and every applicable choice are explicit.
+   Do not ask the old stage40/localhost target question.
 3. Relay the verdict to the **same qa-agent instance** with `SendMessage`:
    - **Changes requested** → forward; it revises and returns to the gate. Re-surface, stay stopped.
-   - **Approved** → the resume message carries the **user's verdict**, the **PR reference (URL from
-     Stage 4)** (it was launched in deferred-PR mode without one), the **target stage** when the
-     user's approval names one (e.g. "approved, run it on stage34" — typical once the PR's `/dynamic`
-     environment exists; the stage was unknowable at invocation time), and the **recording decision**
-     (that the user asked for a recording — via `--record` or the GATE 2 answer — or that they
-     declined; omit recording instructions entirely on a decline). Pass the stage exactly as the
-     user named it; if the approval names none, say so and qa-agent uses its default
-     localhost/stage40 target. The qa-agent then runs everything Phase B needs against that target:
-     it provisions a stage account, executes with Playwright (recording individual test cases when requested
-     and uploading the clips via `devex:internal-static-hosting`), and publishes PASS/FAIL results in
-     the PR description using its `Evidence`/`QA` placement rules. The plan stays in-session.
-     Relay any explicit user override of the results destination in the Phase-B resume.
+   - **Approved** → resume only after the applicable choices are settled. The message carries the
+     **user's verdict**, **PR reference (URL from Stage 4)**, `start_dynamic: Yes/No`,
+     `screenshots: Yes/No`, `recording: Yes/No`, and any exact explicit target. If startup is No and
+     no explicit target exists, do not resume QA: ask for an existing test URL/environment or let the
+     user defer QA. Never fill in localhost or stage40. Resume the **same qa-agent instance** with
+     `SendMessage`; it owns any authorized `/dynamic` comment and environment wait. The orchestrator
+     never posts `/dynamic` itself. QA then resolves one target, provisions fixtures, executes with
+     Playwright, captures/uploads the requested independent media, and publishes PASS/FAIL results in
+     the PR description using its `Evidence`/`QA` placement rules. The plan stays in-session. Relay
+     any explicit user override of the results destination in the Phase-B resume.
 
 ## Stage 6 — Final report
 
 Return a concise summary: ticket key, branch, PR URL, review outcome (rounds + verdict), and the QA
-PASS/FAIL result with a link to the results in the PR description (including the 🎥 recording URL
-when the run was recorded). If publication failed, include the results and failure reason in-session;
+PASS/FAIL result with a link to the results in the PR description, including recording and screenshot
+links when produced. If QA is pending because startup failed, timed out, was declined without a
+target, or was deferred, report the observed status and required next action instead of demanding a
+verdict. If publication failed, include the results and failure reason in-session;
 do not claim they were published or substitute a results-comment link. Honor an explicit user
 override of the results destination when reporting the link.
 
@@ -281,11 +295,11 @@ never block, invalidate, or roll back an already-shipped PR.
 - **Deferred-PR handoff**: the parallel qa-agent has no PR at launch. Pass the PR URL (from Stage 4)
   in the **Phase-B resume** `SendMessage`, not at initial dispatch. The PR is the join point of the
   two branches.
-- **The QA target stage is a GATE 2 input, not an invocation param.** A PR's ephemeral stage exists
-  only after Stage 4 creates the draft PR and its `/dynamic` environment comes up, so it cannot be
-  named at `/ship` time. The user names it, if at all, in their GATE 2 approval; relay it in the
-  Phase-B resume exactly as they named it, and **never invent one** — no stage in the approval means
-  qa-agent's default localhost/stage40 target.
+- **Startup and target are explicit GATE 2 state.** Relay an explicit existing target exactly as the
+  user supplied it. Otherwise `start_dynamic: Yes` lets QA create and resolve the deployment;
+  `start_dynamic: No` requires an existing URL/environment or a deferred QA run. Never invent a
+  target, derive a stage from the PR number, or fall back to localhost/stage40. The orchestrator
+  passes the startup decision and never posts `/dynamic`.
 - **Resume, don't re-spawn, across phases**: only **qa-agent** has an internal Phase A/B gate —
   relay its approval to the *same* instance via `SendMessage` so its context persists. The parallel
   qa-agent is launched once (after the first verified tree) and resumed for Phase B; never dispatch a
@@ -308,10 +322,10 @@ never block, invalidate, or roll back an already-shipped PR.
 - **Never skip a gate**, and never commit when the review is unresolved after the cap.
 - **Git ops go through the Haiku agent** with: no co-author line, ff-only pulls on the same branch
   only, and the repo PR template.
-- **Recording is decided at GATE 2 and relayed in the Phase-B resume.** `--record` only pre-answers
-  the GATE 2 question; without it, ask when surfacing the QA plan. Never mention recording in
-  qa-agent's initial brief, and never turn recording on un-asked. Recording (and its upload) is
-  best-effort inside qa-agent — its failure never fails the run or the pipeline.
+- **Media choices are independent GATE 2 inputs.** `--record` only pre-answers recording. Ask every
+  unanswered recording/screenshot question while surfacing the QA plan, relay explicit Yes/No values,
+  and never turn either on through plan approval alone. Recording and screenshot capture/upload are
+  best-effort inside QA; failures do not change the test verdict.
 - **Stage 7 never gates and never fails the run** — it always attempts to run after Stage 6, but any
   skip (env var unset, ticket didn't touch edu-frontend) or failure (commit/push error) is noted in
   the report and otherwise ignored. The shipped PR's success is independent of Stage 7's outcome.
@@ -343,13 +357,14 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 6.0.2 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 7.0.2 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
-`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥4.1.0
-(accepts the target stage with the Phase-B resume — no provenance challenge; accepts an optional recording request on the same resume —
-records cases with `playwright-cli`, uploads via `devex:internal-static-hosting`, and appends labeled 🎥 lines to
-the results; publishes results in the PR description’s `Evidence` section, or `QA` when the applied
-template has no `Evidence`, preserving human content and replacing its owned block on reruns;
+`reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥5.0.0
+(accepts explicit startup, screenshot, recording, and optional target state in the Phase-B resume;
+resolves authorized dynamic deployments without implicit target fallback; captures media with
+`playwright-cli`, uploads via `devex:internal-static-hosting`, and publishes results in the PR
+description’s `Evidence` section, or `QA` when the applied template has no `Evidence`, preserving
+human content and replacing its owned block on reruns;
 returns a description link with the verdict line + Test Case/Description/Status/Notes table), and
 `engineering-insights` ≥1.0.0 (bundled skill, used by Stage 7 — takes a target path via `args`, no
 routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that

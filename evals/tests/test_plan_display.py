@@ -54,3 +54,21 @@ def test_real_fixture_excludes_agent_metadata_from_expected_plan(fixture_name):
     window.text = "TC1 happy-path reschedule"
     with pytest.raises(AssertionError, match="complete queued plan"):
         module.assert_queued_plan_displayed(window, fixture_name)
+
+
+def test_current_gate_requires_plan_in_prose_before_question():
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).parents[1] / "orchestrator" / "test_parallel_qa.py"
+    spec = importlib.util.spec_from_file_location("parallel_qa_assertions", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    plan = (
+        "TC1 happy-path reschedule (preconditions, steps, expected), "
+        "TC2 lesson <12h hides action, TC3 third reschedule hidden. "
+        "Flag exp_lesson_reschedule_v1 required."
+    )
+    window = SimpleNamespace(text="", calls=[question_call(plan)], diagnostics=lambda: "question-only plan")
+    with pytest.raises(AssertionError, match="complete queued plan"):
+        module.assert_queued_plan_displayed(window, "pr_created_qa_ready")

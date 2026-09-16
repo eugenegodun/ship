@@ -12,10 +12,14 @@ reviewed, QA'd pull request.
 
 The ticket key is the only required input. There is no stage or model parameter. Claude
 Code asks you to choose planner and reviewer models at startup; Codex uses fixed models
-per role. Name the QA target stage in your QA-plan approval, once the draft PR and its
-`/dynamic` environment are available. Without a named stage, QA browses
-`http://localhost:3000`, backed by `stage40`; a named stage uses that stage's real host
-for both the browser and fixtures.
+per role. At QA-plan approval, Ship asks whether to record video, take feature screenshots,
+and start the testing server by posting `/dynamic` to the PR. `--record` still pre-answers only
+the video question. Earlier explicit choices are retained.
+
+If you approve startup, QA posts once, waits for the matching deployment, and resolves its
+actual target before creating fixtures or opening the feature. A failed or timed-out deployment
+leaves QA pending. If you decline startup, provide an existing test environment or defer QA;
+there is no implicit localhost fallback. Explicit stages and localhost remain supported.
 
 ## How it works
 
@@ -40,7 +44,7 @@ flowchart TD
     PR --> QG{"Approve QA plan"}
     QAPlan --> QG
     QG -->|Revise| QAPlan
-    QG -->|Approved: target and recording settled| QA["Run browser QA"]
+    QG -->|Approved: startup and evidence settled| QA["Run browser QA"]
     QA --> Results["Post results and final report"]
     Results -.-> Insights["Capture insights when applicable"]
 
@@ -75,8 +79,9 @@ The pipeline uses four core agents and a git agent:
   a disposable stage account, enables any required feature flags, drives Playwright, and
   publishes PASS/FAIL results in the PR description under **Evidence**. If the applied PR
   template has no Evidence section, it reuses or creates **QA**. Reruns replace the agent’s
-  marked results block and preserve existing human content. The plan stays in-session. Its target
-  stage arrives with your approval, and — when recording is on — it captures each test case, uploads the clips, and links them by case and role under the verdict.
+  marked results block and preserve existing human content. The plan stays in-session. QA uses
+  your existing target or starts a dynamic with your permission. Optional videos and screenshots
+  are labeled by case and role and published together inside the same results block.
 
 Two bundled skills run alongside the pipeline:
 
@@ -106,6 +111,18 @@ and final report. If an upload fails, the labeled local file path is reported in
 Capture failures are reported without claiming an unverified file exists. Recording and
 upload failures do not change test verdicts or cause tests to be rerun. Local clips are kept.
 This excludes setup and transitions; agent thinking time within a case can still appear.
+
+## QA feature screenshots
+
+Answer Yes to “Take screenshots of the feature and add them to the PR description?” at the
+QA gate. Screenshots and videos are independent: request either, both, or neither.
+QA captures representative visible states during the actual test, including passing outcomes,
+and uploads verified PNGs to internal static hosting. Images, captions, and direct links appear
+alongside videos in the existing Evidence/QA results block. Hosting is VPN-only; direct links
+remain available if GitHub cannot render an image preview.
+
+Capture or upload failures preserve the QA verdict and are reported with available local paths.
+Declining the gallery does not remove diagnostic screenshots used for failures or visual checks.
 
 ## Evals
 

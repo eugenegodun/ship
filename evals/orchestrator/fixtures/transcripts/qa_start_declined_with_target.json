@@ -1,0 +1,5 @@
+{
+  "base": "qa_plan_approved",
+  "replace_last_tool_result": "{\"Record video of this QA run?\": \"No\", \"Take screenshots of the feature and add them to the PR description?\": \"Yes\", \"Start the testing server by posting `/dynamic` to this PR?\": \"No\"}",
+  "replace_last_user_text": "Approved. Recording: No. Screenshots: Yes. Start dynamic: No. Use the existing explicit target stage34."
+}
