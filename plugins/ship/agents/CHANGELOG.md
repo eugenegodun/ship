@@ -9,6 +9,32 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.15.2 (2026-09-15)
+- `ship` 7.0.2 explicitly displays the QA plan before opening the blocking choice tool.
+- Dynamic startup evals bound their response scope and allow 16,384 tokens, while retaining truncation and behavioral checks.
+- The implementer simulation explicitly preloads debugging guidance instead of leaving skill discovery outside its simulated commands.
+
+## ship package — 1.15.1 (2026-09-15)
+- `ship` 7.0.1 clarifies that Codex must copy completed planner reports without Markdown rewrites,
+  keeping the parent's approval request and progress table outside the copied report.
+- Recording evals request concise timelines and use an explicit 16,384-token ceiling to allow
+  multi-user responses to finish. Other evaluation budgets and recording rubric thresholds stay
+  unchanged; truncated output still fails with concise diagnostics.
+- Added harness budget-forwarding and verbatim-preservation regression checks. QA agent remains 5.0.0.
+
+## ship package — 1.15.0 (2026-09-15)
+- `ship` 7.0.0 keeps the video decision and adds independent screenshot and `/dynamic` startup
+  choices at QA approval in both Claude and Codex. Explicit targets are retained; the implicit
+  localhost/stage40 fallback is removed.
+- `qa-agent` 5.0.0 posts the startup comment only with explicit permission, retains request state,
+  and waits for revision-matched deployment evidence before provisioning. Failed or unresolved
+  startup leaves QA pending, with no automatic retrigger.
+- Optional feature screenshots capture passing states as well as relevant failures, upload verified
+  images, and publish captions, image embeds, and direct links alongside videos in the existing
+  owned PR-description block. Media failures preserve test verdicts and available local evidence.
+- Added gate, startup, media-combination, and screenshot-publication regression evals; regenerated
+  Codex artifacts from canonical sources.
+
 ## ship package — 1.14.0 (2026-09-14)
 - **QA videos cover individual test cases.** `qa-agent` 4.0.2 → 4.1.0 starts recording after
   preconditions and stops after each outcome, before reset/navigation for the next case. Navigation

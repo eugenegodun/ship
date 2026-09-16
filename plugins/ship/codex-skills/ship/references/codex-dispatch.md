@@ -26,7 +26,7 @@ A queued child completion does not guarantee that an idle parent wakes up.
 | Clean review | Spawn git agent, then wait |
 | PR ready but QA plan still running | Wait for QA plan |
 | PR and QA plan ready | Surface plan and request approval; end turn at GATE 2 |
-| QA execution approved | Resume same QA agent with PR/target/recording choice, then wait |
+| QA approved and choices settled | Resume same QA agent with PR/startup/screenshots/recording/optional target, then wait |
 | QA execution completed | Compile results, attempt retrospectives, then final report |
 
 If the user asks “status?” while work is authorized, give commentary and execute the pending
@@ -47,8 +47,8 @@ Examples (these are tool calls, not text to show instead of invoking tools):
 ## Invocation, preflight, and roles
 
 Inputs: ticket key; optional `--record`. Ask for a missing ticket or unexplained extra
-argument. Preserve explicit user constraints such as base branch and declined recording. There are
-no model questions on Codex. A target stage is passed at QA approval when known, not invented.
+argument. Preserve explicit user constraints such as base branch, existing test target, and media
+choices. There are no model questions on Codex. Targets are never invented.
 
 Preflight is a once-per-run prerequisite. First inspect the retained tool evidence: a completed
 installer check with exit 0 and all five roles unchanged sets `preflight_passed = true`. Retain that
@@ -83,8 +83,8 @@ Reviewers are fresh each round. Models are fixed per role; no reviewer model esc
 ## State and mailbox handling
 
 Retain `preflight_passed` and its tool evidence, ticket, flags, approved plan, role identities,
-worktree/branch, verification evidence,
-review count, queued QA plan, PR URL, and approval decisions. `update_plan` is bookkeeping only.
+worktree/branch, verification evidence, review count, queued QA plan, PR URL, explicit target, and
+independent plan/startup/screenshot/recording decisions. `update_plan` is bookkeeping only.
 
 `wait_agent` returns an activity/timeout summary; read the separate child mailbox message for its
 report. If completion is announced without the report, use `list_agents` to inspect state/results.
@@ -104,9 +104,14 @@ because it has not returned yet. `send_message` does not activate an idle child;
 
 ### 1. Plan — GATE 1
 
-Dispatch planner with ticket and user context. Wait. Surface
-returned plan verbatim, request approval, and stop. Changes resume the same planner. Approval retains
-the plan and immediately dispatches implementation. Do not resume the planner for a nonexistent Phase B.
+Dispatch planner with ticket and user context. Wait. Copy the completed planner report exactly,
+preserving its wording, punctuation, filenames, command separators, list numbering, and existing
+Markdown without additions, omissions, paraphrasing, or reformatting. Strip only transport metadata
+that is not part of the report, such as the mailbox identity prefix. Put your own introduction,
+approval request, and required stage table outside the copied report. Before sending, compare the
+copy with the child report and correct any content difference. Request approval and stop. Changes
+resume the same planner. Approval retains the plan and immediately dispatches implementation. Do
+not begin implementation before approval. Do not resume the planner for a nonexistent Phase B.
 
 ### 2. Implementation
 
@@ -121,11 +126,11 @@ An evidenced failure requiring user action is a halt; QA has not started before 
 
 At the first verified tree, spawn QA Phase A and reviewer without waiting for QA planning first.
 The QA brief includes feature description, approved plan, worktree, and this authorization scope:
-after human approval of its plan, it may provision disposable stage fixtures, drive the browser,
-and publish test results in the PR description using qa-agent’s `Evidence`/`QA` placement rules.
-State explicitly: PR and stage are deferred; do not query `gh pr view`,
-infer a branch, or assume a stage. Return the plan and wait; Phase B is not yet approved.
-Do not send recording instructions in the initial QA brief.
+after human approval of its plan, it may provision disposable fixtures, drive the browser, and
+publish test results in the PR description using qa-agent’s `Evidence`/`QA` placement rules.
+State explicitly: PR and target are deferred; do not query `gh pr view`, infer a branch, assume a
+stage, or start an environment. Return the plan and wait; Phase B is not yet approved. Do not send
+startup, screenshot, or recording choices in the initial QA brief.
 
 ### 3. Review and fixes — maximum three review rounds
 
@@ -148,21 +153,36 @@ report the App's **Create branch** handoff and await the user's PR URL before QA
 
 ### 5. QA plan — GATE 2; then execution
 
-Only once both PR URL and queued QA plan exist: surface the plan content verbatim and ask approval.
-Ask “Record video of this QA run?” at this same gate unless `--record` or an explicit prior user
-choice already answers it. Stop at the gate with no execution dispatched.
-Changes resume the same QA agent to revise its plan, then return to the gate. Approval resumes it
-with verdict, PR URL, exact user-provided target stage (or state none was provided; use its default
-localhost/stage40), and requested recording instructions. Omit recording instructions on a decline.
-QA provisions fixtures, runs browser tests, and publishes PASS/FAIL results in the PR description
-using its `Evidence`/`QA` placement rules. The plan stays in-session. Relay any explicit user override
-of the results destination in the Phase-B resume.
-Wait for the execution report; recording/upload failure is best-effort and does not fail the run.
+Only once both PR URL and queued QA plan exist: surface the plan content verbatim and request explicit
+approval plus every unanswered independent choice in the same gate interaction:
+
+- “Record video of this QA run?” unless `--record` or a prior explicit choice answers it.
+- “Take screenshots of the feature and add them to the PR description?” unless a prior explicit
+  choice answers it.
+- “Start the testing server by posting `/dynamic` to this PR?” when startup is still needed. Explain
+  that Yes permits QA to post the comment and wait for deployment before testing. Honor a supplied
+  existing target instead of replacing it.
+
+Stop at the gate with no execution dispatched. Plan approval alone does not answer either new choice;
+a media/startup answer does not approve the plan. Changes resume the same QA agent to revise its plan,
+then surface the revised plan and return to this gate without executing.
+
+After approval and all applicable choices are settled, resume the same QA agent with `followup_task`.
+The Phase-B message always includes the verdict, PR URL, `start_dynamic: Yes/No`, `screenshots:
+Yes/No`, `recording: Yes/No`, and any exact explicit target. When startup is declined without an
+explicit target, do not resume: ask for an existing test URL/environment or let the user defer QA.
+Never supply localhost/stage40 implicitly. The orchestrator never posts `/dynamic`; QA owns that
+authorized write, target resolution, fixtures, browser execution, media, and PR-description results.
+The plan stays in-session. Relay any explicit results-destination override in the Phase-B message.
+Wait for the execution report; recording/screenshot upload failure is best-effort and does not fail
+the run.
 
 ### 6–7. Results and best-effort retrospectives
 
 Compile ticket, branch, PR URL, review rounds/verdict, QA PASS/FAIL, the results link in the PR
-description, and video link when produced. If publication failed, include the results and failure
+description, and video/screenshot links when produced. If QA is pending because startup failed,
+timed out, was declined without a target, or was deferred, report the observed status and required
+next action instead of demanding a verdict. If publication failed, include the results and failure
 reason in-session; do not claim publication or substitute a results-comment link. Honor an explicit
 user override of the results destination when reporting the link. Point to Codex `/status` for usage;
 never invent token counts.

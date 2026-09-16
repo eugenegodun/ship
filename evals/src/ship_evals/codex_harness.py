@@ -128,7 +128,8 @@ class CodexSimResult:
 
 
 def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict], str | CodexToolReply],
-                              max_calls: int = 40, stop_after_tools: set[str] | None = None) -> CodexSimResult:
+                              max_calls: int = 40, stop_after_tools: set[str] | None = None,
+                              system: str | None = None) -> CodexSimResult:
     """Multi-turn driver for the Codex dialect, analogous to ship_evals.simulator.continue_transcript.
 
     Resumes from an existing OpenAI chat-completions transcript, answering every tool call via
@@ -137,7 +138,7 @@ def continue_codex_transcript(messages: list[dict], respond: Callable[[str, dict
     max_calls is exhausted. Decision-only probes may set stop_after_tools to observe
     the complete first substantive call batch without simulating its execution.
     """
-    system = load_codex_system()
+    system = system or load_codex_system()
     tools = CODEX_ORCHESTRATOR_TOOLS
     messages = list(messages)
     result = CodexSimResult()

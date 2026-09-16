@@ -1,0 +1,7 @@
+{
+  "base": "qa_gate_ready",
+  "append_messages": [
+    {"role": "assistant", "content": "GATE 2 plan, verbatim: TC1 enables the lesson rule and verifies its saved state; TC2 verifies the disabled state. Approve it? Also answer independently: Record video? Take feature screenshots for the PR description? Start the testing server by allowing QA to post /dynamic and wait for deployment?"},
+    {"role": "user", "content": "Approved. Recording: No. Screenshots: Yes. Start dynamic: Yes. No existing target was provided."}
+  ]
+}
