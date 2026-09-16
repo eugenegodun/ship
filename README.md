@@ -86,12 +86,10 @@ The pipeline uses four core agents and a git agent:
 Two bundled skills run alongside the pipeline:
 
 - **`engineering-insights`** — invoked automatically at Stage 7 to capture non-obvious
-  lessons from the run (pipeline friction, and project gotchas when the ticket touched
-  `edu-frontend/`). Set `SHIP_REPO_PATH` to an existing local Ship clone to capture
-  pipeline lessons in its `INSIGHTS.md`; that call is skipped when the variable is unset
-  or the directory is missing. Project lessons go into the implementation worktree's
-  `edu-frontend/INSIGHTS.md` when that project was touched. Both calls commit locally
-  without pushing. Best-effort: a skip or failure never affects the shipped PR.
+  pipeline lessons from the run. Set `SHIP_REPO_PATH` to an existing local Ship clone
+  to capture those lessons in its `INSIGHTS.md`; capture is skipped when the variable
+  is unset or the directory is missing. Changes are committed locally without pushing.
+  Best-effort: a skip or failure never affects the shipped PR.
 - **`workflow-retro`** (`/workflow-retro`, manual-only) — a read-only observer that
   reviews a completed `/ship` run afterward: real per-agent token spend, what went well
   or poorly, and improvement suggestions. Its analyzer currently reads Claude Code
