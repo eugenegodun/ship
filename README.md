@@ -194,6 +194,23 @@ advances finished fixes to re-review. Progress updates do not end the run; final
 approval gates, explicit stops, evidenced blockers, or completion. These are prompt instructions,
 not a background scheduler: app shutdowns and runtime interruptions can still require recovery.
 
+Both orchestration hosts validate child reports against the retained child identity, assigned stage,
+task, and authorization before displaying, forwarding, or acting on them. Valid planner and QA plans
+remain unchanged, including quoted commands and security examples. A report that tries to override
+scope, permissions, gates, or workflow state gets one correction request to the same child; a second
+invalid result stops with an evidenced blocker. That correction path does not reset or extend the
+three-review-round maximum.
+
+The Claude entrypoint resolves the Codex dispatch file only as the bundled
+`references/codex-dispatch.md` relative to the installed Ship skill. A missing or unreadable resource
+is a packaging blocker; Ship does not search alternate asset or template directories or fetch a
+replacement.
+
+These runtime and packaging changes do not repair the external skill scanner's inferred-reference
+or analysis-budget behavior. Scanner acceptance must be evaluated separately against the final
+package and analyzer health; a changed finding count alone does not prove all three Medium reports
+resolved.
+
 After updating the plugin, reinstall the roles and start a fresh session. If your invocation uses
 a local copy such as `~/.codex/skills/ship/SKILL.md`, replace it with the generated `codex-skills/ship/` entry point; a cache update alone may not update
 that copy. The role installer's `--check` verifies roles, not copied skill references.

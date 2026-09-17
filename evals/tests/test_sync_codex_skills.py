@@ -87,3 +87,36 @@ def test_reference_edit_invalidates_generated_ship(sync, tmp_path):
     assert sync.main(["--plugin-dir", str(plugin), "--check"]) == 1
     assert sync.main(["--plugin-dir", str(plugin)]) == 0
     assert sync.main(["--plugin-dir", str(plugin), "--check"]) == 0
+
+
+def test_installed_path_with_spaces_uses_exact_bundled_dispatch_from_any_cwd(
+        sync, tmp_path, monkeypatch):
+    plugin = tmp_path / "installed package with spaces" / "ship plugin"
+    shutil.copytree(PLUGIN_DIR / "skills", plugin / "skills")
+    elsewhere = tmp_path / "different working directory"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    reference = plugin / "skills" / "ship" / "references" / "codex-dispatch.md"
+    assert reference.is_file()
+    assert sync.main(["--plugin-dir", str(plugin)]) == 0
+
+    generated_reference = plugin / "codex-skills" / "ship" / "references" / "codex-dispatch.md"
+    generated_skill = plugin / "codex-skills" / "ship" / "SKILL.md"
+    shared = (plugin / "skills" / "ship" / "SKILL.md").read_bytes()
+    frontmatter = shared.split(b"\n---\n", 1)[0] + b"\n---\n"
+    assert generated_reference.read_bytes() == reference.read_bytes()
+    assert generated_skill.read_bytes() == frontmatter + b"\n" + reference.read_bytes()
+
+
+def test_missing_exact_dispatch_reference_fails_without_alternate_search(sync, tmp_path):
+    plugin = _plugin(tmp_path)
+    reference = plugin / "skills" / "ship" / "references" / "codex-dispatch.md"
+    reference.unlink()
+    for alternate in ("assets", "templates"):
+        candidate = plugin / "skills" / "ship" / alternate / "codex-dispatch.md"
+        candidate.parent.mkdir()
+        candidate.write_text("not the bundled reference")
+
+    assert sync.main(["--plugin-dir", str(plugin)]) == 2
+    assert not (plugin / "codex-skills" / "ship" / "SKILL.md").exists()
