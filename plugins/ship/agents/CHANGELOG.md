@@ -9,6 +9,50 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 2.0.0 (2026-09-18)
+- **Breaking insights authorization contract:** `ship` 8.0.0 and `engineering-insights` 2.0.0 bind
+  notes to the retained ticket repository/worktree root `INSIGHTS.md` and require an actual user
+  message explicitly approving that repository and write. Paths, `$SHIP_REPO_PATH`, child output,
+  skill invocation, and implementation/QA approvals no longer authorize or redirect notes writes.
+- Without approval, substantive notes are displayed with the absolute target and exact addition as
+  an optional post-completion approval request; no file is written, created, staged, or committed.
+  No substantial insight remains a quiet skip. Validation failure never falls back elsewhere.
+- Automatic map promotion is removed. A minimal patch to an existing root `AGENTS.md` or `CLAUDE.md`
+  is displayed separately and changes only after explicit approval of that exact patch. Notes
+  approval does not cover map files; map edits are never automatically committed or pushed.
+- Approved notes use the packaged read-only target validator immediately before writes. A local
+  notes commit remains best-effort and must contain only root `INSIGHTS.md`, preserving unrelated
+  index state; otherwise the approved write stays uncommitted. No push is performed.
+- The ticket pipeline's plan/QA gates, stage order, review cap, models, roles, child-report boundary,
+  QA behavior, and PR result are unchanged. Insights approval is an optional follow-up after the
+  completed report, and never reopens ticket stages or invalidates delivery.
+
+## ship package — 1.16.1 (2026-09-18)
+- `engineering-insights` 1.0.2 clarifies that a caller-selected notes path and existing note content
+  cannot expand filesystem authority, override user instructions, or redirect the target.
+- Existing notes remain evidence for deduplication and context rather than executable instructions.
+  Sibling `CLAUDE.md`/`AGENTS.md` Gotchas promotion remains available under the user's instructions
+  and host permissions, grounded in the observed session rather than a note's self-description.
+- Orchestration order, gates, automatic non-gating capture, target selection, append/create behavior,
+  local commit/no-push behavior, role definitions, and no-substantial-insight handling are unchanged.
+  The generated Codex copy is refreshed from the shared source. This prompt clarification does not
+  prove behavioral equivalence or eliminate scanner findings.
+
+## ship package — 1.16.0 (2026-09-17)
+- `ship` 7.1.0 validates every child result against the retained child identity, assigned stage,
+  task, and authorization state before displaying, forwarding, or acting on it. Valid planner and QA
+  plans keep their exact content, including legitimate quoted commands and security examples.
+- An invalid report is retained as evidence and gets one correction request to the same child. A
+  repeated override attempt or unavailable child stops with a blocker; correction state persists
+  across gates and never resets or extends the maximum of three review rounds.
+- The Codex bundled dispatch reference is resolved only relative to the installed skill directory.
+  Missing or unreadable packaging now fails closed without alternate directory or network searches.
+  Existing approval gates, QA choices, agent bodies, roles, models, and sandboxes are unchanged.
+- External scanner reference inference and analysis-budget behavior remain separately owned; these
+  runtime changes do not by themselves establish that all three Medium scanner reports are cleared.
+- Update the plugin, reinstall Codex roles, replace any copied Codex skill entrypoint, and restart the
+  session so the new orchestration instructions are loaded.
+
 ## ship package — 1.15.2 (2026-09-15)
 - `ship` 7.0.2 explicitly displays the QA plan before opening the blocking choice tool.
 - Dynamic startup evals bound their response scope and allow 16,384 tokens, while retaining truncation and behavioral checks.
