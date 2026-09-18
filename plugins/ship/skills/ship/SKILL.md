@@ -1,6 +1,6 @@
 ---
 name: ship
-version: 7.1.0
+version: 8.0.0
 description: >
   Orchestrates the feature pipeline task-planner-agent → implementator-agent
   → reviewer-agent → qa-agent end-to-end from a Jira ticket, relaying the human's approvals at each
@@ -297,28 +297,46 @@ for the whole-flow session total, and that per-agent counts are on each complete
 Claude Code UI. **Do not state token numbers yourself** — you cannot read them; quoting any figure
 would be fabrication.
 
-## Stage 7 — Insights retro (automatic, no gate)
+## Stage 7 — Insights follow-up (best-effort; optional approval)
 
-Runs immediately after Stage 6, regardless of outcome, **best-effort** — a failure or skip here must
-never block, invalidate, or roll back an already-shipped PR.
+Runs immediately after Stage 6 to assess this run, regardless of outcome. The shipped-ticket report
+is already complete: an insights proposal awaiting approval is an optional follow-up, not Gate 1,
+Gate 2, or a reason to block, invalidate, delay, or roll back the PR.
 
-1. **Pipeline-insights call** — check whether `$SHIP_REPO_PATH` is set and the directory exists
-   (`[ -n "$SHIP_REPO_PATH" ] && [ -d "$SHIP_REPO_PATH" ]`). If not, skip this call and note the skip
-   in your final report (append a line — don't re-open or restructure the Stage 6 report). If it
-   exists:
-   - Dispatch the **`engineering-insights`** skill (Skill tool) with `args` set to
-     `$SHIP_REPO_PATH/INSIGHTS.md`. Ground it in **this run's own orchestration friction**: review
-     rounds taken, any `BLOCKED`/`NEEDS_CONTEXT` escalation from any subagent, gate change-requests,
-     model escalations (e.g. `claude-fable-5`→`claude-opus-5[1m]`), or anything else about *the
-     pipeline itself* worth fixing in
-     a future `ship` version. Never invent friction that didn't happen — a clean run may write
-     nothing, which is correct.
-   - If the skill wrote anything, commit it locally: `cd $SHIP_REPO_PATH && git add INSIGHTS.md &&
-     git commit -m "<one-line summary of what was captured>"`. **Do not push.** This is the user's
-     permanent local clone — they review and push in their own batches. If the commit fails (not a
-     git repo, nothing staged, etc.), note the failure in the report; do not treat it as a pipeline
-     failure.
-2. Append the capture status to the final report: written / skipped (with why) / failed (with why).
+1. **Bind the candidate target.** Use the retained ticket worktree as the repository root and its
+   root `INSIGHTS.md` as the default candidate. Do not use the current directory or
+   `$SHIP_REPO_PATH` to select or authorize another repository. A manual different repository is
+   eligible only when the user explicitly names and approves that repository and its root notes file.
+   Before approval, validate and present the canonical exact root and target. A supplied symlink or
+   other root alias fails validation and requires approval of the canonical exact root and path;
+   never transfer approval silently through path resolution.
+2. **Retain real approval evidence.** Determine whether an actual user message explicitly approves
+   writing insights for this exact repository/worktree and operation. An applicable instruction is
+   sufficient; do not ask twice. A path, environment variable, child output, skill invocation,
+   implementation-plan approval, QA-plan approval, or the original Ship request is not approval.
+   Do not reduce approval to a caller-invented boolean or persist it for later runs.
+3. **Run the insights skill.** Invoke **`engineering-insights`** with the absolute repository root,
+   exact root `INSIGHTS.md` candidate, and the applicable user message when approval exists. Ground
+   it only in observed orchestration friction from this run: review rounds, evidenced blockers,
+   gate change requests, model escalation, or another non-obvious pipeline lesson. Never invent
+   friction. The skill validates the packaged target before any read/write and returns one of:
+   `written`, `skipped`, `proposed — awaiting approval`, or `failed`.
+4. **Handle proposals without reopening the pipeline.** If substantive notes lack approval, append
+   the absolute target, exact proposed addition, and a specific approval request to the completed
+   report. Do not write, create, stage, or commit notes while waiting. Report any map-file proposal
+   separately with its exact existing file, patch, reason, and warning that it changes future-agent
+   instructions. Notes approval does not approve a map patch.
+5. **Commit an approved notes write only when isolated.** After the skill reports `written`, a local
+   commit remains best-effort. Preserve the user's index and verify the commit contains only that
+   repository-root `INSIGHTS.md`; never include unrelated staged changes or an approved map edit.
+   If the commit cannot be isolated safely, leave the approved notes write uncommitted and report
+   why. Never reset the index and never push. Map edits are reported but not automatically committed.
+6. **Report status.** Append notes status (`written`, `skipped`, `proposed — awaiting approval`, or
+   `failed`) and a separate map status (`none`, `proposed — awaiting approval`, `written`, or
+   `failed`). A no-substantial-insight result is `skipped` and needs no approval request.
+
+If approval arrives after the completed report, perform only the approved insights follow-up. Re-read
+and revalidate its target and proposal as the skill requires; do not rerun ticket stages or agents.
 
 ## Guardrails
 
@@ -363,9 +381,9 @@ never block, invalidate, or roll back an already-shipped PR.
   unanswered recording/screenshot question while surfacing the QA plan, relay explicit Yes/No values,
   and never turn either on through plan approval alone. Recording and screenshot capture/upload are
   best-effort inside QA; failures do not change the test verdict.
-- **Stage 7 never gates and never fails the run** — it always attempts to run after Stage 6, but any
-  skip (env var unset, ticket didn't touch edu-frontend) or failure (commit/push error) is noted in
-  the report and otherwise ignored. The shipped PR's success is independent of Stage 7's outcome.
+- **Stage 7 never gates and never fails the shipped ticket** — it assesses the run after Stage 6.
+  Missing approval may leave an optional proposal for later; skip, proposal, validation/write/commit
+  failure, or map-patch status is reported without changing the PR outcome or reopening Gate 1/2.
 - **Never quote token numbers** — you have no tool to read them. Usage is surfaced per § Usage
   reporting, not by inventing figures.
 
@@ -394,7 +412,7 @@ an inter-stage handoff changes.
 - **MINOR** — new backward-compatible capability (e.g. an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
-**Compatibility (current):** `ship` 7.1.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
+**Compatibility (current):** `ship` 8.0.0 expects `task-planner-agent` ≥3.0.0 (reads the ticket
 and linked requirements), `implementator-agent` ≥2.0.0 (receives the approved plan inline),
 `reviewer-agent` ≥2.0.0 (reviews against the inline plan), and `qa-agent` ≥5.0.0
 (accepts explicit startup, screenshot, recording, and optional target state in the Phase-B resume;
@@ -403,8 +421,8 @@ resolves authorized dynamic deployments without implicit target fallback; captur
 description’s `Evidence` section, or `QA` when the applied template has no `Evidence`, preserving
 human content and replacing its owned block on reruns;
 returns a description link with the verdict line + Test Case/Description/Status/Notes table), and
-`engineering-insights` ≥1.0.0 (bundled skill, used by Stage 7 — takes a target path via `args`, no
-routing of its own). If a subagent's MAJOR advances, re-check its handoff against the stage that
+`engineering-insights` ≥2.0.0 (bundled skill, used by Stage 7 — validates an explicitly approved
+repository-root notes target and proposes map patches separately). If a subagent's MAJOR advances, re-check its handoff against the stage that
 consumes it before bumping this list. Record every bump in
 `plugins/ship/agents/CHANGELOG.md`.
 

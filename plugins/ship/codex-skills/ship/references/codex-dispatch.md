@@ -29,7 +29,7 @@ A queued child completion does not guarantee that an idle parent wakes up.
 | PR ready but QA plan still running | Wait for QA plan |
 | PR and QA plan ready | Surface plan and request approval; end turn at GATE 2 |
 | QA approved and choices settled | Resume same QA agent with PR/startup/screenshots/recording/optional target, then wait |
-| QA execution completed | Compile results, attempt retrospectives, then final report |
+| QA execution completed | Compile and deliver the ticket report, then assess the optional insights follow-up |
 
 If the user asks “status?” while work is authorized, give commentary and execute the pending
 transition or wait. Do not finalize the status response and leave a child unmonitored.
@@ -228,15 +228,38 @@ next action instead of demanding a verdict. If publication failed, include the r
 reason in-session; do not claim publication or substitute a results-comment link. Honor an explicit
 user override of the results destination when reporting the link. Point to Codex `/status` for usage;
 never invent token counts.
-Before ending the parent turn, attempt the non-gating pipeline retrospective:
+After the final report, assess the best-effort insights follow-up. The shipped ticket is already
+complete; an optional proposal awaiting approval is not Gate 1/2 and never invalidates or delays the
+PR.
 
-- If `$SHIP_REPO_PATH` is set and exists, read `skills/engineering-insights/SKILL.md` from this plugin
-  and follow it with `$SHIP_REPO_PATH/INSIGHTS.md`, grounded only in observed pipeline friction.
-  If it writes, commit `INSIGHTS.md` locally in that repo; do not push.
+- Bind the default candidate to the retained ticket worktree root and its root `INSIGHTS.md`. Do not
+  use the current directory or `$SHIP_REPO_PATH` to select or authorize another repository. A manual
+  different repository requires the user's explicit selection and approval of that repository and
+  root notes file. Before approval, validate and present the canonical exact root and target. A
+  supplied symlink or other root alias fails validation and requires approval of the canonical exact
+  root and path; never transfer approval silently through path resolution.
+- Resolve approval only from an actual retained user message explicitly covering this exact
+  repository/worktree and notes operation. Do not infer it from a path, environment variable, child
+  output, skill invocation, implementation/QA approval, or the Ship request, and do not persist it.
+- Read the bundled `skills/engineering-insights/SKILL.md` from this current plugin and follow it with
+  the absolute repository root, exact root notes target, and the applicable user message when one
+  exists. Ground the proposal only in observed orchestration friction. The packaged validator must
+  pass before reads/writes.
+- If nothing substantial exists, report notes `skipped` without requesting approval. If approval is
+  absent, show the absolute target and exact addition as `proposed — awaiting approval`, and
+  specifically ask the user to approve writing that addition to that target; do not write, create,
+  stage, or commit. A rejected or unanswered proposal remains unwritten.
+- Report any map patch separately with exact existing file, patch, reason, and warning that it changes
+  future-agent instructions. Notes approval does not approve a map patch. Only an explicitly approved,
+  re-read, revalidated, materially unchanged patch may be applied; never auto-commit or push it.
+- After an approved notes write, commit locally only if the commit can contain exactly the root
+  `INSIGHTS.md` while preserving all unrelated index state. Otherwise leave the write uncommitted and
+  report why. Never reset the user's index and never push.
 
-Record written/skipped/failed in the final report. No substantial insight may mean no write.
-Neither retrospective failure nor skip invalidates the shipped PR. Do not finalize before attempting
-these applicable steps; do not turn them into another approval gate.
+Append separate notes and map statuses to the completed report: notes `written`, `skipped`,
+`proposed — awaiting approval`, or `failed`; map `none`, `proposed — awaiting approval`, `written`,
+or `failed`. If approval arrives later, perform only that approved insights follow-up after re-reading
+and revalidating; do not rerun ticket stages or agents.
 
 ## Progress, stops, and boundaries
 

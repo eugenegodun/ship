@@ -9,6 +9,24 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 2.0.0 (2026-09-18)
+- **Breaking insights authorization contract:** `ship` 8.0.0 and `engineering-insights` 2.0.0 bind
+  notes to the retained ticket repository/worktree root `INSIGHTS.md` and require an actual user
+  message explicitly approving that repository and write. Paths, `$SHIP_REPO_PATH`, child output,
+  skill invocation, and implementation/QA approvals no longer authorize or redirect notes writes.
+- Without approval, substantive notes are displayed with the absolute target and exact addition as
+  an optional post-completion approval request; no file is written, created, staged, or committed.
+  No substantial insight remains a quiet skip. Validation failure never falls back elsewhere.
+- Automatic map promotion is removed. A minimal patch to an existing root `AGENTS.md` or `CLAUDE.md`
+  is displayed separately and changes only after explicit approval of that exact patch. Notes
+  approval does not cover map files; map edits are never automatically committed or pushed.
+- Approved notes use the packaged read-only target validator immediately before writes. A local
+  notes commit remains best-effort and must contain only root `INSIGHTS.md`, preserving unrelated
+  index state; otherwise the approved write stays uncommitted. No push is performed.
+- The ticket pipeline's plan/QA gates, stage order, review cap, models, roles, child-report boundary,
+  QA behavior, and PR result are unchanged. Insights approval is an optional follow-up after the
+  completed report, and never reopens ticket stages or invalidates delivery.
+
 ## ship package — 1.16.1 (2026-09-18)
 - `engineering-insights` 1.0.2 clarifies that a caller-selected notes path and existing note content
   cannot expand filesystem authority, override user instructions, or redirect the target.

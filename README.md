@@ -46,7 +46,7 @@ flowchart TD
     QG -->|Revise| QAPlan
     QG -->|Approved: startup and evidence settled| QA["Run browser QA"]
     QA --> Results["Post results and final report"]
-    Results -.-> Insights["Capture insights when applicable"]
+    Results -.-> Insights["Propose or write approved insights"]
 
     classDef approval fill:#fff3cd,stroke:#9a6700,color:#24292f
     classDef stop fill:#ffebe9,stroke:#cf222e,color:#24292f
@@ -85,11 +85,14 @@ The pipeline uses four core agents and a git agent:
 
 Two bundled skills run alongside the pipeline:
 
-- **`engineering-insights`** — invoked automatically at Stage 7 to capture non-obvious
-  pipeline lessons from the run. Set `SHIP_REPO_PATH` to an existing local Ship clone
-  to capture those lessons in its `INSIGHTS.md`; capture is skipped when the variable
-  is unset or the directory is missing. Changes are committed locally without pushing.
-  Best-effort: a skip or failure never affects the shipped PR.
+- **`engineering-insights`** — assessed automatically at Stage 7 for non-obvious pipeline
+  lessons. Its only notes candidate is `INSIGHTS.md` at the retained ticket worktree root.
+  Writing or creating it requires an explicit user instruction covering that repository and
+  operation; otherwise Ship shows the absolute target and exact proposed addition for optional
+  approval after the shipped-ticket report. `SHIP_REPO_PATH` no longer selects or authorizes a
+  destination. A proposed `AGENTS.md`/`CLAUDE.md` patch has separate explicit approval and is never
+  automatically committed. Approved notes may be committed locally only in an isolated
+  `INSIGHTS.md`-only commit; Ship never pushes. Skip, proposal, or failure never affects the PR.
 - **`workflow-retro`** (`/workflow-retro`, manual-only) — a read-only observer that
   reviews a completed `/ship` run afterward: real per-agent token spend, what went well
   or poorly, and improvement suggestions. Its analyzer currently reads Claude Code
@@ -211,6 +214,11 @@ or analysis-budget behavior. Scanner acceptance must be evaluated separately aga
 package and analyzer health; a changed finding count alone does not prove all three Medium reports
 resolved.
 
+Ship 2.0.0 changes the insights migration contract: existing `SHIP_REPO_PATH` configuration does
+not authorize a write. Explicitly approve the exact ticket repository/worktree root `INSIGHTS.md`
+when you want notes created or appended. Review and approve any displayed map-file patch separately;
+notes approval does not cover future-agent instruction files.
+
 After updating the plugin, reinstall the roles and start a fresh session. If your invocation uses
 a local copy such as `~/.codex/skills/ship/SKILL.md`, replace it with the generated `codex-skills/ship/` entry point; a cache update alone may not update
 that copy. The role installer's `--check` verifies roles, not copied skill references.
@@ -228,7 +236,7 @@ Two independent version axes:
   [`plugins/ship/agents/CHANGELOG.md`](plugins/ship/agents/CHANGELOG.md). These track
   behavior changes to the pipeline itself (gate structure, agent handoffs, etc). The
   `ship` orchestrator owns the contract: its MAJOR bumps whenever an inter-stage handoff
-  or invocation input changes. Current: `ship` 6.0.2, `qa-agent` 4.1.0,
+  or invocation input changes. Current: `ship` 8.0.0, `qa-agent` 5.0.0,
   `task-planner-agent` 3.0.0, `implementator-agent` 2.0.0, `reviewer-agent` 2.0.0.
 - **Plugin package version** — the installable package version, in each tool's
   manifest (`plugins/ship/.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`,
