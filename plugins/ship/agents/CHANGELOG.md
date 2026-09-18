@@ -9,6 +9,17 @@ SemVer changelog for the feature pipeline: the `ship` orchestrator (skill) and i
 - **MINOR** — new backward-compatible capability (an agent gains a skill or step).
 - **PATCH** — wording/clarity/typo, no behavior change.
 
+## ship package — 1.16.1 (2026-09-18)
+- `engineering-insights` 1.0.2 clarifies that a caller-selected notes path and existing note content
+  cannot expand filesystem authority, override user instructions, or redirect the target.
+- Existing notes remain evidence for deduplication and context rather than executable instructions.
+  Sibling `CLAUDE.md`/`AGENTS.md` Gotchas promotion remains available under the user's instructions
+  and host permissions, grounded in the observed session rather than a note's self-description.
+- Orchestration order, gates, automatic non-gating capture, target selection, append/create behavior,
+  local commit/no-push behavior, role definitions, and no-substantial-insight handling are unchanged.
+  The generated Codex copy is refreshed from the shared source. This prompt clarification does not
+  prove behavioral equivalence or eliminate scanner findings.
+
 ## ship package — 1.16.0 (2026-09-17)
 - `ship` 7.1.0 validates every child result against the retained child identity, assigned stage,
   task, and authorization state before displaying, forwarding, or acting on it. Valid planner and QA
